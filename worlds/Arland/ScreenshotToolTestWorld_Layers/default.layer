@@ -1,0 +1,160 @@
+CinematicEntity Test {
+ coords 0 0 0
+ Scene CinematicScene "{68D772DA33024CF6}" {
+  Tracks {
+   AnimationCinematicTrack "{68D772DA603C9D9F}" {
+    TrackName "Char01"
+    Play BooleanCinematicTrack "{68D772DA603C9DD2}" {
+     TrackName "Play"
+     Keyframes {
+      BooleanCinematicKeyframe "{68D772DA6EDE1830}" {
+       FrameNumber 0
+       Value 1
+      }
+     }
+    }
+   }
+  }
+ }
+}
+$grp SCR_ChimeraCharacter : "{2619482C6C4202E0}Prefabs/Characters/Campaign/Final/BLUFOR/US_army/Campaign_US_AI.et" {
+ {
+  components {
+   AnimationPlayerComponent "{68D772DA924179D5}" {
+    Animation "{BC6CE48139292039}anims/anm/NPC/male/Body/Briefing/briefing_walk.anm"
+    StartTime 0.6
+   }
+  }
+  coords 1486.627 38 2908.23
+  angles 0 -16.25 0
+ }
+ Char01 {
+  components {
+   CharacterSoundComponent "{520EA1D2F659CF84}" {
+    Enabled 0
+   }
+   SCR_CharacterControllerComponent "{520EA1D2F659CEA5}" {
+    Enabled 0
+   }
+   AIControlComponent "{520EA1D2DB109F34}" {
+    Enabled 0
+    components {
+     AICharacterAimingComponent "{520EA1D2DB109F0C}" {
+      Enabled 0
+     }
+    }
+   }
+   CharacterAimingComponent "{520EA1D2F659CE42}" {
+    Enabled 0
+   }
+   SCR_CompartmentAccessComponent "{52249C842F1EF1F4}" {
+    Enabled 0
+   }
+   SCR_CharacterPerceivableComponent "{566CCE2397E28600}" {
+    Enabled 0
+   }
+   CharacterGrenadeSlotComponent "{520EA1D2F659CE6E}" {
+    Enabled 0
+   }
+   CharacterGrenadeSlotComponent "{5A6CDA0CCF43068E}" {
+    Enabled 0
+   }
+   AnimationPlayerComponent "{68D772DA229FED0D}" {
+    Animation "{3D47BBCDF90C1E28}anims/anm/NPC/male/Loitering/p_loitering_rfl_var01.anm"
+    StartTime 12.7
+    Loop 1
+    AutoPlay 1
+   }
+   SCR_CharacterAnimationComponent "{520EA1D2F659C994}" {
+    Enabled 0
+   }
+  }
+  Flags 0x80000 0
+  coords 1487.792 0 2908.57
+  angles 0.047 -2.826 0
+ }
+}
+Vehicle BTR1 : "{C012BB3488BEA0C2}Prefabs/Vehicles/Wheeled/BTR70/BTR70.et" {
+ components {
+  SCR_VehicleSoundComponent "{55C2E66AD4EF2CA6}" {
+   Enabled 0
+  }
+  AIKnowledgeComponent "{6120C53097494C76}" {
+   Enabled 0
+  }
+  ChimeraAIPathfindingComponent "{5676B7807269CA5B}" {
+   Enabled 0
+  }
+  SCR_AIVehicleUsageComponent "{60E4E37C467714E8}" {
+   Enabled 0
+  }
+  SCR_BaseCompartmentManagerComponent "{20FB66C5DCB8DF72}" {
+   Enabled 0
+  }
+  SCR_BaseLockComponent "{54D6FBC0EA806FE5}" {
+   Enabled 0
+  }
+  SCR_EditableVehicleComponent "{50DEB7C26B5EB312}" {
+   Enabled 0
+  }
+  BaseVehicleNodeComponent "{20FB66C5B2237133}" {
+   Enabled 0
+   components {
+    ControllersManagerComponent "{20FB66C5C1BE9DA0}" {
+     Enabled 0
+    }
+    SCR_BaseHUDComponent "{37C2676694790BC7}" {
+     Enabled 0
+    }
+    SCR_CarControllerComponent "{20FB66C5BC92275B}" {
+     Enabled 0
+    }
+   }
+  }
+  ChimeraAIVehicleControlComponent "{61C2E46781A66E82}" {
+   Enabled 0
+   components {
+    AICarMovementComponent "{61C2E46796C28D80}" {
+     Enabled 0
+    }
+   }
+  }
+  SCR_VehiclePerceivableComponent "{566CD04B8A6107DD}" {
+   Enabled 0
+  }
+  CarProcAnimComponent "{A201E6A6F82F2CDA}" {
+   Enabled 0
+  }
+  SlotManagerComponent "{55BCE45E438E4CFF}" {
+   Slots {
+    RegisteringComponentSlotInfo CommanderTurret {
+     RegisterActions 0
+    }
+    RegisteringComponentSlotInfo Turret {
+     AutoTransform 0
+     MergePhysics 0
+     RegisterActions 0
+     RegisterDamage 0
+     RegisterControllers 0
+     RegisterWeapons 0
+     RegisterCompartments 0
+    }
+   }
+  }
+  SCR_VehicleInventoryStorageManagerComponent "{591056FA3B752FE6}" {
+   Enabled 0
+  }
+  VehicleAnimationComponent "{50B803EAA459B0AF}" {
+   AutoCommandBind 0
+   AutoVariablesBind 0
+  }
+  VehicleGamepadEffectsManagerComponent "{61E2E297F9B95CA6}" {
+   Enabled 0
+  }
+  NwkCarMovementComponent "{5D6CA5AFEC980F35}" {
+   Enabled 0
+  }
+ }
+ coords 1482.079 38 2905.989
+ angles -3.581 23.091 -4.864
+}

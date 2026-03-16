@@ -1,0 +1,8 @@
+GameProject {
+ ID "ScreenshotToolbox"
+ GUID "68CCF1A8B06248CB"
+ TITLE "ScreenshotToolbox"
+ Dependencies {
+  "58D0FB3206B6F859"
+ }
+}
