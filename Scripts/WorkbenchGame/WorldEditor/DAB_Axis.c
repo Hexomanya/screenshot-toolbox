@@ -12,5 +12,4 @@ class DAB_AxisHelper
 		
 		return rotation;
 	}
-
 }

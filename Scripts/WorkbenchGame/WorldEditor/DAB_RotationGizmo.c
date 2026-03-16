@@ -58,6 +58,18 @@ class DAB_RotationGizmo
 		rotation = Vector(rotation[1], rotation[0], rotation[2]);
 		Math3D.AnglesToMatrix(rotation, m_mRotation);
 	}
+	
+	//-----------------------------------------------------------------------
+	void SetRadius(float radius)
+	{
+	    m_fRadius = radius;
+	}
+	
+	//-----------------------------------------------------------------------
+	protected float GetRingThickness()
+	{
+	    return m_fRadius * DAB_VisConfig.GIZMO_RING_THICKNESS_RATIO;
+	}
 
 	//-----------------------------------------------------------------------
 	protected vector GetAxis(DAB_Axis axis, vector rotationMatrix[4])
@@ -75,9 +87,7 @@ class DAB_RotationGizmo
 	void Render(WorldEditorAPI api)
 	{
 	    m_aShapes.Clear();
-
-	    ShapeFlags flags = ;
-	
+		
 	    // Build axis list with distances from camera
 	    vector camPos, rayEnd, rayDir;
 	    int cx = api.GetScreenWidth() / 2;
@@ -132,7 +142,7 @@ class DAB_RotationGizmo
 		            break;
 		    }
 		
-		    m_aShapes.Insert(DAB_Shape.CreateRing(m_vCenter, GetAxis(axis, m_mRotation), m_fRadius, DAB_RotationGizmo.ringThickness, color, 32, flags));
+		    m_aShapes.Insert(DAB_Shape.CreateRing(m_vCenter, GetAxis(axis, m_mRotation), m_fRadius, GetRingThickness(), color, 32, DAB_VisConfig.GIZMO_FLAGS));
 		}
 	}
 
@@ -197,7 +207,7 @@ class DAB_RotationGizmo
 	//-----------------------------------------------------------------------
 	protected DAB_Axis CheckPicking(vector rayOrigin, vector rayDir)
 	{
-	    float threshold = DAB_RotationGizmo.ringThickness * 0.5;
+	    float threshold = GetRingThickness() * 0.5;
 	    DAB_Axis bestAxis = DAB_Axis.NONE;
 	    float bestDiff = float.MAX;
 	

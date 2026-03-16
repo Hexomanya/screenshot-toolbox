@@ -140,7 +140,7 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 		DAB_BoneTransform transform = m_ModifiedBones.Get(boneName);
 		if (!transform) transform = CreateNewTransform(boneName);
 		
-		m_gizmoController.Attach(m_TargetEntity, transform, m_API);
+		m_gizmoController.Attach(m_TargetEntity, transform, m_API, m_fCameraTargetDistance);
         RedrawOverlay();
     }
 	

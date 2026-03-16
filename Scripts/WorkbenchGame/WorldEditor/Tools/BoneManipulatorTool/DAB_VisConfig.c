@@ -11,11 +11,14 @@ class DAB_VisConfig
 	static const float SPHERE_START_SLOPE_DISTANCE = 1;
 	static const float SPHERE_HOVER_MULTIPLIER = 1.1;
 	
+	//Gizmo
+	static const float GIZMO_SCREEN_SIZE = 0.15;
+	static const float GIZMO_RING_THICKNESS_RATIO = 0.15;
+	
 	//Colors
     static const int COLOR_DEFAULT = ARGB(168, 240, 240, 240);
 	static const int COLOR_HOVER = ARGB(255, 255, 220,  60);
     static const int COLOR_SELECTED = ARGB(255, 180, 255, 48);
-
 	static const int COLOR_AXIS_X = ARGB(200, 255, 0, 0);
 	static const int COLOR_AXIS_Y = ARGB(200, 0, 255, 0);
 	static const int COLOR_AXIS_Z = ARGB(200, 0, 0, 255);
@@ -25,7 +28,7 @@ class DAB_VisConfig
 	static const ShapeFlags GIZMO_FLAGS = ShapeFlags.NOZBUFFER  | ShapeFlags.TRANSP | ShapeFlags.NOOUTLINE | ShapeFlags.DOUBLESIDE;
 
 
-	//g\left(x\right)=\left\{x\le b:a,\ d-\frac{d-a}{1+c\left(x-b\right)^{2}}\right\}
+	//Dezmos demo: g\left(x\right)=\left\{x\le b:a,\ d-\frac{d-a}{1+c\left(x-b\right)^{2}}\right\}
 	static float ComputeSphereSize(float currentDistance)
 	{
 		float a = SPHERE_DRAW_RADIUS_MIN;
@@ -38,4 +41,10 @@ class DAB_VisConfig
 		
 		return d - ((d - a) / (1 + c * Math.Pow((x - b), 2)));
 	}
+	
+	static float ComputeGizmoRadius(float cameraDistance)
+	{
+	    return GIZMO_SCREEN_SIZE * cameraDistance;
+	}
+
 }

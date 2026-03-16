@@ -49,7 +49,7 @@ class DAB_GizmoController
 	}
 	
 	//-----------------------------------------------------------------------
-	void Attach(IEntity entity, DAB_BoneTransform boneToAttach, WorldEditorAPI api)
+	void Attach(IEntity entity, DAB_BoneTransform boneToAttach, WorldEditorAPI api, float cameraDistance)
 	{
 	    if(m_currentTransform != null)
 	    {
@@ -80,7 +80,7 @@ class DAB_GizmoController
 	    Math3D.MatrixMultiply3(m_mEntityRotation, boneOrigMat, combined);
 	    vector worldAngles = Math3D.MatrixToAngles(combined);
 	
-	    m_RotationGizmo = new DAB_RotationGizmo(position, Vector(worldAngles[1], worldAngles[0], worldAngles[2]), 0.3);
+	    m_RotationGizmo = new DAB_RotationGizmo(position, Vector(worldAngles[1], worldAngles[0], worldAngles[2]), DAB_VisConfig.ComputeGizmoRadius(cameraDistance));
 	    m_RotationGizmo.GetOnRotate().Insert(this.OnGizmoRotate);
 	    m_RotationGizmo.Render(api);
 	}
@@ -119,7 +119,10 @@ class DAB_GizmoController
 	//-----------------------------------------------------------------------
 	void OnCamerDistanceChange(float newCameraDistance, WorldEditorAPI api)
 	{
-	
+		if (!m_RotationGizmo) return;
+
+	    m_RotationGizmo.SetRadius(DAB_VisConfig.ComputeGizmoRadius(newCameraDistance));
+	    m_RotationGizmo.Render(api);
 	}
 	
 	//-----------------------------------------------------------------------
