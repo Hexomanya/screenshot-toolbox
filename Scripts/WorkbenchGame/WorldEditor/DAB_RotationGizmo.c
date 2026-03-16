@@ -141,8 +141,28 @@ class DAB_RotationGizmo
 		            else color = DAB_VisConfig.COLOR_AXIS_Z;
 		            break;
 		    }
+			
+			vector ax1, ax2;
+			GetRingBasis(axis, ax1, ax2);
+			
+			vector camOffset = camPos - m_vCenter;
+			float startAngle = ComputeArcStartAngle(axis, camOffset);
 		
-		    m_aShapes.Insert(DAB_Shape.CreateRing(m_vCenter, GetAxis(axis, m_mRotation), m_fRadius, GetRingThickness(), color, 32, DAB_VisConfig.GIZMO_FLAGS));
+		   	m_aShapes.Insert(
+				DAB_Shape.CreateRing(
+					m_vCenter, 
+					GetAxis(axis, m_mRotation), 
+					m_fRadius, 
+					GetRingThickness(), 
+					color, 
+					32, 
+					DAB_VisConfig.GIZMO_FLAGS, 
+					DAB_VisConfig.GIZMO_ARC_FRACTION,
+					startAngle,
+					ax1,
+					ax2
+				)
+			);
 		}
 	}
 
@@ -211,23 +231,50 @@ class DAB_RotationGizmo
 	    DAB_Axis bestAxis = DAB_Axis.NONE;
 	    float bestDiff = float.MAX;
 	
+	    vector camOffset = rayOrigin - m_vCenter;
+	
 	    DAB_Axis axes[3] = { DAB_Axis.X_Axis, DAB_Axis.Y_Axis, DAB_Axis.Z_Axis };
 	    foreach (DAB_Axis axis : axes)
 	    {
 	        vector hitPos;
-	        if (IntersectRayPlane(rayOrigin, rayDir, m_vCenter, GetAxis(axis, m_mRotation), hitPos))
-	        {
-	            float dist = vector.Distance(m_vCenter, hitPos);
-	            float diff = Math.AbsFloat(dist - m_fRadius);
-	            if (diff < threshold && diff < bestDiff)
-	            {
-	                bestDiff = diff;
-	                bestAxis = axis;
-	            }
-	        }
+	        if (!IntersectRayPlane(rayOrigin, rayDir, m_vCenter, GetAxis(axis, m_mRotation), hitPos))
+	            continue;
+	
+	        float dist = vector.Distance(m_vCenter, hitPos);
+	        float diff = Math.AbsFloat(dist - m_fRadius);
+	        if (diff >= threshold || diff >= bestDiff)
+	            continue;
+	
+	        // Reject hits that fall in the missing 3/4
+	        vector ax1, ax2;
+	        GetRingBasis(axis, ax1, ax2);
+	        vector dir = hitPos - m_vCenter;
+	        float hitAngle = Math.Atan2(vector.Dot(dir, ax2), vector.Dot(dir, ax1));
+	
+	        float startAngle = ComputeArcStartAngle(axis, camOffset);
+	        float relAngle = hitAngle - startAngle;
+			if (relAngle < 0)         relAngle += Math.PI2;
+			if (relAngle >= Math.PI2) relAngle -= Math.PI2;
+	
+	        if (relAngle > DAB_VisConfig.GIZMO_ARC_FRACTION * Math.PI2)
+	            continue;
+	
+	        bestDiff = diff;
+	        bestAxis = axis;
 	    }
 	
 	    return bestAxis;
+	}
+	
+	//-----------------------------------------------------------------------
+	protected void GetRingBasis(DAB_Axis axis, out vector ax1, out vector ax2)
+	{
+	    switch (axis)
+	    {
+	        case DAB_Axis.X_Axis: ax1 = m_mRotation[1]; ax2 = m_mRotation[2]; break;
+	        case DAB_Axis.Y_Axis: ax1 = m_mRotation[2]; ax2 = m_mRotation[0]; break;
+	        case DAB_Axis.Z_Axis: ax1 = m_mRotation[0]; ax2 = m_mRotation[1]; break;
+	    }
 	}
 
 	//-----------------------------------------------------------------------
@@ -261,5 +308,24 @@ class DAB_RotationGizmo
 			}
 		}
 		return false;
+	}
+	
+	//-----------------------------------------------------------------------
+	protected float ComputeArcStartAngle(DAB_Axis axis, vector camOffset)
+	{
+	    vector ax1, ax2;
+	    GetRingBasis(axis, ax1, ax2);
+	
+	    float u = vector.Dot(camOffset, ax1);
+	    float v = vector.Dot(camOffset, ax2);
+	
+	    float uSnap, vSnap;
+	    if (u >= 0) uSnap =  1.0; else uSnap = -1.0;
+	    if (v >= 0) vSnap =  1.0; else vSnap = -1.0;
+	
+	    float centerAngle = Math.Atan2(vSnap, uSnap);
+		Print("centerAngle: " + centerAngle);
+		Print("final: " + (centerAngle - (DAB_VisConfig.GIZMO_ARC_FRACTION * Math.PI2 * 0.5)));
+	    return centerAngle - (DAB_VisConfig.GIZMO_ARC_FRACTION * Math.PI2 * 0.5);
 	}
 }

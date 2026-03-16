@@ -14,6 +14,7 @@ class DAB_VisConfig
 	//Gizmo
 	static const float GIZMO_SCREEN_SIZE = 0.15;
 	static const float GIZMO_RING_THICKNESS_RATIO = 0.15;
+	static const float GIZMO_ARC_FRACTION = 0.25;
 	
 	//Colors
     static const int COLOR_DEFAULT = ARGB(168, 240, 240, 240);
