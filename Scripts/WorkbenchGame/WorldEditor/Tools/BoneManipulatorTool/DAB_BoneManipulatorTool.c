@@ -24,6 +24,8 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 	protected bool m_bPollCameraPosition = false;
 	protected float m_fCameraTargetDistance = 0;
 	
+	protected SlotManagerComponent m_SlotManager;
+	
     //-----------------------------------------------------------------------
     override void OnActivate()
     {
@@ -120,16 +122,44 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 			Print("RefreshBone: bone '" + boneName + "' has no stored transform!", LogLevel.ERROR);
 			return;
 		}
-
-		Animation anim = m_TargetEntity.GetAnimation();	
+	
 		TNodeId boneId = DAB_BoneHelper.GetBoneId(m_TargetEntity, boneName);
 		
 		Print("Setting bone to: " + transform.m_vRotationOffset);
 		vector rotRad = transform.m_vRotationOffset * Math.DEG2RAD;
 		vector rotRadCorrected = Vector(rotRad[1], rotRad[0], rotRad[2]);
 		
+		Animation anim = GetSlotDependentAnim(boneName);
 		anim.SetBone(m_TargetEntity, boneId, rotRadCorrected, transform.m_vPositionOffset, 1.0);
 		m_TargetEntity.Update();
+	}
+	
+	//-----------------------------------------------------------------------
+	protected Animation GetSlotDependentAnim(string boneName)
+	{
+		Print("Searching for " + boneName + "slot.");
+		if(!m_SlotManager) return m_TargetEntity.GetAnimation();
+		
+		array<EntitySlotInfo> slotInfos = {};
+		m_SlotManager.GetSlotInfos(slotInfos);
+		
+		foreach (EntitySlotInfo slotInfo : slotInfos)
+		{
+			IEntity slotEntity = slotInfo.GetAttachedEntity();
+			if(!slotEntity) continue;
+			
+			Animation anim = slotEntity.GetAnimation();
+			if(!anim) continue;
+			
+			TNodeId boneId = anim.GetBoneIndex(boneName);
+			
+			if(boneId == -1) continue;
+			
+			Print("Found " + boneName + " slot with boneId: " + (int)boneId);
+			return anim;
+		}
+		
+		return m_TargetEntity.GetAnimation();
 	}
 
     //-----------------------------------------------------------------------
@@ -197,6 +227,8 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 			return;
 		}
 		
+		m_SlotManager = SlotManagerComponent.Cast(m_TargetEntity.FindComponent(SlotManagerComponent));
+		
 		anim.GetBoneNames(m_boneNames);
 		RefreshCameraTargetDistance();
     }
@@ -209,7 +241,7 @@ class DAB_BoneManipulatorTool : WorldEditorTool
         if (m_sSelectedBoneName.IsEmpty())
             m_Renderer.DrawAllBones(m_TargetEntity, m_boneNames, m_sHoveredBoneName, m_fCameraTargetDistance, m_bHideVolumeBones);
         else
-            m_Renderer.DrawSelectedBone(m_TargetEntity, m_sSelectedBoneName, m_fCameraTargetDistance, m_API); //TODO: If bone selected, take distance to bone
+            m_Renderer.DrawSelectedBone(m_TargetEntity, m_sSelectedBoneName, m_fCameraTargetDistance, m_API, m_boneNames); //TODO: If bone selected, take distance to bone
     }
 	
 	//-----------------------------------------------------------------------

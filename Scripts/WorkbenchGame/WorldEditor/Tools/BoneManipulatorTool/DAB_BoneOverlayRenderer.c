@@ -3,6 +3,7 @@ class DAB_BoneOverlayRenderer
     protected ref map<string, vector> m_CachedWorldPositions = new map<string, vector>();
     protected ref array<ref Shape> m_ActiveShapes = new array<ref Shape>();
 	protected ref DebugTextScreenSpace m_SelectedBoneText;
+	protected ref DebugTextScreenSpace m_SelectedParentText;
 	
 	protected float m_fCurrentSphereSize = 0;
 	
@@ -71,18 +72,22 @@ class DAB_BoneOverlayRenderer
         }
     }
 
-    void DrawSelectedBone(IEntity entity, string selectedBoneName, float cameraBoneDistance, WorldEditorAPI api)
+    void DrawSelectedBone(IEntity entity, string selectedBoneName, float cameraBoneDistance, WorldEditorAPI api, array<string> boneNames)
     {
 		m_fCurrentSphereSize = DAB_VisConfig.ComputeSphereSize(cameraBoneDistance) * DAB_VisConfig.SPHERE_HOVER_MULTIPLIER;
         ClearShapes();
 
 		m_SelectedBoneText = DebugTextScreenSpace.Create(api.GetWorld(), selectedBoneName, DebugTextFlags.FACE_CAMERA, 10, 10);
+		
 
         Animation anim = entity.GetAnimation();
         if (!anim) return;
 		
         TNodeId boneId = anim.GetBoneIndex(selectedBoneName);
         if (boneId == -1) return;
+		
+		string parentBone = DAB_BoneHelper.FindParentBoneName(anim, boneId, boneNames);
+		m_SelectedParentText = DebugTextScreenSpace.Create(api.GetWorld(), parentBone, DebugTextFlags.FACE_CAMERA, 10, 25);
 
         vector boneLocal[4];
         anim.GetBoneMatrix(boneId, boneLocal);
@@ -144,6 +149,7 @@ class DAB_BoneOverlayRenderer
 	    // When ref count hits zero, Enforce Script GC handles cleanup.
 	    m_ActiveShapes.Clear();
 		m_SelectedBoneText = null;
+		m_SelectedParentText = null;
 	}
 
     protected bool RaySphereIntersect(vector ro, vector rd, vector sc, float r, out float t)

@@ -14,11 +14,80 @@ CinematicEntity Test {
      }
     }
    }
+   CustomCinematicTrack "{68E163188933F017}" {
+    TrackName "BTR01"
+    ClassName "SlotBoneAnimationCinematicTrack"
+    ChildTracks {
+     StringCinematicTrack "{68E163188933FC9E}" {
+      TrackName "m_sSlotName"
+      Keyframes {
+       StringCinematicKeyframe "{68E1631A36E4320A}" {
+        FrameNumber 0
+        Value ""
+       }
+      }
+     }
+     StringCinematicTrack "{68E163188933FD9B}" {
+      TrackName "m_sBoneName"
+      Keyframes {
+       StringCinematicKeyframe "{68E1631A03612B12}" {
+        FrameNumber 0
+        Value "v_gun_01"
+       }
+      }
+     }
+     Vector3CinematicTrack "{68E163188933FA85}" {
+      TrackName "m_YawPitchRoll"
+      X FloatCinematicTrack "{68E163188933FA96}" {
+       TrackName "X"
+       Keyframes {
+        FloatCinematicKeyframe "{68E1631A3F763116}" {
+         FrameNumber 0
+         Value 5.75
+         InterpMode 0
+        }
+       }
+      }
+      Y FloatCinematicTrack "{68E163188933FA91}" {
+       TrackName "Y"
+       Keyframes {
+        FloatCinematicKeyframe "{68E1631A3DDAF166}" {
+         FrameNumber 0
+         Value 1.13
+         InterpMode 0
+        }
+       }
+      }
+      Z FloatCinematicTrack "{68E163188933FA9D}" {
+       TrackName "Z"
+       Keyframes {
+        FloatCinematicKeyframe "{68E1631A3C244373}" {
+         FrameNumber 0
+         Value -0.5
+         InterpMode 0
+        }
+       }
+      }
+     }
+     Vector3CinematicTrack "{68E163188933FA52}" {
+      TrackName "m_Position"
+      X FloatCinematicTrack "{68E163188933FA5A}" {
+       TrackName "X"
+      }
+      Y FloatCinematicTrack "{68E163188933FBA6}" {
+       TrackName "Y"
+      }
+      Z FloatCinematicTrack "{68E163188933FBA5}" {
+       TrackName "Z"
+      }
+     }
+    }
+   }
   }
  }
 }
 $grp SCR_ChimeraCharacter : "{2619482C6C4202E0}Prefabs/Characters/Campaign/Final/BLUFOR/US_army/Campaign_US_AI.et" {
- {
+ Test01 {
   components {
    AnimationPlayerComponent "{68D772DA924179D5}" {
     Animation "{BC6CE48139292039}anims/anm/NPC/male/Body/Briefing/briefing_walk.anm"
@@ -70,12 +139,15 @@ $grp SCR_ChimeraCharacter : "{2619482C6C4202E0}Prefabs/Characters/Campaign/Final
    }
   }
   Flags 0x80000 0
-  coords 1487.792 0 2908.57
-  angles 0.047 -2.826 0
+  coords 1487.77 -0.002 2908.569
+  angles 0.047 -8.93 -0.005
  }
 }
+Turret : "{337D05CC762A1A21}Prefabs/Vehicles/Wheeled/BTR70/VehParts/Turret/BTR70_Turret_Anim.et" {
+ coords 1479.41 38 2906.808
+}
 $grp Vehicle : "{C012BB3488BEA0C2}Prefabs/Vehicles/Wheeled/BTR70/BTR70.et" {
- BTR1 {
+ BTR01 {
   components {
    SCR_VehicleSoundComponent "{55C2E66AD4EF2CA6}" {
     Enabled 0
@@ -132,13 +204,9 @@ $grp Vehicle : "{C012BB3488BEA0C2}Prefabs/Vehicles/Wheeled/BTR70/BTR70.et" {
       RegisterActions 0
      }
      RegisteringComponentSlotInfo Turret {
-      AutoTransform 0
       MergePhysics 0
+      Prefab "{337D05CC762A1A21}Prefabs/Vehicles/Wheeled/BTR70/VehParts/Turret/BTR70_Turret_Anim.et"
       RegisterActions 0
-      RegisterDamage 0
-      RegisterControllers 0
-      RegisterWeapons 0
-      RegisterCompartments 0
      }
     }
    }

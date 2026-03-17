@@ -197,8 +197,7 @@ class DAB_RotationGizmo
 	    {
 	        float currentAngle = GetMouseAngle(rayOrigin, rayDir);
 	        float delta = currentAngle - m_fLastAngle;
-			m_fLastAngle = currentAngle;
-	
+			
 	        if (delta >  180) delta -= 360;
 	        if (delta < -180) delta += 360;
 	
@@ -207,6 +206,8 @@ class DAB_RotationGizmo
 	
 	        // Sync drag basis to current ring rotation so angle measurement stays accurate
 	        Math3D.MatrixCopy(m_mRotation, m_mDragBasis);
+			
+			m_fLastAngle = GetMouseAngle(rayOrigin, rayDir);
 	    }
 	    else
 	    {
