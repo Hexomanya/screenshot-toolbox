@@ -139,9 +139,9 @@ class DAB_GizmoController
 		vector deltaMatrix[3];
 		switch (axis)
 		{
-			case DAB_Axis.X_Axis: Math3D.AnglesToMatrix(Vector(0,     delta, 0    ), deltaMatrix); break;
-			case DAB_Axis.Y_Axis: Math3D.AnglesToMatrix(Vector(delta, 0,     0    ), deltaMatrix); break;
-			case DAB_Axis.Z_Axis: Math3D.AnglesToMatrix(Vector(0,     0,     delta), deltaMatrix); break;
+			case DAB_Axis.X_Axis: Math3D.AnglesToMatrix(Vector(0,      -delta, 0     ), deltaMatrix); break;
+			case DAB_Axis.Y_Axis: Math3D.AnglesToMatrix(Vector(delta,  0,      0     ), deltaMatrix); break;
+			case DAB_Axis.Z_Axis: Math3D.AnglesToMatrix(Vector(0,      0,      -delta), deltaMatrix); break;
 			default: return;
 		}
 		
@@ -151,12 +151,9 @@ class DAB_GizmoController
 		
 		vector ypr = Math3D.MatrixToAngles(m_mAccumRotation);
 		vector newRotation = Vector(ypr[1], ypr[0], ypr[2]);
-		
-		//Print("newRotation(" + newRotation + ") - original(" + m_currentTransform.GetOriginalRotation() + ") = " + (newRotation - m_currentTransform.GetOriginalRotation()));
-		
+
 		m_currentTransform.m_vRotationOffset = newRotation;
 		
-		Print("Accumulated rotation (Pitch, Yaw, Roll): " + newRotation);
 		m_OnTransformChanged.Invoke(m_currentTransform);
 		
 		UpdateGizmo();

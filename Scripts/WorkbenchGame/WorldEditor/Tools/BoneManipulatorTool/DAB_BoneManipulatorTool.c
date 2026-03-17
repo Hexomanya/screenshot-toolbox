@@ -228,10 +228,8 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 		
 		if(DAB_Helper.AreFloatsEqual(distance, m_fCameraTargetDistance, DAB_VisConfig.CAMERA_POLLING_DISTANCE_EPSILON)) return;
 		
-		
 		m_fCameraTargetDistance = distance;
-		Print("New distance: " + m_fCameraTargetDistance);
-		
+
 		RedrawOverlay();
 		m_gizmoController.OnCamerDistanceChange(m_fCameraTargetDistance, m_API);
 	}
@@ -261,7 +259,4 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 		}
 	}*/
 	
-	protected override void OnEnterEvent(){Print("Enter!");}
-	protected override void OnLeaveEvent(){Print("Leave!");}
-	protected override void OnMouseDoubleClickEvent(float x, float y, WETMouseButtonFlag buttons){Print("Double!");}
 }

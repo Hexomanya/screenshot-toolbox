@@ -190,31 +190,33 @@ class DAB_RotationGizmo
 	//-----------------------------------------------------------------------
 	void OnMouseMove(float x, float y, WorldEditorAPI api)
 	{
-		vector rayOrigin, rayEnd, rayDir;
-		api.TraceWorldPos((int)x, (int)y, TraceFlags.WORLD, rayOrigin, rayEnd, rayDir);
-
-		if (m_bIsDragging)
-		{
-			float currentAngle = GetMouseAngle(rayOrigin, rayDir);
-			float delta = currentAngle - m_fLastAngle;
-			
-			if (delta > 180) delta -= 360;
-			if (delta < -180) delta += 360;
-			
-			if (m_OnRotate)
-				m_OnRotate.Invoke(m_eActiveAxis, delta);
-
+	    vector rayOrigin, rayEnd, rayDir;
+	    api.TraceWorldPos((int)x, (int)y, TraceFlags.WORLD, rayOrigin, rayEnd, rayDir);
+	
+	    if (m_bIsDragging)
+	    {
+	        float currentAngle = GetMouseAngle(rayOrigin, rayDir);
+	        float delta = currentAngle - m_fLastAngle;
 			m_fLastAngle = currentAngle;
-		}
-		else
-		{
-			DAB_Axis hovered = CheckPicking(rayOrigin, rayDir);
-			if (hovered != m_eActiveAxis)
-			{
-				m_eActiveAxis = hovered;
-				Render(api);
-			}
-		}
+	
+	        if (delta >  180) delta -= 360;
+	        if (delta < -180) delta += 360;
+	
+	        if (m_OnRotate)
+	            m_OnRotate.Invoke(m_eActiveAxis, delta);
+	
+	        // Sync drag basis to current ring rotation so angle measurement stays accurate
+	        Math3D.MatrixCopy(m_mRotation, m_mDragBasis);
+	    }
+	    else
+	    {
+	        DAB_Axis hovered = CheckPicking(rayOrigin, rayDir);
+	        if (hovered != m_eActiveAxis)
+	        {
+	            m_eActiveAxis = hovered;
+	            Render(api);
+	        }
+	    }
 	}
 
 	//-----------------------------------------------------------------------
@@ -324,8 +326,6 @@ class DAB_RotationGizmo
 	    if (v >= 0) vSnap =  1.0; else vSnap = -1.0;
 	
 	    float centerAngle = Math.Atan2(vSnap, uSnap);
-		Print("centerAngle: " + centerAngle);
-		Print("final: " + (centerAngle - (DAB_VisConfig.GIZMO_ARC_FRACTION * Math.PI2 * 0.5)));
 	    return centerAngle - (DAB_VisConfig.GIZMO_ARC_FRACTION * Math.PI2 * 0.5);
 	}
 }
