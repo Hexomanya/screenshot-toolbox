@@ -45,10 +45,7 @@ class DAB_BoneHelper
 	    rotMat[0] = boneLocal[0];
 	    rotMat[1] = boneLocal[1];
 	    rotMat[2] = boneLocal[2];
-	
-	    // MatrixToAngles returns Vector(yaw, pitch, roll).
-	    // Store as Vector(pitch, yaw, roll) to match the convention
-	    // used by m_vRotationOffset and expected by Attach/UpdateGizmo.
+
 	    vector ypr = Math3D.MatrixToAngles(rotMat);
 	    boneRotation = Vector(ypr[1], ypr[0], ypr[2]);
 	    return true;
@@ -77,14 +74,12 @@ class DAB_BoneHelper
 	    rotMat[1] = boneWorld[1];
 	    rotMat[2] = boneWorld[2];
 	
-	    // MatrixToAngles returns Vector(yaw, pitch, roll).
-	    // Store as Vector(pitch, yaw, roll) to match the convention
-	    // used by m_vRotationOffset and expected by Attach/UpdateGizmo.
 	    vector ypr = Math3D.MatrixToAngles(rotMat);
 	    boneRotation = Vector(ypr[1], ypr[0], ypr[2]);
 	    return true;
 	}
 	
+	// TODO: Can we do an overload that accepts anim?
 	//-----------------------------------------------------------------------
 	static TNodeId GetBoneId(IEntity entity, string boneName)
 	{
@@ -105,8 +100,10 @@ class DAB_BoneHelper
 	}
 	
 	//-----------------------------------------------------------------------
-	static string FindParentBoneName(Animation anim, TNodeId boneId, array<string> allBoneNames)
+	static string FindParentBoneName(Animation anim, string boneName, array<string> boneNames)
 	{
+		TNodeId boneId = anim.GetBoneIndex(boneName);
+		
 	    vector boneLocal[4];
 	    anim.GetBoneLocalMatrix(boneId, boneLocal);
 	
@@ -114,9 +111,7 @@ class DAB_BoneHelper
 	
 	    vector boneWorld[4];
 	    anim.GetBoneMatrix(boneId, boneWorld);
-	
-	    // parentWorld = boneWorld * inverse(boneLocal)
-	    // For orthonormal matrix: inverse translation = -R^T * t = (-dot(ax0,t), -dot(ax1,t), -dot(ax2,t))
+
 	    float itx = -vector.Dot(boneLocal[0], boneLocal[3]);
 	    float ity = -vector.Dot(boneLocal[1], boneLocal[3]);
 	    float itz = -vector.Dot(boneLocal[2], boneLocal[3]);
@@ -129,7 +124,7 @@ class DAB_BoneHelper
 	    float bestDist = 0.001;
 	    string bestName = "";
 	
-	    foreach (string name : allBoneNames)
+	    foreach (string name : boneNames)
 	    {
 	        TNodeId candidateId = anim.GetBoneIndex(name);
 	        if (candidateId == boneId) continue;
@@ -145,5 +140,19 @@ class DAB_BoneHelper
 	        }
 	    }
 	    return bestName;
+	}
+	
+	//-----------------------------------------------------------------------
+	static map<string, string> ComputeBoneParents(Animation anim, array<string> boneNames)
+	{
+		map<string, string> boneParents = new map<string, string>();
+		
+		foreach(string boneName : boneNames)
+		{
+			string parentName = FindParentBoneName(anim, boneName, boneNames);
+			boneParents.Set(boneName, parentName); // We add "" value for bones without parent, so we know they were processed.
+		}
+		
+		return boneParents;
 	}
 }

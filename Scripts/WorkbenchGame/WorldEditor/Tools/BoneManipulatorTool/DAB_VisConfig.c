@@ -10,6 +10,8 @@ class DAB_VisConfig
 	static const float SPHERE_DISTANCE_SLOPE = 0.1;
 	static const float SPHERE_START_SLOPE_DISTANCE = 1;
 	static const float SPHERE_HOVER_MULTIPLIER = 1.1;
+	static const float SPHERE_PARENT_DIST_SCALE = 10.0;
+	static const float SPHERE_DEPTH_SCALE_MIN = 0.2;    
 	
 	//Gizmo
 	static const float GIZMO_SCREEN_SIZE = 0.15;

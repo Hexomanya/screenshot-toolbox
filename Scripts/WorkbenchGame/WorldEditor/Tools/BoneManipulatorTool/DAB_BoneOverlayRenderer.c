@@ -7,16 +7,16 @@ class DAB_BoneOverlayRenderer
 	
 	protected float m_fCurrentSphereSize = 0;
 	
-    void DrawAllBones(IEntity entity, array<string> boneNames, string hoveredBone, float cameraTargetDistance, bool hideVolumeBones)
+    void DrawAllBones(IEntity entity, DAB_SkeletonInfo skeletonInfo, string hoveredBone, float cameraTargetDistance, bool hideVolumeBones)
     {
 		m_fCurrentSphereSize = DAB_VisConfig.ComputeSphereSize(cameraTargetDistance);
 		
 		ClearShapes();
         m_CachedWorldPositions.Clear();
 		
-        if(entity == null)
+        if(entity == null || skeletonInfo == null)
 		{
-			Print("DrawAllBones: Provided entity is null.", LogLevel.ERROR);
+			Print("DrawAllBones: Provided entity or skeletonInfo is null.", LogLevel.ERROR);
 			return;
 		}
 		
@@ -30,6 +30,8 @@ class DAB_BoneOverlayRenderer
 		
         vector entityWorld[4];
         entity.GetTransform(entityWorld);
+		
+		array<string> boneNames = skeletonInfo.GetBoneNames(); // So it is easier to read
 
         for (int i = 0; i < boneNames.Count(); i++)
         {
@@ -41,7 +43,7 @@ class DAB_BoneOverlayRenderer
 
             TNodeId boneId = anim.GetBoneIndex(boneNames[i]);
 
-            if (boneId == -1) continue;
+            if (boneId == -1) continue; //TODO: Is -1 even the invalid for TNodeId?
             
 			
             vector boneLocal[4];
@@ -72,23 +74,25 @@ class DAB_BoneOverlayRenderer
         }
     }
 
-    void DrawSelectedBone(IEntity entity, string selectedBoneName, float cameraBoneDistance, WorldEditorAPI api, array<string> boneNames)
+    void DrawSelectedBone(IEntity entity, DAB_SkeletonInfo skeletonInfo, string selectedBoneName, float cameraBoneDistance, WorldEditorAPI api)
     {
 		m_fCurrentSphereSize = DAB_VisConfig.ComputeSphereSize(cameraBoneDistance) * DAB_VisConfig.SPHERE_HOVER_MULTIPLIER;
         ClearShapes();
 
+		if(entity == null || skeletonInfo == null)
+		{
+			Print("DrawSelectedBone: Provided entity or skeletonInfo is null.", LogLevel.ERROR);
+			return;
+		}
+
 		m_SelectedBoneText = DebugTextScreenSpace.Create(api.GetWorld(), selectedBoneName, DebugTextFlags.FACE_CAMERA, 10, 10);
 		
-
         Animation anim = entity.GetAnimation();
         if (!anim) return;
 		
         TNodeId boneId = anim.GetBoneIndex(selectedBoneName);
         if (boneId == -1) return;
 		
-		string parentBone = DAB_BoneHelper.FindParentBoneName(anim, boneId, boneNames);
-		m_SelectedParentText = DebugTextScreenSpace.Create(api.GetWorld(), parentBone, DebugTextFlags.FACE_CAMERA, 10, 25);
-
         vector boneLocal[4];
         anim.GetBoneMatrix(boneId, boneLocal);
 

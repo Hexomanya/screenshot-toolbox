@@ -15,10 +15,12 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 	protected ref DAB_GizmoController m_gizmoController;
  	
     protected string m_sSelectedBoneName = ""; 
-	protected ref array<string> m_boneNames = {};
 	protected string m_sHoveredBoneName = "";
+	
+	protected ref map<string, ref DAB_SkeletonInfo> m_CachedSkeletons = new map<string, ref DAB_SkeletonInfo>();
+	protected string m_sCurrentSkeleton;
    
-	protected ref map<string, DAB_BoneTransform> m_ModifiedBones = new map<string, DAB_BoneTransform>();
+	protected ref map<string, ref DAB_BoneTransform> m_ModifiedBones = new map<string, ref DAB_BoneTransform>();
 	
 	protected vector m_vLastCameraPos = vector.Zero;
 	protected bool m_bPollCameraPosition = false;
@@ -155,7 +157,6 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 			
 			if(boneId == -1) continue;
 			
-			Print("Found " + boneName + " slot with boneId: " + (int)boneId);
 			return anim;
 		}
 		
@@ -208,7 +209,7 @@ class DAB_BoneManipulatorTool : WorldEditorTool
     //-----------------------------------------------------------------------
     protected void RefreshTargetEntity()
     {
-		m_boneNames.Clear();
+		m_sCurrentSkeleton = "";
 		
         m_TargetEntitySource = m_API.GetSelectedEntity(0);
         if (m_TargetEntitySource)
@@ -227,9 +228,25 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 			return;
 		}
 		
-		m_SlotManager = SlotManagerComponent.Cast(m_TargetEntity.FindComponent(SlotManagerComponent));
+		string skeletonKey = DAB_SkeletonInfo.ComputeSkeletonKey(m_TargetEntity);
+		if(skeletonKey.IsEmpty())
+		{
+			Print("RefreshTargetEntity: skeletonKey was empty!", LogLevel.ERROR);
+			return;
+		}
 		
-		anim.GetBoneNames(m_boneNames);
+		if(! m_CachedSkeletons.Contains(skeletonKey))
+		{
+			array<string> boneNames = {};
+			anim.GetBoneNames(boneNames);
+			map<string, string> boneParents = DAB_BoneHelper.ComputeBoneParents(anim, boneNames);
+			//Start here with computing distances!
+			DAB_SkeletonInfo newSkeleton = new DAB_SkeletonInfo(skeletonKey, boneNames, boneParents);
+			m_CachedSkeletons.Set(skeletonKey, newSkeleton);
+		}
+		
+		m_sCurrentSkeleton = skeletonKey;
+		m_SlotManager = SlotManagerComponent.Cast(m_TargetEntity.FindComponent(SlotManagerComponent));
 		RefreshCameraTargetDistance();
     }
 
@@ -238,10 +255,14 @@ class DAB_BoneManipulatorTool : WorldEditorTool
     {
         if (!m_TargetEntity) return;
 
+		DAB_SkeletonInfo skeletonInfo = GetCurrentSkeletonInfo();
+		if(!skeletonInfo) return;
+		
+		
         if (m_sSelectedBoneName.IsEmpty())
-            m_Renderer.DrawAllBones(m_TargetEntity, m_boneNames, m_sHoveredBoneName, m_fCameraTargetDistance, m_bHideVolumeBones);
+            m_Renderer.DrawAllBones(m_TargetEntity, skeletonInfo, m_sHoveredBoneName, m_fCameraTargetDistance, m_bHideVolumeBones);
         else
-            m_Renderer.DrawSelectedBone(m_TargetEntity, m_sSelectedBoneName, m_fCameraTargetDistance, m_API, m_boneNames); //TODO: If bone selected, take distance to bone
+            m_Renderer.DrawSelectedBone(m_TargetEntity, skeletonInfo, m_sSelectedBoneName, m_fCameraTargetDistance, m_API); //TODO: If bone selected, take distance to bone
     }
 	
 	//-----------------------------------------------------------------------
@@ -277,6 +298,26 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 		m_sHoveredBoneName = hitBoneName;
 		RedrawOverlay();
 	}
+	
+	//-----------------------------------------------------------------------
+	protected DAB_SkeletonInfo GetCurrentSkeletonInfo()
+	{
+		if(m_sCurrentSkeleton.IsEmpty())
+		{
+			Print("Provided key was empty!", LogLevel.ERROR);
+			return null;
+		}
+
+		DAB_SkeletonInfo info;
+		if(!m_CachedSkeletons.Find(m_sCurrentSkeleton, info))
+		{
+			Print("SkeletonInfo for key " + m_sCurrentSkeleton + " could not be found! All possible keys were:", LogLevel.ERROR);
+			return null;
+		}
+
+		return info;
+	}
+	
 	
 	//-----------------------------------------------------------------------
 	// We do not have a normal update method, so we have to use this abomanation.
