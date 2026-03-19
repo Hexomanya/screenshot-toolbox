@@ -96,6 +96,7 @@ $grp SCR_ChimeraCharacter : "{2619482C6C4202E0}Prefabs/Characters/Campaign/Final
   }
   coords 1486.627 38 2908.23
   angles 0 -16.25 0
+  scale 1.29
  }
  Char01 {
   components {

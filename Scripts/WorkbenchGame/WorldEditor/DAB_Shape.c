@@ -134,4 +134,104 @@ class DAB_Shape
 
 		return Shape.CreateTris(color, flags, verts, triCount);
 	}
+
+	//-----------------------------------------------------------------------
+	// Builds a scale-handle shape: a cylinder shaft topped with a solid cube.
+	//
+	// Geometry (8 shaft segments, cube has 6 faces):
+	//   Cylinder sides — 8 × 2 tris = 16 tris  (48 verts)
+	//   Cube faces     — 6 × 2 tris = 12 tris  (36 verts)
+	//   Total          —              28 tris   (84 verts)
+	//
+	// 'base' is the shaft start, 'tip' is the centre of the cube head.
+	// boxHalfSize is the half-extent of the cube on every axis.
+	static Shape CreateScaleHandle(vector base, vector tip, float shaftRadius, float boxHalfSize, int color, ShapeFlags flags)
+	{
+		vector totalVec = tip - base;
+		float  totalLen = totalVec.Length();
+		if (totalLen < 0.0001) return null;
+		vector axisDir = totalVec.Normalized();
+
+		// Shaft ends at the bottom face of the cube
+		vector boxBottom = tip - axisDir * boxHalfSize;
+
+		// Stable perpendicular basis
+		vector up = vector.Up;
+		if (Math.AbsFloat(vector.Dot(axisDir, up)) > 0.99)
+			up = vector.Right;
+		vector ax1 = SCR_Math3D.Cross(axisDir, up).Normalized();
+		vector ax2 = SCR_Math3D.Cross(axisDir, ax1).Normalized();
+
+		const int SEGMENTS = 8;
+		vector verts[84]; // 28 tris × 3 verts
+		int vi       = 0;
+		int triCount = 0;
+
+		// ── Cylinder shaft (base → boxBottom) ─────────────────────────────
+		for (int i = 0; i < SEGMENTS; i++)
+		{
+			float a0 = (float)i       / SEGMENTS * Math.PI2;
+			float a1 = (float)(i + 1) / SEGMENTS * Math.PI2;
+
+			vector r0 = ax1 * Math.Cos(a0) + ax2 * Math.Sin(a0);
+			vector r1 = ax1 * Math.Cos(a1) + ax2 * Math.Sin(a1);
+
+			vector p00 = base      + r0 * shaftRadius;
+			vector p01 = base      + r1 * shaftRadius;
+			vector p10 = boxBottom + r0 * shaftRadius;
+			vector p11 = boxBottom + r1 * shaftRadius;
+
+			verts[vi++] = p00; verts[vi++] = p10; verts[vi++] = p01;
+			verts[vi++] = p01; verts[vi++] = p10; verts[vi++] = p11;
+			triCount += 2;
+		}
+
+		// ── Cube head ─────────────────────────────────────────────────────
+		// 8 corners indexed:  top (+axisDir) = 0-3, bottom (-axisDir) = 4-7
+		//   0 = +ax1 +ax2 +axis   1 = -ax1 +ax2 +axis
+		//   2 = -ax1 -ax2 +axis   3 = +ax1 -ax2 +axis
+		//   4 = +ax1 +ax2 -axis   5 = -ax1 +ax2 -axis
+		//   6 = -ax1 -ax2 -axis   7 = +ax1 -ax2 -axis
+		float s = boxHalfSize;
+		vector c0 = tip + ax1 * s + ax2 * s + axisDir * s;
+		vector c1 = tip - ax1 * s + ax2 * s + axisDir * s;
+		vector c2 = tip - ax1 * s - ax2 * s + axisDir * s;
+		vector c3 = tip + ax1 * s - ax2 * s + axisDir * s;
+		vector c4 = tip + ax1 * s + ax2 * s - axisDir * s;
+		vector c5 = tip - ax1 * s + ax2 * s - axisDir * s;
+		vector c6 = tip - ax1 * s - ax2 * s - axisDir * s;
+		vector c7 = tip + ax1 * s - ax2 * s - axisDir * s;
+
+		// Top face (+axisDir)
+		verts[vi++] = c0; verts[vi++] = c1; verts[vi++] = c2;
+		verts[vi++] = c0; verts[vi++] = c2; verts[vi++] = c3;
+		triCount += 2;
+
+		// Bottom face (-axisDir)
+		verts[vi++] = c4; verts[vi++] = c6; verts[vi++] = c5;
+		verts[vi++] = c4; verts[vi++] = c7; verts[vi++] = c6;
+		triCount += 2;
+
+		// +ax1 side
+		verts[vi++] = c0; verts[vi++] = c3; verts[vi++] = c7;
+		verts[vi++] = c0; verts[vi++] = c7; verts[vi++] = c4;
+		triCount += 2;
+
+		// -ax1 side
+		verts[vi++] = c1; verts[vi++] = c5; verts[vi++] = c6;
+		verts[vi++] = c1; verts[vi++] = c6; verts[vi++] = c2;
+		triCount += 2;
+
+		// +ax2 side
+		verts[vi++] = c0; verts[vi++] = c4; verts[vi++] = c5;
+		verts[vi++] = c0; verts[vi++] = c5; verts[vi++] = c1;
+		triCount += 2;
+
+		// -ax2 side
+		verts[vi++] = c3; verts[vi++] = c2; verts[vi++] = c6;
+		verts[vi++] = c3; verts[vi++] = c6; verts[vi++] = c7;
+		triCount += 2;
+
+		return Shape.CreateTris(color, flags, verts, triCount);
+	}
 }

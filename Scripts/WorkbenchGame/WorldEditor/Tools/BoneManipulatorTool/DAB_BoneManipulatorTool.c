@@ -97,16 +97,28 @@ class DAB_BoneManipulatorTool : WorldEditorTool
                 RedrawOverlay();
                 break;
 
-			// B — switch to Rotation gizmo (only while a bone is selected)
-			case KeyCode.KC_B:
+			// U — switch to Rotation gizmo (only while a bone is selected)
+			case KeyCode.KC_U:
 				if (!m_sSelectedBoneName.IsEmpty())
 					m_gizmoController.SwitchMode(DAB_GizmoMode.Rotation, m_API);
 				break;
 
-			// N — switch to Move (position) gizmo (only while a bone is selected)
-			case KeyCode.KC_N:
+			// I — switch to Move (position) gizmo (only while a bone is selected)
+			case KeyCode.KC_I:
 				if (!m_sSelectedBoneName.IsEmpty())
 					m_gizmoController.SwitchMode(DAB_GizmoMode.Position, m_API);
+				break;
+
+			// O — switch to Scale gizmo (only while a bone is selected)
+			case KeyCode.KC_O:
+				if (!m_sSelectedBoneName.IsEmpty())
+					m_gizmoController.SwitchMode(DAB_GizmoMode.Scale, m_API);
+				break;
+
+			// J — reset selected bone to its original transform
+			case KeyCode.KC_J:
+				if (!m_sSelectedBoneName.IsEmpty())
+					ResetBone(m_sSelectedBoneName);
 				break;
         }
 		
@@ -194,7 +206,7 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 		localOff[1] = vector.Dot(worldOff, boneOrigWorldRot[1]);
 		localOff[2] = vector.Dot(worldOff, boneOrigWorldRot[2]);
 
-		anim.SetBone(m_TargetEntity, boneId, rotRadCorrected, localOff, 1.0);
+		anim.SetBone(m_TargetEntity, boneId, rotRadCorrected, localOff, transform.m_fScale);
 		m_TargetEntity.Update();
 	}
 	
@@ -265,6 +277,30 @@ class DAB_BoneManipulatorTool : WorldEditorTool
         if (m_TargetEntitySource)
             m_API.SetEntitySelection(m_TargetEntitySource);
     }
+
+	//-----------------------------------------------------------------------
+	// Resets the selected bone to its original transform (zero offsets, scale 1)
+	// without deselecting it, so the user can immediately manipulate again.
+	// Steps:
+	//   1. Zero the stored offsets so RefreshBone calls SetBone with identity.
+	//   2. Call RefreshBone to apply the identity transform to the engine.
+	//   3. Reset the controller's accumulated rotation to identity, so the next
+	//      drag starts clean instead of compounding into the old accumulator.
+	//   4. Redraw the overlay so the bone sphere moves back to its rest position.
+	//   (m_ModifiedBones keeps the entry with zeroed offsets — that is fine.)
+	protected void ResetBone(string boneName)
+	{
+		DAB_BoneTransform transform = m_ModifiedBones.Get(boneName);
+		if (!transform) return;
+
+		transform.m_vPositionOffset = vector.Zero;
+		transform.m_vRotationOffset = vector.Zero;
+		transform.m_fScale          = 1.0;
+
+		RefreshBone(boneName);
+		m_gizmoController.ResetAccumulatedTransform(m_API);
+		m_Renderer.DrawSelectedBone(m_TargetEntity, boneName, m_API);
+	}
 	
 	
 	protected void RefreshCameraTargetDistance()

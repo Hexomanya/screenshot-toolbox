@@ -23,6 +23,12 @@ class DAB_RotationGizmo
 	protected bool m_bIsDragging;
 	protected float m_fLastAngle;
 
+	// Arc start angles cached at the moment dragging begins (one per axis,
+	// indexed by DAB_Axis enum value). Frozen during a drag so the arcs do
+	// not snap to face the camera on every rotation tick. Recomputed on the
+	// first Render() call after the drag is released.
+	protected float m_fCachedArcStartAngles[3];
+
 	protected ref ScriptInvokerBase<DAB_RotationGizmo_OnRotate> m_OnRotate;
 	protected ref array<ref Shape> m_aShapes = {};
 
@@ -93,6 +99,19 @@ class DAB_RotationGizmo
 	    int cx = api.GetScreenWidth() / 2;
 	    int cy = api.GetScreenHeight() / 2;
 	    api.TraceWorldPos(cx, cy, TraceFlags.WORLD, camPos, rayEnd, rayDir);
+
+		// Only recompute arc orientations when not dragging.
+		// During a drag, Render() is called every tick by UpdateRotationGizmo();
+		// recomputing here would snap each arc to face the camera on every frame,
+		// making the rings visibly jump while the user is rotating. The cached
+		// angles are frozen at drag-start and restored on the post-release render.
+		if (!m_bIsDragging)
+		{
+			vector camOffset = camPos - m_vCenter;
+			m_fCachedArcStartAngles[DAB_Axis.X_Axis] = ComputeArcStartAngle(DAB_Axis.X_Axis, camOffset);
+			m_fCachedArcStartAngles[DAB_Axis.Y_Axis] = ComputeArcStartAngle(DAB_Axis.Y_Axis, camOffset);
+			m_fCachedArcStartAngles[DAB_Axis.Z_Axis] = ComputeArcStartAngle(DAB_Axis.Z_Axis, camOffset);
+		}
 	
 	    DAB_Axis axes[3] = { DAB_Axis.X_Axis, DAB_Axis.Y_Axis, DAB_Axis.Z_Axis };
 	
@@ -144,9 +163,6 @@ class DAB_RotationGizmo
 			
 			vector ax1, ax2;
 			GetRingBasis(axis, ax1, ax2);
-			
-			vector camOffset = camPos - m_vCenter;
-			float startAngle = ComputeArcStartAngle(axis, camOffset);
 		
 		   	m_aShapes.Insert(
 				DAB_Shape.CreateRing(
@@ -158,7 +174,7 @@ class DAB_RotationGizmo
 					32, 
 					DAB_VisConfig.GIZMO_FLAGS, 
 					DAB_VisConfig.GIZMO_ARC_FRACTION,
-					startAngle,
+					m_fCachedArcStartAngles[axis],
 					ax1,
 					ax2
 				)
@@ -221,10 +237,16 @@ class DAB_RotationGizmo
 	}
 
 	//-----------------------------------------------------------------------
-	void OnMouseRelease(WETMouseButtonFlag buttons)
+	void OnMouseRelease(WETMouseButtonFlag buttons, WorldEditorAPI api)
 	{
 		if (buttons & WETMouseButtonFlag.LEFT)
+		{
 			m_bIsDragging = false;
+			// Re-render now that dragging has ended: m_bIsDragging is false so
+			// Render() will recompute the cached arc start angles to face the
+			// camera from the bone's new orientation.
+			Render(api);
+		}
 	}
 	
 	//-----------------------------------------------------------------------
@@ -233,8 +255,6 @@ class DAB_RotationGizmo
 	    float threshold = GetRingThickness() * 0.5;
 	    DAB_Axis bestAxis = DAB_Axis.NONE;
 	    float bestDiff = float.MAX;
-	
-	    vector camOffset = rayOrigin - m_vCenter;
 	
 	    DAB_Axis axes[3] = { DAB_Axis.X_Axis, DAB_Axis.Y_Axis, DAB_Axis.Z_Axis };
 	    foreach (DAB_Axis axis : axes)
@@ -247,14 +267,15 @@ class DAB_RotationGizmo
 	        float diff = Math.AbsFloat(dist - m_fRadius);
 	        if (diff >= threshold || diff >= bestDiff)
 	            continue;
-	
-	        // Reject hits that fall in the missing 3/4
+
+	        // Reject hits that fall in the missing arc — use the cached start
+	        // angle so picking always matches exactly what is drawn on screen.
 	        vector ax1, ax2;
 	        GetRingBasis(axis, ax1, ax2);
 	        vector dir = hitPos - m_vCenter;
 	        float hitAngle = Math.Atan2(vector.Dot(dir, ax2), vector.Dot(dir, ax1));
-	
-	        float startAngle = ComputeArcStartAngle(axis, camOffset);
+
+	        float startAngle = m_fCachedArcStartAngles[axis];
 	        float relAngle = hitAngle - startAngle;
 			if (relAngle < 0)         relAngle += Math.PI2;
 			if (relAngle >= Math.PI2) relAngle -= Math.PI2;

@@ -2,7 +2,8 @@ enum DAB_GizmoMode
 {
 	Deactivated,
 	Position,
-	Rotation
+	Rotation,
+	Scale
 }
 
 void DAB_GizmoController_OnTransformChanged(DAB_BoneTransform changedTransform);
@@ -14,6 +15,7 @@ class DAB_GizmoController
 
 	protected ref DAB_RotationGizmo m_RotationGizmo;
 	protected ref DAB_MoveGizmo     m_PositionGizmo;
+	protected ref DAB_ScaleGizmo    m_ScaleGizmo;
 
 	protected ref ScriptInvokerBase<DAB_GizmoController_OnTransformChanged> m_OnTransformChanged;
 
@@ -99,6 +101,11 @@ class DAB_GizmoController
 			m_PositionGizmo.GetOnMove().Clear();
 			m_PositionGizmo = null;
 		}
+		if (m_ScaleGizmo)
+		{
+			m_ScaleGizmo.GetOnScale().Clear();
+			m_ScaleGizmo = null;
+		}
 
 		m_gizmoMode = newMode;
 
@@ -106,6 +113,7 @@ class DAB_GizmoController
 		{
 			case DAB_GizmoMode.Rotation: CreateRotationGizmo(api); break;
 			case DAB_GizmoMode.Position: CreatePositionGizmo(api); break;
+			case DAB_GizmoMode.Scale:    CreateScaleGizmo(api);    break;
 		}
 	}
 
@@ -117,6 +125,7 @@ class DAB_GizmoController
 		{
 			case DAB_GizmoMode.Rotation: if (m_RotationGizmo) m_RotationGizmo.OnMouseMove(x, y, api); break;
 			case DAB_GizmoMode.Position: if (m_PositionGizmo) m_PositionGizmo.OnMouseMove(x, y, api); break;
+			case DAB_GizmoMode.Scale:    if (m_ScaleGizmo)    m_ScaleGizmo.OnMouseMove(x, y, api);    break;
 		}
 	}
 
@@ -128,6 +137,7 @@ class DAB_GizmoController
 		{
 			case DAB_GizmoMode.Rotation: if (m_RotationGizmo) m_RotationGizmo.OnMousePress(x, y, buttons, api); break;
 			case DAB_GizmoMode.Position: if (m_PositionGizmo) m_PositionGizmo.OnMousePress(x, y, buttons, api); break;
+			case DAB_GizmoMode.Scale:    if (m_ScaleGizmo)    m_ScaleGizmo.OnMousePress(x, y, buttons, api);    break;
 		}
 	}
 
@@ -137,8 +147,9 @@ class DAB_GizmoController
 		if (!m_currentTransform) return;
 		switch (m_gizmoMode)
 		{
-			case DAB_GizmoMode.Rotation: if (m_RotationGizmo) m_RotationGizmo.OnMouseRelease(buttons); break;
+			case DAB_GizmoMode.Rotation: if (m_RotationGizmo) m_RotationGizmo.OnMouseRelease(buttons, api); break;
 			case DAB_GizmoMode.Position: if (m_PositionGizmo) m_PositionGizmo.OnMouseRelease(buttons); break;
+			case DAB_GizmoMode.Scale:    if (m_ScaleGizmo)    m_ScaleGizmo.OnMouseRelease(buttons);    break;
 		}
 	}
 
@@ -154,6 +165,9 @@ class DAB_GizmoController
 
 		if (m_PositionGizmo) m_PositionGizmo.GetOnMove().Clear();
 		m_PositionGizmo = null;
+
+		if (m_ScaleGizmo) m_ScaleGizmo.GetOnScale().Clear();
+		m_ScaleGizmo = null;
 	}
 
 	//-----------------------------------------------------------------------
@@ -172,11 +186,30 @@ class DAB_GizmoController
 			case DAB_GizmoMode.Position:
 				if (m_PositionGizmo) { m_PositionGizmo.SetRadius(newRadius); m_PositionGizmo.Render(api); }
 				break;
+			case DAB_GizmoMode.Scale:
+				if (m_ScaleGizmo) { m_ScaleGizmo.SetRadius(newRadius); m_ScaleGizmo.Render(api); }
+				break;
 		}
 	}
 
 	//-----------------------------------------------------------------------
 	DAB_GizmoMode GetGizmoMode() { return m_gizmoMode; }
+
+	//-----------------------------------------------------------------------
+	// Resets the accumulated rotation back to identity without deselecting.
+	// Call this after zeroing a transform's offsets so the next drag starts
+	// from a clean state rather than compounding into the old accumulator.
+	void ResetAccumulatedTransform(WorldEditorAPI api)
+	{
+		Math3D.MatrixIdentity3(m_mAccumRotation);
+
+		switch (m_gizmoMode)
+		{
+			case DAB_GizmoMode.Rotation: UpdateRotationGizmo(); break;
+			case DAB_GizmoMode.Position: UpdatePositionGizmo(); break;
+			case DAB_GizmoMode.Scale:    UpdateScaleGizmo();    break;
+		}
+	}
 
 	// ── Private ────────────────────────────────────────────────────────────
 
@@ -339,5 +372,55 @@ class DAB_GizmoController
 		m_PositionGizmo.SetPosition(gizmoPos);
 		m_PositionGizmo.SetRadius(DAB_VisConfig.ComputeGizmoRadius(m_API, gizmoPos));
 		m_PositionGizmo.Render(m_API);
+	}
+
+	//-----------------------------------------------------------------------
+	// The scale gizmo has no rotation (always world up) so only position and
+	// screen-space radius need updating.
+	protected void CreateScaleGizmo(WorldEditorAPI api)
+	{
+		vector position = m_currentTransform.GetAdjustedPosition();
+
+		m_ScaleGizmo = new DAB_ScaleGizmo(position, DAB_VisConfig.ComputeGizmoRadius(api, position));
+		m_ScaleGizmo.GetOnScale().Insert(this.OnGizmoScale);
+		m_ScaleGizmo.Render(api);
+	}
+
+	//-----------------------------------------------------------------------
+	// Fired by DAB_ScaleGizmo each frame during a drag.
+	// delta is a signed world-space distance along world up (metres).
+	// We scale by SCALE_SENSITIVITY and clamp to prevent negative scale.
+	protected void OnGizmoScale(float delta)
+	{
+		if (!m_currentTransform)
+		{
+			Print("OnGizmoScale: no current transform!", LogLevel.WARNING);
+			return;
+		}
+
+		m_currentTransform.m_fScale = m_currentTransform.m_fScale + delta * DAB_VisConfig.SCALE_SENSITIVITY;
+
+		// Never let scale reach zero or go negative
+		if (m_currentTransform.m_fScale < 0.01)
+			m_currentTransform.m_fScale = 0.01;
+
+		m_OnTransformChanged.Invoke(m_currentTransform);
+
+		UpdateScaleGizmo();
+	}
+
+	//-----------------------------------------------------------------------
+	protected void UpdateScaleGizmo()
+	{
+		if (!m_ScaleGizmo || !m_currentTransform)
+		{
+			Print("UpdateScaleGizmo: gizmo or transform is missing!", LogLevel.ERROR);
+			return;
+		}
+
+		vector gizmoPos = m_currentTransform.GetAdjustedPosition();
+		m_ScaleGizmo.SetPosition(gizmoPos);
+		m_ScaleGizmo.SetRadius(DAB_VisConfig.ComputeGizmoRadius(m_API, gizmoPos));
+		m_ScaleGizmo.Render(m_API);
 	}
 }

@@ -6,6 +6,7 @@ class DAB_BoneTransform
 	
 	vector m_vPositionOffset = vector.Zero;
 	vector m_vRotationOffset = vector.Zero;
+	float  m_fScale          = 1.0;
 	
 	//-----------------------------------------------------------------------
 	void DAB_BoneTransform(string boneName, vector originalPosition, vector originalRotation)
