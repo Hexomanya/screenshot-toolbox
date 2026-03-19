@@ -1,0 +1,21 @@
+class DAB_Helper
+{
+	private void DAB_Helper();
+	private void ~DAB_Helper();
+
+	//-----------------------------------------------------------------------
+	//! Returns the current world-space camera position.
+	static vector GetCameraPosition(WorldEditorAPI api)
+	{
+		vector camMat[4];
+		api.GetWorld().GetCurrentCamera(camMat);
+		return camMat[3];
+	}
+
+	//-----------------------------------------------------------------------
+	//! Returns true when \p a and \p b differ by less than \p epsilon.
+	static bool AreFloatsEqual(float a, float b, float epsilon = 0.001)
+	{
+		return Math.AbsFloat(a - b) < epsilon;
+	}
+}
