@@ -5,8 +5,14 @@
 )]
 class DAB_BoneManipulatorTool : WorldEditorTool
 {
-	[Attribute(defvalue: "1", uiwidget: UIWidgets.CheckBox, desc: "Hide volume bones from the overlay, because they can overlap other bones!", category: "Display")]
+	[Attribute(defvalue: "1", uiwidget: UIWidgets.CheckBox, desc: "Hide volume bones from the overlay", category: "Display")]
 	protected bool m_bHideVolumeBones;
+	
+	[Attribute(defvalue: "1", uiwidget: UIWidgets.CheckBox, desc: "Hide the camera bone from the overlay", category: "Display")]
+	protected bool m_bHideCameraBone;
+	
+	[Attribute(defvalue: "0", uiwidget: UIWidgets.CheckBox, desc: "Hide lines connecting bones to their parents", category: "Display")]
+	protected bool m_bHideBoneConnections;
 	
     protected IEntity m_TargetEntity;
     protected IEntitySource m_TargetEntitySource;
@@ -23,6 +29,7 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 	protected ref map<string, ref DAB_BoneTransform> m_ModifiedBones = new map<string, ref DAB_BoneTransform>();
 	
 	protected vector m_vLastCameraPos = vector.Zero;
+	protected ref DAB_BoneDisplaySettings m_LastBoneDisplaySettings;
 	protected bool m_bPollCameraPosition = false;
 	protected float m_fCameraTargetDistance = 0;
 	
@@ -51,6 +58,7 @@ class DAB_BoneManipulatorTool : WorldEditorTool
     //-----------------------------------------------------------------------
     override void OnMouseMoveEvent(float x, float y)
     {
+		RefreshCameraTargetDistance();
 		m_gizmoController.OnMouseMove(x, y, m_API);
 		CheckBoneHover(x, y);
     }
@@ -139,7 +147,6 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 	//-----------------------------------------------------------------------
 	protected Animation GetSlotDependentAnim(string boneName)
 	{
-		Print("Searching for " + boneName + "slot.");
 		if(!m_SlotManager) return m_TargetEntity.GetAnimation();
 		
 		array<EntitySlotInfo> slotInfos = {};
@@ -178,16 +185,15 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 	//-----------------------------------------------------------------------
 	protected DAB_BoneTransform CreateNewTransform(string boneName)
 	{
-		TNodeId boneId = DAB_BoneHelper.GetBoneId(m_TargetEntity, boneName);
-		
 		vector bonePosition;
-		if (!DAB_BoneHelper.TryGetBonePosition(m_TargetEntity, boneId, bonePosition))
+		if (!DAB_BoneHelper.TryGetBonePosition(m_TargetEntity, boneName, bonePosition))
 		{
 			Print("CreateNewTransform: could not retrieve position for bone '" + boneName + "'!", LogLevel.ERROR);
 			return null;
 		}
 		
 		vector boneRotation;
+		TNodeId boneId = DAB_BoneHelper.GetBoneId(m_TargetEntity, boneName);
 		if (!DAB_BoneHelper.TryGetBoneLocalRotation(m_TargetEntity, boneId, boneRotation))
 		{
 			Print("CreateNewTransform: could not retrieve rotation for bone '" + boneName + "'!", LogLevel.ERROR);
@@ -205,6 +211,31 @@ class DAB_BoneManipulatorTool : WorldEditorTool
         if (m_TargetEntitySource)
             m_API.SetEntitySelection(m_TargetEntitySource);
     }
+	
+	
+	protected void RefreshCameraTargetDistance()
+	{
+	    if (!m_TargetEntity)
+	    {
+	        Print("RefreshCameraTargetDistance: no entity selected.", LogLevel.ERROR);
+	        return;
+	    }
+	
+	    vector camPos = DAB_Helper.GetCameraPosition(m_API);
+	    vector targetPosition = m_TargetEntity.GetOrigin();
+	    float distance = vector.Distance(camPos, targetPosition);
+	
+	    if (DAB_Helper.AreFloatsEqual(distance, m_fCameraTargetDistance, DAB_VisConfig.CAMERA_POLLING_DISTANCE_EPSILON)) return;
+	
+	    m_fCameraTargetDistance = distance;
+	
+	    if (m_sSelectedBoneName.IsEmpty())
+	        m_Renderer.RefreshSphereSizes(m_sHoveredBoneName, camPos, m_API);
+	    else
+	        m_Renderer.DrawSelectedBone(m_TargetEntity, m_sSelectedBoneName, m_API);
+	
+	    m_gizmoController.OnCameraDistanceChange(m_fCameraTargetDistance, m_API);
+	}
 
     //-----------------------------------------------------------------------
     protected void RefreshTargetEntity()
@@ -240,8 +271,8 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 			array<string> boneNames = {};
 			anim.GetBoneNames(boneNames);
 			map<string, string> boneParents = DAB_BoneHelper.ComputeBoneParents(anim, boneNames);
-			//Start here with computing distances!
-			DAB_SkeletonInfo newSkeleton = new DAB_SkeletonInfo(skeletonKey, boneNames, boneParents);
+			map<string, float> boneParentDistances = DAB_BoneHelper.ComputeBoneParentDistances(m_TargetEntity, boneParents);
+			DAB_SkeletonInfo newSkeleton = new DAB_SkeletonInfo(skeletonKey, boneNames, boneParents, boneParentDistances);
 			m_CachedSkeletons.Set(skeletonKey, newSkeleton);
 		}
 		
@@ -250,53 +281,34 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 		RefreshCameraTargetDistance();
     }
 
-    //-----------------------------------------------------------------------
-    protected void RedrawOverlay()
-    {
-        if (!m_TargetEntity) return;
-
-		DAB_SkeletonInfo skeletonInfo = GetCurrentSkeletonInfo();
-		if(!skeletonInfo) return;
-		
-		
-        if (m_sSelectedBoneName.IsEmpty())
-            m_Renderer.DrawAllBones(m_TargetEntity, skeletonInfo, m_sHoveredBoneName, m_fCameraTargetDistance, m_bHideVolumeBones);
-        else
-            m_Renderer.DrawSelectedBone(m_TargetEntity, skeletonInfo, m_sSelectedBoneName, m_fCameraTargetDistance, m_API); //TODO: If bone selected, take distance to bone
-    }
-	
 	//-----------------------------------------------------------------------
-	protected void RefreshCameraTargetDistance()
+	protected void RedrawOverlay()
 	{
-		if (!m_TargetEntity)
-		{
-			Print("RefreshCameraTargetDistance: no entity selected.", LogLevel.ERROR);
-			return;
-		}
-		
-		vector camPos = DAB_Helper.GetCameraPosition(m_API);
-		vector targetPosition = m_TargetEntity.GetOrigin();
-		
-		float distance = vector.Distance(camPos, targetPosition);
-		
-		if(DAB_Helper.AreFloatsEqual(distance, m_fCameraTargetDistance, DAB_VisConfig.CAMERA_POLLING_DISTANCE_EPSILON)) return;
-		
-		m_fCameraTargetDistance = distance;
+	    if (!m_TargetEntity) return;
+	
+	    DAB_SkeletonInfo skeletonInfo = GetCurrentSkeletonInfo();
+	    if (!skeletonInfo) return;
+	
+	    vector camPos = DAB_Helper.GetCameraPosition(m_API);
+		m_LastBoneDisplaySettings = new DAB_BoneDisplaySettings(m_bHideVolumeBones, m_bHideCameraBone, m_bHideBoneConnections);
 
-		RedrawOverlay();
-		m_gizmoController.OnCamerDistanceChange(m_fCameraTargetDistance, m_API);
+	    if (m_sSelectedBoneName.IsEmpty())
+	        m_Renderer.DrawAllBones(m_TargetEntity, skeletonInfo, m_sHoveredBoneName, camPos, m_LastBoneDisplaySettings, m_API);
+	    else
+	        m_Renderer.DrawSelectedBone(m_TargetEntity, m_sSelectedBoneName, m_API);
 	}
 	
 	//-----------------------------------------------------------------------
 	protected void CheckBoneHover(float x, float y)
 	{
-		if(!m_sSelectedBoneName.IsEmpty()) return;
-		
-		string hitBoneName = m_Renderer.PickBoneAtScreenPos(x, y, m_TargetEntity, m_API);
-		if(hitBoneName == m_sHoveredBoneName) return;
-		
-		m_sHoveredBoneName = hitBoneName;
-		RedrawOverlay();
+	    if (!m_sSelectedBoneName.IsEmpty()) return;
+	
+	    string hitBoneName = m_Renderer.PickBoneAtScreenPos(x, y, m_TargetEntity, m_API);
+	    if (hitBoneName == m_sHoveredBoneName) return;
+	
+	    m_sHoveredBoneName = hitBoneName;
+	    vector camPos = DAB_Helper.GetCameraPosition(m_API);
+	    m_Renderer.RefreshSphereSizes(m_sHoveredBoneName, camPos, m_API);
 	}
 	
 	//-----------------------------------------------------------------------
@@ -316,6 +328,21 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 		}
 
 		return info;
+	}
+	
+	//-----------------------------------------------------------------------
+	protected void RefreshDisplaySettings()
+	{
+		DAB_BoneDisplaySettings newSettings = new DAB_BoneDisplaySettings(m_bHideVolumeBones, m_bHideCameraBone, m_bHideBoneConnections);
+		if(newSettings.IsSame(m_LastBoneDisplaySettings)) return;
+		
+		RedrawOverlay(); //RedrawOverlay set new settings
+	}
+	
+	//-----------------------------------------------------------------------
+	protected override void OnEnterEvent()
+	{
+		RefreshDisplaySettings();
 	}
 	
 	

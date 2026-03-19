@@ -4,7 +4,7 @@ class DAB_BoneHelper
 	private void ~DAB_BoneHelper();
 	
 	//-----------------------------------------------------------------------
-	static bool TryGetBonePosition(IEntity entity, TNodeId boneId, out vector bonePosition)
+	static bool TryGetBonePosition(IEntity entity, string boneName, out vector bonePosition)
 	{
 		bonePosition = vector.Zero;
 		if (!entity) return false;
@@ -16,17 +16,26 @@ class DAB_BoneHelper
 			return false;
 		}
 		
-        vector entityWorld[4];
-        entity.GetTransform(entityWorld);
+		vector entityWorld[4];
+	    entity.GetTransform(entityWorld);
 		
+        bonePosition = DAB_BoneHelper.GetBonePosition(anim, entityWorld, boneName);
+		return true;
+	}
+	
+	// Would it be better to make this Try... as well and check anim?
+	//-----------------------------------------------------------------------
+	static vector GetBonePosition(Animation anim, vector entityWorld[4], string boneName)
+	{
+		TNodeId boneId = anim.GetBoneIndex(boneName);
+			
         vector boneLocal[4];
         anim.GetBoneMatrix(boneId, boneLocal);
 
         vector boneWorld[4];
         Math3D.MatrixMultiply4(entityWorld, boneLocal, boneWorld);
 
-        bonePosition = boneWorld[3];
-		return true;
+        return boneWorld[3];
 	}
 	
 	//-----------------------------------------------------------------------
@@ -154,5 +163,58 @@ class DAB_BoneHelper
 		}
 		
 		return boneParents;
+	}
+	
+	//-----------------------------------------------------------------------
+	static map<string, float> ComputeBoneParentDistances(IEntity entity, map<string, string> boneParents)
+	{
+		if(!entity)
+		{
+			Print("Entity can not be null!", LogLevel.ERROR);
+			return null;
+		}
+		
+		map<string, float> boneParentDistances = new map<string, float>();
+		map<string, vector> bonePositionCache = new map<string, vector>();
+		
+		Animation anim = entity.GetAnimation(); // TODO: Can this be null?
+		vector entityWorld[4];
+	    entity.GetTransform(entityWorld);
+		
+		for (MapIterator it = boneParents.Begin(); it != boneParents.End(); it = boneParents.Next(it))
+		{
+		    string childBoneName = boneParents.GetIteratorKey(it);
+		    string parentBoneName = boneParents.GetIteratorElement(it);
+		
+			if(childBoneName.IsEmpty())
+			{
+				Print("Child bonename should never be empty!", LogLevel.ERROR);
+				continue;
+			}
+			
+		    if(parentBoneName.IsEmpty()) // Does not have a parent
+			{
+				boneParentDistances.Set(childBoneName, -1);
+				continue;
+			}
+			
+			vector childPos, parentPos;
+			if(! bonePositionCache.Find(childBoneName, childPos)) 
+			{
+				childPos = DAB_BoneHelper.GetBonePosition(anim, entityWorld, childBoneName);
+				bonePositionCache.Set(childBoneName, childPos);
+			}
+			
+			if(! bonePositionCache.Find(parentBoneName, parentPos)) 
+			{
+				parentPos = DAB_BoneHelper.GetBonePosition(anim, entityWorld, parentBoneName);
+				bonePositionCache.Set(parentBoneName, parentPos);
+			}
+			
+			float distance = vector.Distance(childPos, parentPos);
+			boneParentDistances.Set(childBoneName, distance);
+		}
+		
+		return boneParentDistances;
 	}
 }

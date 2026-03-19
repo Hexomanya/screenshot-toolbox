@@ -6,12 +6,12 @@ class DAB_SkeletonInfo
 	protected ref map<string, float> m_BoneToParentDistances = new map<string, float>();
 	
 	//-----------------------------------------------------------------------
-	void DAB_SkeletonInfo(string skeletonKey, array<string> boneNames, map<string, string> boneParents, /*map<string, float> boneToParentDistances*/)
+	void DAB_SkeletonInfo(string skeletonKey, array<string> boneNames, map<string, string> boneParents, map<string, float> boneToParentDistances)
 	{
 		m_sSkeletonKey = skeletonKey;
 		m_BoneNames = boneNames;
 		m_BoneParents = boneParents;
-		//m_BoneToParentDistances = boneToParentDistances;
+		m_BoneToParentDistances = boneToParentDistances;
 	}
 
 	//-----------------------------------------------------------------------
