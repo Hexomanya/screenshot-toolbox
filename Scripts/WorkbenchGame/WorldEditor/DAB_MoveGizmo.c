@@ -21,6 +21,14 @@ class DAB_MoveGizmo
 	protected vector m_vDragStartCenter;
 	protected float  m_fLastAxisT;
 
+	// Camera-relative axis signs: +1 when the axis vector faces toward the camera,
+	// -1 when it faces away. Updated every Render() so every arrow always points
+	// toward the viewer. Exposed via GetXSign/GetYSign/GetZSign() so
+	// DAB_GizmoController can keep drag direction consistent with the arrow.
+	protected float m_fXSign = 1;
+	protected float m_fYSign = 1;
+	protected float m_fZSign = -1;
+
 	protected ref ScriptInvokerBase<DAB_MoveGizmo_OnMove> m_OnMove;
 	protected ref array<ref Shape> m_aShapes = {};
 
@@ -62,9 +70,32 @@ class DAB_MoveGizmo
 	{
 		m_aShapes.Clear();
 
-		// Camera position for back-to-front depth sorting
+		// Camera position for back-to-front depth sorting and Z-axis facing.
 		vector camPos, rayEnd, rayDir;
 		api.TraceWorldPos(api.GetScreenWidth() / 2, api.GetScreenHeight() / 2, TraceFlags.WORLD, camPos, rayEnd, rayDir);
+
+		// Recompute axis signs: flip each arrow to always face toward the camera.
+		// If the axis vector already points toward the camera (dot > 0) use +1;
+		// otherwise -1. This way GetAxisVector always returns a camera-facing
+		// direction for all three axes.
+		vector camDir = (camPos - m_vCenter).Normalized();
+		float xDot = vector.Dot(m_mRotation[0], camDir);
+		if (xDot >= 0)
+			m_fXSign = 1.0;
+		else
+			m_fXSign = -1.0;
+
+		float yDot = vector.Dot(m_mRotation[1], camDir);
+		if (yDot >= 0)
+			m_fYSign = 1.0;
+		else
+			m_fYSign = -1.0;
+
+		float zDot = vector.Dot(m_mRotation[2], camDir);
+		if (zDot >= 0)
+			m_fZSign = 1.0;
+		else
+			m_fZSign = -1.0;
 
 		float shaftRadius = m_fRadius * 0.035;
 		float coneRadius  = m_fRadius * 0.10;
@@ -151,17 +182,20 @@ class DAB_MoveGizmo
 	//-----------------------------------------------------------------------
 	void OnMouseMove(float x, float y, WorldEditorAPI api)
 	{
-		vector rayOrigin, rayEnd, rayDir;
-		api.TraceWorldPos((int)x, (int)y, TraceFlags.WORLD, rayOrigin, rayEnd, rayDir);
-
 		if (m_bIsDragging)
 		{
-			// Guard against re-entrant Invoke: Render() -> TraceWorldPos() can
-			// flush Workbench events and call OnMouseMove again before the
-			// current Invoke() has returned, which Enfusion's ScriptInvoker
-			// treats as a recursive call and throws an exception.
+			// Guard must come BEFORE TraceWorldPos. TraceWorldPos can flush the
+			// Workbench event queue, firing a reentrant OnMouseMove while we are
+			// still inside this call. If the guard were checked after the trace,
+			// the reentrant call would process a newer T value and advance
+			// m_fLastAxisT, so the outer call would then compute a negative delta
+			// (it's behind the updated reference) and partially cancel the
+			// movement — producing the visual lag.
 			if (m_bHandlingMove) return;
 			m_bHandlingMove = true;
+
+			vector rayOrigin, rayEnd, rayDir;
+			api.TraceWorldPos((int)x, (int)y, TraceFlags.WORLD, rayOrigin, rayEnd, rayDir);
 
 			// T is a scalar along the axis from the FIXED drag-start center.
 			// m_vCenter may shift each frame as the bone moves, but
@@ -183,7 +217,10 @@ class DAB_MoveGizmo
 		}
 		else
 		{
-			// Hover highlight
+			// Hover highlight — no drag state, so no reentrancy concern here.
+			vector rayOrigin, rayEnd, rayDir;
+			api.TraceWorldPos((int)x, (int)y, TraceFlags.WORLD, rayOrigin, rayEnd, rayDir);
+
 			DAB_Axis hovered = CheckPicking(rayOrigin, rayDir);
 			if (hovered != m_eActiveAxis)
 			{
@@ -201,16 +238,24 @@ class DAB_MoveGizmo
 	}
 
 	//-----------------------------------------------------------------------
-	// Note: Z is negated so the arrow faces toward the viewer, matching the
-	// Enfusion convention where local +Z would otherwise point into the scene.
-	// OnGizmoMove negates Z's worldAxisDir to keep drag direction consistent.
+	// Accessors for the camera-relative axis signs (+1 or -1).
+	// DAB_GizmoController reads these so drag displacement always matches
+	// the visual arrow direction.
+	float GetXSign() { return m_fXSign; }
+	float GetYSign() { return m_fYSign; }
+	float GetZSign() { return m_fZSign; }
+
+	//-----------------------------------------------------------------------
+	// Each axis uses its camera-relative sign (updated each Render) so every
+	// arrow always faces the viewer. OnGizmoMove uses GetXSign/GetYSign/GetZSign
+	// to keep drag direction consistent with the arrow.
 	protected vector GetAxisVector(DAB_Axis axis)
 	{
 		switch (axis)
 		{
-			case DAB_Axis.X_Axis: return m_mRotation[0];
-			case DAB_Axis.Y_Axis: return m_mRotation[1];
-			case DAB_Axis.Z_Axis: return m_mRotation[2] * -1;
+			case DAB_Axis.X_Axis: return m_mRotation[0] * m_fXSign;
+			case DAB_Axis.Y_Axis: return m_mRotation[1] * m_fYSign;
+			case DAB_Axis.Z_Axis: return m_mRotation[2] * m_fZSign;
 		}
 		return vector.Zero;
 	}

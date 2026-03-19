@@ -285,11 +285,13 @@ class DAB_GizmoController
 		vector worldAxisDir;
 		switch (axis)
 		{
-			case DAB_Axis.X_Axis: worldAxisDir = combined[0]; break;
-			case DAB_Axis.Y_Axis: worldAxisDir = combined[1]; break;
-			// Negated to match GetAxisVector's negated Z: arrow points toward viewer,
-			// and dragging toward the tip moves the bone toward the viewer as expected.
-			case DAB_Axis.Z_Axis: worldAxisDir = combined[2] * -1; break;
+			case DAB_Axis.X_Axis: worldAxisDir = combined[0] * m_PositionGizmo.GetXSign(); break;
+			case DAB_Axis.Y_Axis: worldAxisDir = combined[1] * m_PositionGizmo.GetYSign(); break;
+			// Use GetZSign() from the gizmo instead of a hardcoded -1.
+			// The move gizmo flips the Z arrow each Render() to always face the
+			// camera; GetZSign() returns that same flip so the drag displacement
+			// stays in the arrow direction regardless of which side the camera is on.
+			case DAB_Axis.Z_Axis: worldAxisDir = combined[2] * m_PositionGizmo.GetZSign(); break;
 			default: return;
 		}
 

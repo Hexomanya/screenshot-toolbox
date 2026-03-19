@@ -157,30 +157,42 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 		// m_vPositionOffset is accumulated in world space (OnGizmoMove adds
 		// worldAxisDir * delta). SetBone expects position in the bone's own
 		// local frame, so we project the world-space offset onto the bone's
-		// world-space axes (not the entity's axes).
+		// world-space axes.
 		//
-		// Projecting onto entity axes only works when the bone is closely
-		// aligned with the entity (e.g. a root-level wheel bone). For bones
-		// that are rotated relative to the entity (e.g. human spine, arm),
-		// the entity axes and bone axes diverge and the movement direction
-		// becomes completely wrong.
+		// IMPORTANT: we must use the bone's ORIGINAL world-space axes
+		// (entity_rotation × bone_original_rotation), NOT the current axes
+		// that already include the accumulated rotation delta. If we used the
+		// current axes, every SetBone rotation call would silently change the
+		// bone's projected localOff and shift its world position — making the
+		// bone appear to rotate around its original rest location instead of
+		// its moved position.
 		Animation anim = GetSlotDependentAnim(boneName);
 
 		vector entityWorld[4];
 		m_TargetEntity.GetTransform(entityWorld);
 
-		// Compute the bone's current world-space matrix so we can express
-		// the world-space offset in the bone's local frame.
-		vector boneLocal[4];
-		anim.GetBoneMatrix(boneId, boneLocal);
-		vector boneWorld[4];
-		Math3D.MatrixMultiply4(entityWorld, boneLocal, boneWorld);
+		// Reconstruct the bone's original world rotation:
+		//   boneOrigWorldRot = entityRot3 × boneOrigLocal3
+		// This mirrors ComputeCombinedMatrix in DAB_GizmoController but stops
+		// before multiplying in m_mAccumRotation, giving the stable reference
+		// frame that was in effect at bone-selection time.
+		vector entityRot3[3];
+		entityRot3[0] = entityWorld[0];
+		entityRot3[1] = entityWorld[1];
+		entityRot3[2] = entityWorld[2];
+
+		vector boneOrigLocal3[3];
+		vector orig = transform.GetOriginalRotation();
+		Math3D.AnglesToMatrix(Vector(orig[1], orig[0], orig[2]), boneOrigLocal3);
+
+		vector boneOrigWorldRot[3];
+		Math3D.MatrixMultiply3(entityRot3, boneOrigLocal3, boneOrigWorldRot);
 
 		vector worldOff = transform.m_vPositionOffset;
 		vector localOff;
-		localOff[0] = vector.Dot(worldOff, boneWorld[0]);
-		localOff[1] = vector.Dot(worldOff, boneWorld[1]);
-		localOff[2] = vector.Dot(worldOff, boneWorld[2]);
+		localOff[0] = vector.Dot(worldOff, boneOrigWorldRot[0]);
+		localOff[1] = vector.Dot(worldOff, boneOrigWorldRot[1]);
+		localOff[2] = vector.Dot(worldOff, boneOrigWorldRot[2]);
 
 		anim.SetBone(m_TargetEntity, boneId, rotRadCorrected, localOff, 1.0);
 		m_TargetEntity.Update();

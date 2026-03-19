@@ -5,11 +5,6 @@ class DAB_VisConfig
 	static const float CAMERA_POLLING_DISTANCE_EPSILON = 0.001;
 	
 	// Sphere
-	/*
-	static const float SPHERE_DRAW_RADIUS_MIN = 0.025;  
-	static const float SPHERE_START_SLOPE_DISTANCE = 1;
-	static const float SPHERE_DISTANCE_SLOPE  = 0.05;*/
-	
 	static const float SPHERE_SCREEN_FRACTION = 0.012;
 	static const float SPHERE_MAX_RADIUS      = 0.10;
 	static const float SPHERE_HOVER_MULTIPLIER = 1.1;
@@ -20,8 +15,8 @@ class DAB_VisConfig
 	// Gizmo
 	// Gizmo radius expressed as a fraction of the viewport height.
 	// 0.15 means the gizmo ring spans 15% of the screen height regardless of camera distance.
-	static const float GIZMO_SCREEN_FRACTION = 0.15;
-	static const float GIZMO_RING_THICKNESS_RATIO = 0.15;
+	static const float GIZMO_SCREEN_FRACTION = 0.2;
+	static const float GIZMO_RING_THICKNESS_RATIO = 0.2;
 	static const float GIZMO_ARC_FRACTION = 0.25;
 	
 	//Colors
@@ -38,21 +33,6 @@ class DAB_VisConfig
 	static const ShapeFlags SPHERE_FLAGS = ShapeFlags.NOZBUFFER | ShapeFlags.TRANSP | ShapeFlags.NOOUTLINE;
 	static const ShapeFlags GIZMO_FLAGS = ShapeFlags.NOZBUFFER  | ShapeFlags.TRANSP | ShapeFlags.NOOUTLINE | ShapeFlags.DOUBLESIDE;
 
-
-	//Dezmos demo: g\left(x\right)=\left\{x\le b:a,\ d-\frac{d-a}{1+c\left(x-b\right)^{2}}\right\}
-	/*static float ComputeSphereSize(float currentDistance)
-	{
-		float a = SPHERE_DRAW_RADIUS_MIN;
-		float b = SPHERE_START_SLOPE_DISTANCE;
-		float c = SPHERE_DISTANCE_SLOPE;
-		float d = SPHERE_MAX_RADIUS;
-		float x = currentDistance;
-		
-		if(x <= b) return a;
-		
-		return d - ((d - a) / (1 + c * Math.Pow((x - b), 2)));
-	}*/
-	
 	
 	// Computes the gizmo radius in world space such that it always appears as
 	// GIZMO_SCREEN_FRACTION of the viewport height, regardless of camera distance.
