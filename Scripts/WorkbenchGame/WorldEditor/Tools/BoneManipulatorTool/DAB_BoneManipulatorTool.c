@@ -87,7 +87,6 @@ class DAB_BoneManipulatorTool : WorldEditorTool
     //-----------------------------------------------------------------------
     override void OnKeyPressEvent(KeyCode key, bool isAutoRepeat)
     {
-		
 		Print("OnKeyPressEvent");
         if (isAutoRepeat) return;
 
@@ -97,6 +96,18 @@ class DAB_BoneManipulatorTool : WorldEditorTool
                 DeselectBone();
                 RedrawOverlay();
                 break;
+
+			// B — switch to Rotation gizmo (only while a bone is selected)
+			case KeyCode.KC_B:
+				if (!m_sSelectedBoneName.IsEmpty())
+					m_gizmoController.SwitchMode(DAB_GizmoMode.Rotation, m_API);
+				break;
+
+			// N — switch to Move (position) gizmo (only while a bone is selected)
+			case KeyCode.KC_N:
+				if (!m_sSelectedBoneName.IsEmpty())
+					m_gizmoController.SwitchMode(DAB_GizmoMode.Position, m_API);
+				break;
         }
 		
 		RefreshCameraTargetDistance();
@@ -115,6 +126,10 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 		string boneName = changedTransform.GetBoneName();
 	   	m_ModifiedBones.Set(boneName, changedTransform);
 		RefreshBone(boneName);
+		// Redraw the sphere at the bone's new world position.
+		// Without this the sphere stays frozen at the position it was
+		// drawn when the bone was first selected.
+		m_Renderer.DrawSelectedBone(m_TargetEntity, boneName, m_API);
 	}
 	
 	//-----------------------------------------------------------------------
@@ -138,9 +153,36 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 		Print("Setting bone to: " + transform.m_vRotationOffset);
 		vector rotRad = transform.m_vRotationOffset * Math.DEG2RAD;
 		vector rotRadCorrected = Vector(rotRad[1], rotRad[0], rotRad[2]);
-		
+
+		// m_vPositionOffset is accumulated in world space (OnGizmoMove adds
+		// worldAxisDir * delta). SetBone expects position in the bone's own
+		// local frame, so we project the world-space offset onto the bone's
+		// world-space axes (not the entity's axes).
+		//
+		// Projecting onto entity axes only works when the bone is closely
+		// aligned with the entity (e.g. a root-level wheel bone). For bones
+		// that are rotated relative to the entity (e.g. human spine, arm),
+		// the entity axes and bone axes diverge and the movement direction
+		// becomes completely wrong.
 		Animation anim = GetSlotDependentAnim(boneName);
-		anim.SetBone(m_TargetEntity, boneId, rotRadCorrected, transform.m_vPositionOffset, 1.0);
+
+		vector entityWorld[4];
+		m_TargetEntity.GetTransform(entityWorld);
+
+		// Compute the bone's current world-space matrix so we can express
+		// the world-space offset in the bone's local frame.
+		vector boneLocal[4];
+		anim.GetBoneMatrix(boneId, boneLocal);
+		vector boneWorld[4];
+		Math3D.MatrixMultiply4(entityWorld, boneLocal, boneWorld);
+
+		vector worldOff = transform.m_vPositionOffset;
+		vector localOff;
+		localOff[0] = vector.Dot(worldOff, boneWorld[0]);
+		localOff[1] = vector.Dot(worldOff, boneWorld[1]);
+		localOff[2] = vector.Dot(worldOff, boneWorld[2]);
+
+		anim.SetBone(m_TargetEntity, boneId, rotRadCorrected, localOff, 1.0);
 		m_TargetEntity.Update();
 	}
 	
