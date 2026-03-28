@@ -14,23 +14,23 @@ CinematicEntity Test {
      }
     }
    }
-   CustomCinematicTrack "{68F6E49B574FC250}" {
+   CustomCinematicTrack "{68F8D634B8293207}" {
     TrackName "Char01_Pose"
     ClassName "DAB_PoseManipulationTrack"
     ChildTracks {
-     StringCinematicTrack "{68F6E49B574E3599}" {
+     StringCinematicTrack "{68F8D634B8293924}" {
       TrackName "m_sEntityName"
       Keyframes {
-       StringCinematicKeyframe "{68F6E49B574E31B9}" {
+       StringCinematicKeyframe "{68F8D634B8292591}" {
         FrameNumber 0
         Value "Char01"
        }
       }
      }
-     StringCinematicTrack "{68F6E49B574E354A}" {
+     StringCinematicTrack "{68F8D634B82926C1}" {
       TrackName "m_sSerializedConfigs"
       Keyframes {
-       StringCinematicKeyframe "{68F6E498AEC91A6B}" {
+       StringCinematicKeyframe "{68F8D634B8291992}" {
         FrameNumber 0
         Value "Configs/PoseModifications/asdasd.conf"
        }
