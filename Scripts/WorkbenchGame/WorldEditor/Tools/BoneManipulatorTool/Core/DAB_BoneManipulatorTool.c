@@ -1,13 +1,14 @@
 [WorkbenchToolAttribute(
 	name: "Bone Manipulator",
 	description: "Direct skeleton posing via viewport gizmos",
-	awesomeFontCode: 0xf188
+	awesomeFontCode: 0xf5d7
 )]
 //! Workbench tool for posing individual bones via viewport gizmos.
 //! Select a bone by clicking its sphere; manipulate with rotation (U),
 //! position (I) or scale (O) gizmos. Press J to reset the selected bone.
 class DAB_BoneManipulatorTool : WorldEditorTool
 {
+
 	// ── Tool attributes ────────────────────────────────────────────────────
 	[Attribute(defvalue: "1", uiwidget: UIWidgets.CheckBox, desc: "Hide volume bones from the overlay", category: "Display")]
 	protected bool m_bHideVolumeBones;
@@ -17,7 +18,31 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 
 	[Attribute(defvalue: "0", uiwidget: UIWidgets.CheckBox, desc: "Hide lines connecting bones to their parents", category: "Display")]
 	protected bool m_bHideBoneConnections;
-
+	
+	[Attribute(
+	    uiwidget: UIWidgets.ResourceNamePicker,
+	    desc: "Select an existing pose modification to load and edit",
+	    params: "conf DAB_PoseModification",
+	    category: "Current Pose Config"
+	)]
+	protected ResourceName m_sWorkingConfig;
+	
+	[Attribute(
+	    uiwidget: UIWidgets.ResourceNamePicker,
+	    desc: "Select existing pose modifications to preview while editing. Current config overwrites these, which is not guranteed in the timeline.",
+	    params: "conf DAB_PoseModification",
+	    category: "Current Pose Config"
+	)]
+	protected ref array<ResourceName> m_aPreviewConfigs;
+	
+	[Attribute(
+	    uiwidget: UIWidgets.ResourceNamePicker,
+	    desc: "Select the folder you are currently working in. New configs will be created there!",
+	    params: "FileNameFormat=absolute folders",
+	    category: "New Config Creation"
+	)]
+	protected ResourceName m_sWorkingConfigFolder;
+	
 	// ── Runtime state ──────────────────────────────────────────────────────
 	protected IEntity       m_TargetEntity;
 	protected IEntitySource m_TargetEntitySource;
@@ -28,15 +53,15 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 	protected string m_sSelectedBoneName = "";
 	protected string m_sHoveredBoneName  = "";
 
-	protected ref map<string, ref DAB_SkeletonInfo>   m_CachedSkeletons = new map<string, ref DAB_SkeletonInfo>();
-	protected string                                   m_sCurrentSkeleton;
-	protected ref map<string, ref DAB_BoneTransform>  m_ModifiedBones   = new map<string, ref DAB_BoneTransform>();
+	protected ref map<string, ref DAB_SkeletonInfo> m_CachedSkeletons = new map<string, ref DAB_SkeletonInfo>();
+	protected string m_sCurrentSkeleton;
+	protected ref map<string, ref DAB_BoneTransform> m_ModifiedBones = new map<string, ref DAB_BoneTransform>();
 
 	protected float m_fCameraTargetDistance = 0;
 	protected ref DAB_BoneDisplaySettings m_LastBoneDisplaySettings;
 
 	protected SlotManagerComponent m_SlotManager;
-
+	
 	// ── Lifecycle ──────────────────────────────────────────────────────────
 
 	//-----------------------------------------------------------------------
@@ -69,6 +94,246 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 	protected override void OnEnterEvent()
 	{
 		RefreshDisplaySettings();
+	}
+	/**/
+	// ── Tool Interaction ───────────────────────────────────────────────────────
+
+	//-----------------------------------------------------------------------
+	[ButtonAttribute("Create New Config")]
+	void CreateNewConfig()
+	{
+	    if (!m_sWorkingConfig.IsEmpty())
+	    {
+	        Workbench.Dialog(
+	            "Working Config Already Set",
+	            "You already have a working config selected:\n" + m_sWorkingConfig +
+	            "\n\nClear the 'Current Pose Config' field first before creating a new one."
+	        );
+	        return;
+	    }
+		
+		DAB_CreateNewManipulationDialog creationDialog = new DAB_CreateNewManipulationDialog(m_sWorkingConfigFolder);
+		bool didConfirmCreation = Workbench.ScriptDialog("Create new Config", "Please select a folder and name for the new config file.", creationDialog);
+		
+		if(!didConfirmCreation) return;
+		
+		string configName = creationDialog.GetNewConfigName();
+		m_sWorkingConfigFolder = creationDialog.GetWorkingConfigFolder();
+		UpdatePropertyPanel();
+		
+	    if (configName.IsEmpty())
+	    {
+	        Workbench.Dialog("Missing Name", "Please enter a name for the new config.");
+	        return;
+	    }
+		
+		if (m_sWorkingConfigFolder.IsEmpty())
+	    {
+	        Workbench.Dialog("Missing Folder", "Please select a destination folder first.");
+	        return;
+	    }
+	
+	    // Build the resource-style path (used as ResourceName after saving)
+	    string resourcePath = m_sWorkingConfigFolder + "/" + configName + ".conf";
+	
+	    // Check if it already exists as a resource
+	    if (FileIO.FileExists(resourcePath))
+	    {
+	        Workbench.Dialog(
+	            "File Already Exists",
+	            "A config named '" + configName + ".conf' already exists in that folder."
+	        );
+	        return;
+	    }
+	
+	    string strippedPath = resourcePath;
+		int guidEnd = resourcePath.IndexOf(DAB_BugWorkaround.CLOSED_BRACKET);
+		
+		if (guidEnd >= 0)
+		    strippedPath = resourcePath.Substring(guidEnd + 1, resourcePath.Length() - guidEnd - 1);
+		
+		string absolutePath;
+		if (!Workbench.GetAbsolutePath(strippedPath, absolutePath, false))
+		{
+		    Workbench.Dialog(
+		        "Path Error",
+		        "Could not resolve the folder to an absolute path.\nMake sure the folder is inside your mod."
+		    );
+		    return;
+		}
+	
+	    // Write the empty conf to disk
+	    DAB_PoseModification emptyMod = new DAB_PoseModification();
+	    emptyMod.m_sName = configName;
+	
+	    Resource holder = BaseContainerTools.CreateContainerFromInstance(emptyMod);
+	    if (!holder)
+	    {
+	        Workbench.Dialog("Error", "Failed to create container from pose modification.");
+	        return;
+	    }
+	
+	    bool saved = BaseContainerTools.SaveContainer(holder.GetResource().ToBaseContainer(), "", absolutePath);
+	    if (!saved)
+	    {
+	        Workbench.Dialog(
+	            "Save Failed",
+	            "Could not write to:\n" + absolutePath +
+	            "\n\nWorkbench may prompt for file system permission — check for a pending dialog."
+	        );
+	        return;
+	    }
+		
+		ResourceManager rm = Workbench.GetModule(ResourceManager);
+		if (!rm)
+		{
+		    Workbench.Dialog("Error", "Could not get ResourceManager module.");
+		    return;
+		}
+		
+		rm.RegisterResourceFile(absolutePath, false);
+		bool fileReady = rm.WaitForFile(absolutePath, 2000);
+		if(!fileReady) Print("File was created, but was not ready in time. This MIGHT cause issues", LogLevel.WARNING);
+		
+	    m_sWorkingConfig = Workbench.GetResourceName(absolutePath);
+	    UpdatePropertyPanel();
+		
+		Workbench.OpenModule(WorldEditor);
+	    Print("DAB_BoneManipulatorTool: created new config at " + absolutePath, LogLevel.NORMAL);
+	}
+	
+	[ButtonAttribute("Copy To Scene")]
+	void CopyToCinematicScene()
+	{
+		if(!m_TargetEntity)
+		{
+	        Workbench.Dialog("No Entity", "Select a entity first.");
+	        return;
+	    }
+		
+		if (m_sWorkingConfig.IsEmpty())
+	    {
+	        Workbench.Dialog("No Config", "Select a working config first.");
+	        return;
+	    }
+
+		map<string, CinematicEntity> currentScenes = RefreshCurrentScenes();
+		
+		if (currentScenes.IsEmpty())
+	    {
+	        Workbench.Dialog("No Scenes Found", "No cinematic scenes exist in this world.");
+	        return;
+	    }
+	
+	    array<string> sceneNames = {};
+		for (MapIterator it = currentScenes.Begin(); it != currentScenes.End(); it = currentScenes.Next(it))
+		    sceneNames.Insert(currentScenes.GetIteratorKey(it));
+	
+	    array<int> selectedIndices = {};
+	    int result = m_API.ShowItemListDialog(
+	        "Select Cinematic Scene",
+	        "Choose which scene to add '" + m_sWorkingConfig + "' to:",
+	        400,
+	        300,
+	        sceneNames,
+	        selectedIndices,
+	        0
+	    );
+	
+		bool didConfirm = ShowConfirmDialog("Copy to Scene(s)", "You are going to copy the ACTIVE manipilation to " + selectedIndices.Count() + " scenes. Are you sure?");
+		Print("result: " + result);
+		Print("didConfirm: " + didConfirm);
+		
+	    if (selectedIndices.IsEmpty())
+	    {
+			Print("Did not select anything! Nothing was copied!");
+			return;
+		}
+		
+		string currentEntityName = m_TargetEntity.GetName();
+	
+		foreach (int sceneIndex : selectedIndices)
+		{
+		    string key = sceneNames[sceneIndex];
+		    if (key.IsEmpty()) continue;
+		
+		    CinematicEntity sceneEntity;
+		    if (!currentScenes.Find(key, sceneEntity)) continue;
+		    if (!sceneEntity) continue;
+		
+		    BaseContainer scene = DAB_CinematicsHelper.GetCinematicScene(sceneEntity, m_API);
+		    if (!scene) continue;
+			
+		    if (DAB_CinematicsHelper.HasSlotBoneTrackForEntity(scene, currentEntityName))
+		    {
+		        bool shouldContinue = ShowConfirmDialog(
+		            "SlotBoneAnimationCinematicTrack Detected",
+		            "The entity '" + currentEntityName + "' has a SlotBoneAnimationCinematicTrack in scene '" + key + "'.\n\n" +
+		            "This may conflict with pose modifications. Do you want to continue anyway?"
+		        );
+		        if (!shouldContinue) continue;
+		    }
+		
+		    int ownedPoseTrackCount = DAB_CinematicsHelper.CountOwnedPoseTracks(scene, currentEntityName);
+		    if (ownedPoseTrackCount > 1)
+		    {
+		        Workbench.Dialog(
+		            "Too Many Pose Tracks",
+		            "The entity '" + currentEntityName + "' has " + ownedPoseTrackCount + " DAB Pose Manipulation Tracks assigned.\n\n" +
+		            "Only one track per entity is supported. Please remove the extra " + (ownedPoseTrackCount - 1) + " track(s) from the cinematic scene before continuing."
+		        );
+		        return;
+		    }
+		
+		    array<ResourceName> configs = {};
+		    foreach (ResourceName previewConfig : m_aPreviewConfigs)
+		    {
+		        if (!previewConfig.IsEmpty())
+		            configs.Insert(previewConfig);
+		    }
+		    configs.Insert(m_sWorkingConfig);
+		
+		    bool success;
+		    IEntitySource sceneEntitySource = m_API.EntityToSource(sceneEntity);
+
+			Print("ownedPoseTrackCount: " + ownedPoseTrackCount);
+			if (ownedPoseTrackCount == 0)
+			    success = DAB_CinematicsHelper.TryAddPoseTrackToScene(sceneEntitySource, currentEntityName, configs, m_API);
+			else
+			    success = DAB_CinematicsHelper.TryUpdatePoseTrackConfigs(sceneEntitySource, currentEntityName, configs, m_API);
+		
+		    if (!success)
+		        Workbench.Dialog("Failed", "Could not update the pose track in scene '" + key + "'.");
+		    else
+		        Print("DAB_BoneManipulatorTool: successfully updated scene '" + key + "'.", LogLevel.NORMAL);
+		}
+	}
+	
+	
+	private void TestData()
+	{
+		string resourcePathString = string.Empty;
+		resourcePathString = m_sWorkingConfig;
+		Print("As string: " + resourcePathString);
+		
+		Resource holder = BaseContainerTools.LoadContainer(resourcePathString);
+		if (!holder || !holder.IsValid())
+		{
+		    Print("Failed to load config: " + m_sWorkingConfig);
+		    return;
+		}
+		
+		DAB_PoseModification poseData = DAB_PoseModification.Cast(
+		    BaseContainerTools.CreateInstanceFromContainer(holder.GetResource().ToBaseContainer())
+		);
+		
+		if (!poseData)
+		{
+		    Print("Failed to cast to DAB_PoseModification");
+		    return;
+		}
+		
+		Print("Loaded modification name: " + poseData.m_sName);
 	}
 
 	// ── Input ──────────────────────────────────────────────────────────────
@@ -149,9 +414,7 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 		string boneName = changedTransform.GetBoneName();
 		m_ModifiedBones.Set(boneName, changedTransform);
 		RefreshBone(boneName);
-		// Redraw the sphere at the bone's new world position so it does not
-		// stay frozen at the location it was drawn when first selected.
-		m_Renderer.DrawSelectedBone(m_TargetEntity, boneName, m_API);
+		
 	}
 
 	//-----------------------------------------------------------------------
@@ -175,9 +438,9 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 			return;
 		}
 
-		TNodeId boneId         = DAB_BoneHelper.GetBoneId(m_TargetEntity, boneName);
-		vector  rotRad         = transform.m_vRotationOffset * Math.DEG2RAD;
-		vector  rotRadCorrected = Vector(rotRad[1], rotRad[0], rotRad[2]);
+		TNodeId boneId = DAB_BoneHelper.GetBoneId(m_TargetEntity, boneName);
+		vector rotRad = transform.m_vRotationOffset * Math.DEG2RAD;
+		vector rotRadCorrected = Vector(rotRad[1], rotRad[0], rotRad[2]);
 
 		Animation anim = GetSlotDependentAnim(boneName);
 
@@ -204,6 +467,7 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 
 		anim.SetBone(m_TargetEntity, boneId, rotRadCorrected, localOff, transform.m_fScale);
 		m_TargetEntity.Update();
+		m_Renderer.DrawSelectedBone(m_TargetEntity, boneName, m_API);
 	}
 
 	//-----------------------------------------------------------------------
@@ -343,13 +607,14 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 		{
 			array<string> boneNames = {};
 			anim.GetBoneNames(boneNames);
-			map<string, string> boneParents        = DAB_BoneHelper.ComputeBoneParents(anim, boneNames);
+			map<string, string> boneParents = DAB_BoneHelper.ComputeBoneParents(anim, boneNames);
 			map<string, float>  boneParentDistances = DAB_BoneHelper.ComputeBoneParentDistances(m_TargetEntity, boneParents);
 			m_CachedSkeletons.Set(skeletonKey, new DAB_SkeletonInfo(skeletonKey, boneNames, boneParents, boneParentDistances));
 		}
-
 		m_sCurrentSkeleton = skeletonKey;
+		
 		m_SlotManager = SlotManagerComponent.Cast(m_TargetEntity.FindComponent(SlotManagerComponent));
+		
 		RefreshCameraTargetDistance();
 	}
 
@@ -408,5 +673,42 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 		}
 
 		return info;
+	}
+	
+	//-----------------------------------------------------------------------
+	protected map<string, CinematicEntity> RefreshCurrentScenes()
+	{
+		map<string, CinematicEntity> currentScenes = new map<string, CinematicEntity>();
+
+		int entityCount = m_API.GetEditorEntityCount();
+		for(int i = 0; i < entityCount; i++)
+		{
+			IEntitySource candidate = m_API.GetEditorEntity(i);
+			if(!candidate) continue;
+			
+			IEntity entity = m_API.SourceToEntity(candidate);
+			if(!entity) continue;
+
+			CinematicEntity sceneEntity = CinematicEntity.Cast(entity);
+			if(!sceneEntity) continue;
+			
+			string sceneName = entity.GetName();
+			if (sceneName.IsEmpty())
+			{
+				Workbench.Dialog("Name Missing!", "Please make sure to name all your cinematic scenes!");
+				sceneName = m_API.GetEntityNiceName(candidate);
+			}
+			    
+			currentScenes.Set(sceneName, sceneEntity);
+		}
+		
+		return currentScenes;
+	}
+	
+	//-----------------------------------------------------------------------
+	protected bool ShowConfirmDialog(string title, string message)
+	{
+	    DAB_ConfirmDialog dialog = new DAB_ConfirmDialog();
+	    return Workbench.ScriptDialog(title, message, dialog);
 	}
 }

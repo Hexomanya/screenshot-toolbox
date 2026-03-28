@@ -2,86 +2,78 @@ CinematicEntity Test {
  coords 0 0 0
  Scene CinematicScene "{68D772DA33024CF6}" {
   Tracks {
-   AnimationCinematicTrack "{68D772DA603C9D9F}" {
-    TrackName "Char01"
-    Play BooleanCinematicTrack "{68D772DA603C9DD2}" {
-     TrackName "Play"
-     Keyframes {
-      BooleanCinematicKeyframe "{68D772DA6EDE1830}" {
-       FrameNumber 0
-       Value 1
+   CustomCinematicTrack "{68EE00A5973BA99C}" {
+    TrackName "SkipTrack"
+    ClassName "SkipCinematicTrack"
+    ChildTracks {
+     BooleanCinematicTrack "{68EE00A5973B9524}" {
+      TrackName "m_bCanSkip"
+     }
+     BooleanCinematicTrack "{68EE00A5973B93F0}" {
+      TrackName "m_bCutsceneContext"
+     }
+    }
+   }
+   CustomCinematicTrack "{68F6E49B574FC250}" {
+    TrackName "Char01_Pose"
+    ClassName "DAB_PoseManipulationTrack"
+    ChildTracks {
+     StringCinematicTrack "{68F6E49B574E3599}" {
+      TrackName "m_sEntityName"
+      Keyframes {
+       StringCinematicKeyframe "{68F6E49B574E31B9}" {
+        FrameNumber 0
+        Value "Char01"
+       }
+      }
+     }
+     StringCinematicTrack "{68F6E49B574E354A}" {
+      TrackName "m_sSerializedConfigs"
+      Keyframes {
+       StringCinematicKeyframe "{68F6E498AEC91A6B}" {
+        FrameNumber 0
+        Value "Configs/PoseModifications/asdasd.conf"
+       }
       }
      }
     }
    }
-   CustomCinematicTrack "{68E163188933F017}" {
-    TrackName "BTR01"
-    ClassName "SlotBoneAnimationCinematicTrack"
-    ChildTracks {
-     StringCinematicTrack "{68E163188933FC9E}" {
-      TrackName "m_sSlotName"
-      Keyframes {
-       StringCinematicKeyframe "{68E1631A36E4320A}" {
-        FrameNumber 0
-        Value ""
-       }
-      }
-     }
-     StringCinematicTrack "{68E163188933FD9B}" {
-      TrackName "m_sBoneName"
-      Keyframes {
-       StringCinematicKeyframe "{68E1631A03612B12}" {
-        FrameNumber 0
-        Value "v_gun_01"
-       }
-      }
-     }
-     Vector3CinematicTrack "{68E163188933FA85}" {
-      TrackName "m_YawPitchRoll"
-      X FloatCinematicTrack "{68E163188933FA96}" {
-       TrackName "X"
-       Keyframes {
-        FloatCinematicKeyframe "{68E1631A3F763116}" {
-         FrameNumber 0
-         Value 5.75
-         InterpMode 0
-        }
-       }
-      }
-      Y FloatCinematicTrack "{68E163188933FA91}" {
-       TrackName "Y"
-       Keyframes {
-        FloatCinematicKeyframe "{68E1631A3DDAF166}" {
-         FrameNumber 0
-         Value 1.13
-         InterpMode 0
-        }
-       }
-      }
-      Z FloatCinematicTrack "{68E163188933FA9D}" {
-       TrackName "Z"
-       Keyframes {
-        FloatCinematicKeyframe "{68E1631A3C244373}" {
-         FrameNumber 0
-         Value -0.5
-         InterpMode 0
-        }
-       }
-      }
-     }
-     Vector3CinematicTrack "{68E163188933FA52}" {
-      TrackName "m_Position"
-      X FloatCinematicTrack "{68E163188933FA5A}" {
-       TrackName "X"
-      }
-      Y FloatCinematicTrack "{68E163188933FBA6}" {
-       TrackName "Y"
-      }
-      Z FloatCinematicTrack "{68E163188933FBA5}" {
-       TrackName "Z"
-      }
-     }
-    }
+  }
+ }
+}
+$grp SplineShapeEntity {
+ {
+  coords 1490.195 38 2908
+  Points {
+   ShapePoint "{68F4F415D3F1CDE2}" {
+    Position 0 0 0
+   }
+   ShapePoint "{68F4F415D3F1D1A0}" {
+    Position 5 0 0
+   }
+   ShapePoint "{68F4F415D2D826F2}" {
+    Position -0.81 0 2.754
+   }
+   ShapePoint "{68F4F415D21C8F03}" {
+    Position -3.25 0 1.541
+   }
+  }
+  IsClosed 1
+ }
+ {
+  coords 1492.59 38 2908.028
+  Points {
+   ShapePoint "{68F503470AFF2B8F}" {
+    Position 0 0 0
+   }
+   ShapePoint "{68F5034717C9BFC1}" {
+    Position 2.686 0 -1.837
+   }
+   ShapePoint "{68F5034708C0ECDF}" {
+    Position 0.09 0 2.241
+   }
+   ShapePoint "{68F503470AFCC672}" {
+    Position 5 0 0
    }
   }
  }

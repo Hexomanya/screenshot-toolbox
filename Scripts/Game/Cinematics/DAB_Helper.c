@@ -18,4 +18,20 @@ class DAB_Helper
 	{
 		return Math.AbsFloat(a - b) < epsilon;
 	}
+	
+	static string GetCombinedConfigString(array<ResourceName> configs)
+	{
+		string configsStr = "";
+	    foreach (int i, ResourceName res : configs)
+	    {
+	        if (i > 0)
+	        {
+	            configsStr += ",";
+	        }
+	        configsStr += res.GetPath();
+	    }
+		
+		return configsStr;
+	}
+	
 }
