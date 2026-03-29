@@ -20,6 +20,8 @@ class DAB_EditorController
 	
 	protected SlotManagerComponent m_SlotManager;
 	
+	protected ResourceName m_sLastLoadedConfig = "";
+	
 	// ── Constructors ──────────────────────────────────────────────────────────
 	void DAB_EditorController(DAB_BoneManipulatorTool parentTool, WorldEditorAPI api)
 	{
@@ -63,6 +65,7 @@ class DAB_EditorController
 	void OnEnterEvent()
 	{
 		RefreshDisplaySettings();
+		LoadAndApplyWorkingConfig();
 	}
 	
 	//-----------------------------------------------------------------------
@@ -177,6 +180,8 @@ class DAB_EditorController
 		m_SlotManager = SlotManagerComponent.Cast(changedEntity.FindComponent(SlotManagerComponent));
 		
 		RefreshCameraTargetDistance();
+		
+		LoadAndApplyWorkingConfig(true);
 	}
 	
 	// ── Private ────────────────────────────────────────────────────────────
@@ -479,80 +484,81 @@ class DAB_EditorController
 	    m_DirtyBones.Clear();
 	    return success;
 	}
+	
+	//-----------------------------------------------------------------------
+	void LoadAndApplyWorkingConfig(bool forceApply = false)
+	{
+		ResourceName currentConfig = m_ParentTool.GetWorkingConfig();
+
+		// If nothing changed and we aren't forcing an update (like an entity swap), do nothing
+		if (!forceApply && currentConfig == m_sLastLoadedConfig)
+			return;
+
+		m_sLastLoadedConfig = currentConfig;
+
+		IEntity targetEntity = m_ParentTool.GetCurrentTargetEntity();
+		if (!targetEntity) return;
+
+		// 1. Reset currently modified bones back to default on the entity
+		foreach (string boneName, DAB_BoneTransform transform : m_ModifiedBones)
+		{
+			transform.m_vPositionOffset = vector.Zero;
+			transform.m_vRotationOffset = vector.Zero;
+			transform.m_fScale          = 1.0;
+			RefreshBone(boneName);
+		}
 		
-	/*
-	//-----------------------------------------------------------------------
-	bool SaveDirtyBones()
-	{
-	    if(m_DirtyBones.Count() == 0) return false;
-	    
-	    ResourceName configPath = m_ParentTool.GetWorkingConfig();
-	    if (configPath.IsEmpty()) return false;
-	
-	    Resource configResource = BaseContainerTools.LoadContainer(configPath);
-	    if (!configResource) return false;
-	    BaseContainer config = configResource.GetResource().ToBaseContainer();
-	
-	    m_API.BeginEntityAction("Saving DirtyBones");
-	    
-	    foreach(string boneName : m_DirtyBones)
-	    {
-	        DAB_BoneTransform transform = m_ModifiedBones.Get(boneName);
-	        SyncTransformToConfig(config, transform);
-	    }
-	    
-	    m_API.EndEntityAction("Saving DirtyBones");
-	    
-	    m_DirtyBones.Clear();
-	    return true;
+		m_ModifiedBones.Clear();
+		m_DirtyBones.Clear();
+		m_GizmoController.Clear(m_API);
+
+		// 2. Load new config if valid
+		if (currentConfig.IsEmpty())
+		{
+			RedrawOverlay();
+			return;
+		}
+
+		Resource configResource = BaseContainerTools.LoadContainer(currentConfig);
+		if (!configResource)
+		{
+			Print("DAB_EditorController.LoadAndApplyWorkingConfig: Could not load config " + currentConfig, LogLevel.ERROR);
+			RedrawOverlay();
+			return;
+		}
+
+		// 3. Parse modifications and apply them
+		BaseContainer config = configResource.GetResource().ToBaseContainer();
+		BaseContainerList modificationsArr = config.GetObjectArray("m_aBoneModifications");
+
+		if (modificationsArr)
+		{
+			for (int i = 0; i < modificationsArr.Count(); i++)
+			{
+				BaseContainer entry = modificationsArr.Get(i);
+				string boneName;
+				vector rotOffset, posOffset;
+				float scale = 1.0;
+
+				entry.Get("m_sBoneName", boneName);
+				entry.Get("m_vRotationOffset", rotOffset);
+				entry.Get("m_vPositionOffset", posOffset);
+				entry.Get("m_fScale", scale);
+
+				// Create transform to capture the default base/original orientation
+				DAB_BoneTransform newTransform = CreateNewTransform(boneName);
+				if (newTransform)
+				{
+					newTransform.m_vRotationOffset = rotOffset;
+					newTransform.m_vPositionOffset = posOffset;
+					newTransform.m_fScale = scale;
+
+					m_ModifiedBones.Set(boneName, newTransform);
+					RefreshBone(boneName);
+				}
+			}
+		}
+
+		RedrawOverlay();
 	}
-	
-	//-----------------------------------------------------------------------
-	protected void SyncTransformToConfig(BaseContainer config, DAB_BoneTransform transform)
-	{
-	    if(!transform || !config) return;
-	    
-	    string boneName = transform.GetBoneName();
-	    int targetIndex = -1;
-	
-	    BaseContainerList modificationsArr = config.GetObjectArray("m_aBoneModifications");
-	    if (modificationsArr)
-	    {
-	        for (int i = 0; i < modificationsArr.Count(); i++)
-	        {
-	            BaseContainer entry = modificationsArr.Get(i);
-	            string entryBoneName;
-	            entry.Get("m_sBoneName", entryBoneName);
-	            
-	            if (entryBoneName == boneName)
-	            {
-	                targetIndex = i;
-	                break;
-	            }
-	        }
-	    }
-	    
-	    if (targetIndex == -1)
-	    {
-			targetIndex = 0;
-			if(modificationsArr)
-				targetIndex = modificationsArr.Count();
-			
-	        m_API.CreateObjectArrayVariableMember(config, {}, "m_aBoneModifications", "DAB_BoneModification", targetIndex);
-	        
-	        array<ref ContainerIdPathEntry> namePath = { new ContainerIdPathEntry("m_aBoneModifications", targetIndex) };
-	        m_API.SetVariableValue(config, namePath, "m_sBoneName", boneName);
-	    }
-	
-	    array<ref ContainerIdPathEntry> path = { new ContainerIdPathEntry("m_aBoneModifications", targetIndex) };
-	    
-	    // Convert to strings once before calling the API
-	    string rot = DAB_Helper.VectorToAttributeFormat(transform.m_vRotationOffset);
-	    string pos = DAB_Helper.VectorToAttributeFormat(transform.m_vPositionOffset);
-	    string scl = transform.m_fScale.ToString();
-	
-	    m_API.SetVariableValue(config, path, "m_vRotationOffset", rot);
-	    m_API.SetVariableValue(config, path, "m_vPositionOffset", pos);
-	    m_API.SetVariableValue(config, path, "m_fScale", scl);
-	}*/
 }

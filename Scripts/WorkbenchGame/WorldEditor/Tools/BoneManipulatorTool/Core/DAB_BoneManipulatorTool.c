@@ -80,6 +80,8 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 		m_InteactionManager.CopyToCinematicScene(m_sWorkingConfig, m_aPreviewConfigs, m_TargetEntity, m_API);
 	}
 	
+	
+	
 	// ── Lifecycle ──────────────────────────────────────────────────────────
 	//-----------------------------------------------------------------------
 	override void OnActivate()

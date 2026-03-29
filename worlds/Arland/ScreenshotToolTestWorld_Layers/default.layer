@@ -38,6 +38,18 @@ CinematicEntity Test {
      }
     }
    }
+   AnimationCinematicTrack "{68FAEA78F67BDFE9}" {
+    TrackName "Char01"
+    Play BooleanCinematicTrack "{68FAEA78F67BDFD8}" {
+     TrackName "Play"
+     Keyframes {
+      BooleanCinematicKeyframe "{68FAEA78FDBF3BE4}" {
+       FrameNumber 0
+       Value 1
+      }
+     }
+    }
+   }
   }
  }
 }
@@ -123,7 +135,6 @@ $grp SCR_ChimeraCharacter : "{2619482C6C4202E0}Prefabs/Characters/Campaign/Final
    }
    AnimationPlayerComponent "{68D772DA229FED0D}" {
     Animation "{3D47BBCDF90C1E28}anims/anm/NPC/male/Loitering/p_loitering_rfl_var01.anm"
-    StartTime 4.8
     Loop 1
     AutoPlay 1
    }
