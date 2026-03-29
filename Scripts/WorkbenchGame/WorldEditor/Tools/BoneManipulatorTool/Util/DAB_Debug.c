@@ -100,4 +100,15 @@ class DAB_Debug
 	
 	    return result;
 	}
+	
+	static string GetDebugVariablePath(array<ref ContainerIdPathEntry> path)
+	{
+		string combinedPath = "";
+		foreach(ContainerIdPathEntry pathEntry : path)
+		{
+			combinedPath = combinedPath + " -> " + pathEntry.PropertyName;
+		}
+		
+		return combinedPath;
+	}
 }

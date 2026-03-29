@@ -157,8 +157,9 @@ class DAB_BoneOverlayRenderer
 		foreach (string boneName : skeletonInfo.GetBoneNames())
 		{
 			if (displaySettings.GetHideVolumeBones() && boneName.EndsWith("Volume")) continue;
-			if (displaySettings.GetHideCameraBone()  && boneName == "Camera")        continue;
-
+			if (displaySettings.GetHideCameraBone() && boneName == "Camera") continue;
+			if (displaySettings.GetHideFaceBones() && skeletonInfo.IsDescendantOf(boneName, "Head")) continue;
+			
 			TNodeId boneId = anim.GetBoneIndex(boneName);
 			if (boneId == -1) continue;
 

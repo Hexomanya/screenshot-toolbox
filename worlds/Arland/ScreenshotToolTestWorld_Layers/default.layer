@@ -30,7 +30,7 @@ CinematicEntity Test {
      StringCinematicTrack "{68F8D634B82926C1}" {
       TrackName "m_sSerializedConfigs"
       Keyframes {
-       StringCinematicKeyframe "{68F8D634B8291992}" {
+       StringCinematicKeyframe "{68F8D623D18E37EC}" {
         FrameNumber 0
         Value "Configs/PoseModifications/asdasd.conf"
        }
@@ -83,7 +83,7 @@ $grp SCR_ChimeraCharacter : "{2619482C6C4202E0}Prefabs/Characters/Campaign/Final
   components {
    AnimationPlayerComponent "{68D772DA924179D5}" {
     Animation "{BC6CE48139292039}anims/anm/NPC/male/Body/Briefing/briefing_walk.anm"
-    StartTime 0.6
+    StartTime 3.6
    }
   }
   coords 1486.627 38 2908.23
@@ -123,7 +123,7 @@ $grp SCR_ChimeraCharacter : "{2619482C6C4202E0}Prefabs/Characters/Campaign/Final
    }
    AnimationPlayerComponent "{68D772DA229FED0D}" {
     Animation "{3D47BBCDF90C1E28}anims/anm/NPC/male/Loitering/p_loitering_rfl_var01.anm"
-    StartTime 12.7
+    StartTime 4.8
     Loop 1
     AutoPlay 1
    }
@@ -138,6 +138,15 @@ $grp SCR_ChimeraCharacter : "{2619482C6C4202E0}Prefabs/Characters/Campaign/Final
 }
 Turret : "{337D05CC762A1A21}Prefabs/Vehicles/Wheeled/BTR70/VehParts/Turret/BTR70_Turret_Anim.et" {
  coords 1479.41 38 2906.808
+}
+Vehicle UH1H1 : "{70BAEEFC2D3FEE64}Prefabs/Vehicles/Helicopters/UH1H/UH1H.et" {
+ components {
+  VehicleProcAnimComponent "{76A3E713CE84D72F}" {
+   Enabled 0
+  }
+ }
+ coords 1467.018 38 2905.153
+ angles 0 75.31 0
 }
 $grp Vehicle : "{C012BB3488BEA0C2}Prefabs/Vehicles/Wheeled/BTR70/BTR70.et" {
  BTR01 {

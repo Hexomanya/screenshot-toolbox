@@ -28,6 +28,32 @@ class DAB_SkeletonInfo
 			Print("GetDirectParent: bone '" + childName + "' not found in parent map.", LogLevel.ERROR);
 		return parent;
 	}
+	
+	//-----------------------------------------------------------------------
+    //! Returns true if 'boneName' is a child, grandchild, etc., of 'ancestorName'.
+    bool IsDescendantOf(string boneName, string ancestorName)
+    {
+        if (boneName.IsEmpty() || ancestorName.IsEmpty())
+            return false;
+
+        string current = boneName;
+        string parent;
+
+        // Traverse up the tree using the cached parent map
+        while (m_BoneParents.Find(current, parent))
+        {
+            if (parent == ancestorName)
+                return true;
+
+            current = parent;
+            
+            // Safety break for root or empty strings
+            if (current.IsEmpty()) 
+                break;
+        }
+
+        return false;
+    }
 
 	// ── Getters ────────────────────────────────────────────────────────────
 	string              GetSkeletonKey()           { return m_sSkeletonKey; }

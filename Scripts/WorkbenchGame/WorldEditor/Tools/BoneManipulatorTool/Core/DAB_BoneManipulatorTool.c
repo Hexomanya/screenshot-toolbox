@@ -15,9 +15,15 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 
 	[Attribute(defvalue: "1", uiwidget: UIWidgets.CheckBox, desc: "Hide the camera bone from the overlay", category: "Display")]
 	protected bool m_bHideCameraBone;
+	
+	[Attribute(defvalue: "1", uiwidget: UIWidgets.CheckBox, desc: "Hide every child of the 'Head' bone", category: "Display")]
+	protected bool m_bHideFaceBones;
 
 	[Attribute(defvalue: "0", uiwidget: UIWidgets.CheckBox, desc: "Hide lines connecting bones to their parents", category: "Display")]
 	protected bool m_bHideBoneConnections;
+	
+	[Attribute(defvalue: "0", uiwidget: UIWidgets.CheckBox, desc: "Turns on auto-saves. This will lead to some lage after each edit", category: "Saving")]
+	protected bool m_bShouldAutoSave;
 	
 	[Attribute(
 	    uiwidget: UIWidgets.ResourceNamePicker,
@@ -29,7 +35,7 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 	
 	[Attribute(
 	    uiwidget: UIWidgets.ResourceNamePicker,
-	    desc: "Select existing pose modifications to preview while editing. Current config overwrites these, which is not guranteed in the timeline.",
+	    desc: "Select existing pose modifications which will be previewed and copied to the cinematic timeline. Current config overwrites these, which is not guranteed in the timeline.",
 	    params: "conf DAB_PoseModification",
 	    category: "Current Pose Config"
 	)]
@@ -53,6 +59,15 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 	
 	// ── Tool Interaction ───────────────────────────────────────────────────────
 	//-----------------------------------------------------------------------
+	[ButtonAttribute("Save Edits")]
+	void SaveEdits()
+	{
+		Print("Saving Edits...");
+	    bool didSave = m_EditorController.SaveDirtyBones();
+		
+		if(!didSave) Print("There was nothing to save");
+	}
+	
 	[ButtonAttribute("Create New Config")]
 	void CreateNewConfig()
 	{
@@ -79,6 +94,7 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 	//-----------------------------------------------------------------------
 	override void OnDeActivate()
 	{
+		SaveEdits(); //TODO: Ask if we should save
 		m_EditorController.OnDeActivate();
 		m_InteactionManager = null;
 		m_EditorController = null;
@@ -123,11 +139,13 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 		m_EditorController.OnKeyPressEvent(key, isAutoRepeat);
 	}
 	
-	// ── Public ────────────────────────────────────────────────────────────
+	// ── Public Getters ────────────────────────────────────────────────────
 	//-----------------------------------------------------------------------
 	IEntity GetCurrentTargetEntity(){ return m_TargetEntity; }
 	IEntitySource GetCurrentTargetEntitySource(){ return m_TargetEntitySource; }
-	DAB_BoneDisplaySettings GetNewDisplaySttings(){ return new DAB_BoneDisplaySettings(m_bHideVolumeBones, m_bHideCameraBone, m_bHideBoneConnections);}
+	DAB_BoneDisplaySettings GetNewDisplaySttings(){ return new DAB_BoneDisplaySettings(m_bHideVolumeBones, m_bHideCameraBone, m_bHideFaceBones, m_bHideBoneConnections); }
+	ResourceName GetWorkingConfig() { return m_sWorkingConfig; }
+	bool GetShouldAutoSave(){ return m_bShouldAutoSave; }
 	
 	// ── Private ────────────────────────────────────────────────────────────
 	//-----------------------------------------------------------------------

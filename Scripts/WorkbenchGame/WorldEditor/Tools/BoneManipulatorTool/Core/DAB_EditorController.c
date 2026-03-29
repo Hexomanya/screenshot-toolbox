@@ -11,11 +11,13 @@ class DAB_EditorController
 
 	protected ref map<string, ref DAB_SkeletonInfo> m_CachedSkeletons = new map<string, ref DAB_SkeletonInfo>();
 	protected string m_sCurrentSkeleton;
+	
 	protected ref map<string, ref DAB_BoneTransform> m_ModifiedBones = new map<string, ref DAB_BoneTransform>();
+	protected ref set<string> m_DirtyBones = new set<string>();
 
 	protected float m_fCameraTargetDistance = 0;
 	protected ref DAB_BoneDisplaySettings m_LastBoneDisplaySettings;
-
+	
 	protected SlotManagerComponent m_SlotManager;
 	
 	// ── Constructors ──────────────────────────────────────────────────────────
@@ -88,6 +90,9 @@ class DAB_EditorController
 	void OnMouseReleaseEvent(float x, float y, WETMouseButtonFlag buttons)
 	{
 		m_GizmoController.OnMouseRelease(x, y, buttons, m_API);
+		
+		if(m_ParentTool.GetShouldAutoSave()) SaveDirtyBones();
+		
 		if (buttons & WETMouseButtonFlag.RIGHT)
 			RefreshCameraTargetDistance();
 	}
@@ -163,9 +168,12 @@ class DAB_EditorController
 			map<string, string> boneParents = DAB_BoneHelper.ComputeBoneParents(anim, boneNames);
 			map<string, float>  boneParentDistances = DAB_BoneHelper.ComputeBoneParentDistances(changedEntity, boneParents);
 			m_CachedSkeletons.Set(skeletonKey, new DAB_SkeletonInfo(skeletonKey, boneNames, boneParents, boneParentDistances));
+		} 
+		else {
+			Print("Loaded saved skeleton");
 		}
-		m_sCurrentSkeleton = skeletonKey;
 		
+		m_sCurrentSkeleton = skeletonKey;
 		m_SlotManager = SlotManagerComponent.Cast(changedEntity.FindComponent(SlotManagerComponent));
 		
 		RefreshCameraTargetDistance();
@@ -177,6 +185,8 @@ class DAB_EditorController
 	{
 		string boneName = changedTransform.GetBoneName();
 		m_ModifiedBones.Set(boneName, changedTransform);
+		m_DirtyBones.Insert(boneName);
+		
 		RefreshBone(boneName);
 	}
 
@@ -316,6 +326,7 @@ class DAB_EditorController
 		transform.m_vRotationOffset = vector.Zero;
 		transform.m_fScale          = 1.0;
 
+		m_DirtyBones.Insert(boneName);
 		RefreshBone(boneName);
 		m_GizmoController.ResetAccumulatedTransform(m_API);
 		m_Renderer.DrawSelectedBone(m_ParentTool.GetCurrentTargetEntity(), boneName, m_API);
@@ -401,4 +412,147 @@ class DAB_EditorController
 
 		return info;
 	}
+	
+	//-----------------------------------------------------------------------
+	bool SaveDirtyBones()
+	{
+	    if(m_DirtyBones.Count() == 0) return false;
+	    
+	    ResourceName configPath = m_ParentTool.GetWorkingConfig();
+	    if (configPath.IsEmpty()) return false;
+	
+	    Resource configResource = BaseContainerTools.LoadContainer(configPath);
+	    if (!configResource) return false;
+	    BaseContainer config = configResource.GetResource().ToBaseContainer();
+	    
+	    DAB_PoseModification poseInstance = new DAB_PoseModification();
+	    BaseContainerTools.WriteToInstance(poseInstance, config);
+	
+	    // [MANUAL ARRAY LOAD - Required because WriteToInstance is shallow for arrays]
+	    BaseContainerList modificationsArr = config.GetObjectArray("m_aBoneModifications");
+	    if (modificationsArr)
+	    {
+	        poseInstance.m_aBoneModifications.Clear();
+	        for (int i = 0; i < modificationsArr.Count(); i++)
+	        {
+	            BaseContainer entry = modificationsArr.Get(i);
+	            DAB_BoneModification mod = new DAB_BoneModification();
+	            entry.Get("m_sBoneName", mod.m_sBoneName);
+	            entry.Get("m_vRotationOffset", mod.m_vRotationOffset);
+	            entry.Get("m_vPositionOffset", mod.m_vPositionOffset);
+	            entry.Get("m_fScale", mod.m_fScale);
+	            poseInstance.m_aBoneModifications.Insert(mod);
+	        }
+	    }
+	
+	    map<string, ref DAB_BoneModification> modificationMap = poseInstance.GetBoneModificationsAsMap();
+	        
+	    foreach(string boneName : m_DirtyBones)
+	    {
+	        DAB_BoneTransform transform = m_ModifiedBones.Get(boneName);
+	        if(!transform) continue;
+	        
+	        DAB_BoneModification mod = modificationMap.Get(boneName);
+	        if(!mod)
+	        {
+	            mod = new DAB_BoneModification();
+	            mod.m_sBoneName = boneName;
+	            poseInstance.m_aBoneModifications.Insert(mod);
+	        }
+			
+	        mod.m_vRotationOffset = transform.m_vRotationOffset;
+	        mod.m_vPositionOffset = transform.m_vPositionOffset;
+	        mod.m_fScale = transform.m_fScale;
+	    }
+	
+	    BaseContainerTools.ReadFromInstance(poseInstance, config);
+	    bool success = BaseContainerTools.SaveContainer(config, configPath);
+	    
+	    if (success)
+	    {
+	        m_API.BeginEntityAction("Bulk Update");
+	        array<ref ContainerIdPathEntry> path = {}; 
+	        m_API.SetVariableValue(config, null, "m_sName", poseInstance.m_sName);
+	        m_API.EndEntityAction();
+	    }
+	
+	    m_DirtyBones.Clear();
+	    return success;
+	}
+		
+	/*
+	//-----------------------------------------------------------------------
+	bool SaveDirtyBones()
+	{
+	    if(m_DirtyBones.Count() == 0) return false;
+	    
+	    ResourceName configPath = m_ParentTool.GetWorkingConfig();
+	    if (configPath.IsEmpty()) return false;
+	
+	    Resource configResource = BaseContainerTools.LoadContainer(configPath);
+	    if (!configResource) return false;
+	    BaseContainer config = configResource.GetResource().ToBaseContainer();
+	
+	    m_API.BeginEntityAction("Saving DirtyBones");
+	    
+	    foreach(string boneName : m_DirtyBones)
+	    {
+	        DAB_BoneTransform transform = m_ModifiedBones.Get(boneName);
+	        SyncTransformToConfig(config, transform);
+	    }
+	    
+	    m_API.EndEntityAction("Saving DirtyBones");
+	    
+	    m_DirtyBones.Clear();
+	    return true;
+	}
+	
+	//-----------------------------------------------------------------------
+	protected void SyncTransformToConfig(BaseContainer config, DAB_BoneTransform transform)
+	{
+	    if(!transform || !config) return;
+	    
+	    string boneName = transform.GetBoneName();
+	    int targetIndex = -1;
+	
+	    BaseContainerList modificationsArr = config.GetObjectArray("m_aBoneModifications");
+	    if (modificationsArr)
+	    {
+	        for (int i = 0; i < modificationsArr.Count(); i++)
+	        {
+	            BaseContainer entry = modificationsArr.Get(i);
+	            string entryBoneName;
+	            entry.Get("m_sBoneName", entryBoneName);
+	            
+	            if (entryBoneName == boneName)
+	            {
+	                targetIndex = i;
+	                break;
+	            }
+	        }
+	    }
+	    
+	    if (targetIndex == -1)
+	    {
+			targetIndex = 0;
+			if(modificationsArr)
+				targetIndex = modificationsArr.Count();
+			
+	        m_API.CreateObjectArrayVariableMember(config, {}, "m_aBoneModifications", "DAB_BoneModification", targetIndex);
+	        
+	        array<ref ContainerIdPathEntry> namePath = { new ContainerIdPathEntry("m_aBoneModifications", targetIndex) };
+	        m_API.SetVariableValue(config, namePath, "m_sBoneName", boneName);
+	    }
+	
+	    array<ref ContainerIdPathEntry> path = { new ContainerIdPathEntry("m_aBoneModifications", targetIndex) };
+	    
+	    // Convert to strings once before calling the API
+	    string rot = DAB_Helper.VectorToAttributeFormat(transform.m_vRotationOffset);
+	    string pos = DAB_Helper.VectorToAttributeFormat(transform.m_vPositionOffset);
+	    string scl = transform.m_fScale.ToString();
+	
+	    m_API.SetVariableValue(config, path, "m_vRotationOffset", rot);
+	    m_API.SetVariableValue(config, path, "m_vPositionOffset", pos);
+	    m_API.SetVariableValue(config, path, "m_fScale", scl);
+	}*/
 }

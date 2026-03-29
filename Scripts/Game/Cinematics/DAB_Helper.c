@@ -19,6 +19,7 @@ class DAB_Helper
 		return Math.AbsFloat(a - b) < epsilon;
 	}
 	
+	//-----------------------------------------------------------------------
 	static string GetCombinedConfigString(array<ResourceName> configs)
 	{
 		string configsStr = "";
@@ -34,4 +35,9 @@ class DAB_Helper
 		return configsStr;
 	}
 	
+	//-----------------------------------------------------------------------
+	static string VectorToAttributeFormat(vector v)
+	{
+		return string.Format("%1 %2 %3", v[0], v[1], v[2]);
+	}
 }
