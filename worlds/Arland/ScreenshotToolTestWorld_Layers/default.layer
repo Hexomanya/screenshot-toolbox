@@ -14,30 +14,6 @@ CinematicEntity Test {
      }
     }
    }
-   CustomCinematicTrack "{68F8D634B8293207}" {
-    TrackName "Char01_Pose"
-    ClassName "DAB_PoseManipulationTrack"
-    ChildTracks {
-     StringCinematicTrack "{68F8D634B8293924}" {
-      TrackName "m_sEntityName"
-      Keyframes {
-       StringCinematicKeyframe "{68F8D634B8292591}" {
-        FrameNumber 0
-        Value "Char01"
-       }
-      }
-     }
-     StringCinematicTrack "{68F8D634B82926C1}" {
-      TrackName "m_sSerializedConfigs"
-      Keyframes {
-       StringCinematicKeyframe "{68F8D623D18E37EC}" {
-        FrameNumber 0
-        Value "Configs/PoseModifications/asdasd.conf"
-       }
-      }
-     }
-    }
-   }
    AnimationCinematicTrack "{68FAEA78F67BDFE9}" {
     TrackName "Char01"
     Play BooleanCinematicTrack "{68FAEA78F67BDFD8}" {
@@ -98,9 +74,8 @@ $grp SCR_ChimeraCharacter : "{2619482C6C4202E0}Prefabs/Characters/Campaign/Final
     StartTime 3.6
    }
   }
-  coords 1486.627 38 2908.23
+  coords 1490.811 38 2909.45
   angles 0 -16.25 0
-  scale 1.29
  }
  Char01 {
   components {

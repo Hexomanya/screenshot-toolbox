@@ -52,8 +52,6 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 	// ── Runtime state ──────────────────────────────────────────────────────
 	protected IEntity       m_TargetEntity;
 	protected IEntitySource m_TargetEntitySource;
-
-	protected ref DAB_ToolInteractionManager m_InteactionManager;
 	protected ref DAB_EditorController m_EditorController;
 	
 	
@@ -62,31 +60,25 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 	[ButtonAttribute("Save Edits")]
 	void SaveEdits()
 	{
-		Print("Saving Edits...");
-	    bool didSave = m_EditorController.SaveDirtyBones();
-		
-		if(!didSave) Print("There was nothing to save");
+		DAB_ToolButtonInteractions.SaveEdits(this, m_EditorController); 
 	}
 	
 	[ButtonAttribute("Create New Config")]
 	void CreateNewConfig()
 	{
-	    m_InteactionManager.CreateNewConfig(m_sWorkingConfig, this, m_sWorkingConfigFolder);
+	    DAB_ToolButtonInteractions.CreateNewConfig(this, m_sWorkingConfig, m_sWorkingConfigFolder);
 	}
 	
 	[ButtonAttribute("Copy To Scene")]
 	void CopyToCinematicScene()
 	{
-		m_InteactionManager.CopyToCinematicScene(m_sWorkingConfig, m_aPreviewConfigs, m_TargetEntity, m_API);
+		DAB_ToolButtonInteractions.CopyToCinematicScene(m_sWorkingConfig, m_aPreviewConfigs, m_TargetEntity, m_API);
 	}
-	
-	
 	
 	// ── Lifecycle ──────────────────────────────────────────────────────────
 	//-----------------------------------------------------------------------
 	override void OnActivate()
 	{
-		m_InteactionManager = DAB_ToolInteractionManager();
 		m_EditorController = DAB_EditorController(this, m_API);
 		
 		RefreshTargetEntity();
@@ -96,9 +88,10 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 	//-----------------------------------------------------------------------
 	override void OnDeActivate()
 	{
-		SaveEdits(); //TODO: Ask if we should save
+		if(m_EditorController.GetDirtyBoneCount() > 0)
+			DAB_ToolButtonInteractions.SaveEdits(this, m_EditorController, true); 
+		
 		m_EditorController.OnDeActivate();
-		m_InteactionManager = null;
 		m_EditorController = null;
 	}
 
@@ -149,7 +142,11 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 	ResourceName GetWorkingConfig() { return m_sWorkingConfig; }
 	bool GetShouldAutoSave(){ return m_bShouldAutoSave; }
 	
-	// ── Private ────────────────────────────────────────────────────────────
+	// ── Public Setters ────────────────────────────────────────────────────
+	//-----------------------------------------------------------------------
+	void SetWorkingConfig(ResourceName newConfig){ m_sWorkingConfig = newConfig; }
+	
+	// ── Private ───────────────────────────────────────────────────────────
 	//-----------------------------------------------------------------------
 	protected void RefreshTargetEntity()
 	{

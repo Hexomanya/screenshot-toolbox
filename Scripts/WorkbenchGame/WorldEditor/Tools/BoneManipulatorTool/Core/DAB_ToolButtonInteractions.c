@@ -1,7 +1,10 @@
-class DAB_ToolInteractionManager
+class DAB_ToolButtonInteractions
 {
-	void CreateNewConfig(ResourceName workingConfig, DAB_BoneManipulatorTool parentTool, inout ResourceName workingConfigFolder)
+	//-----------------------------------------------------------------------
+	static void CreateNewConfig(DAB_BoneManipulatorTool parentTool, inout ResourceName workingConfig, inout ResourceName workingConfigFolder)
 	{
+		Print("Prev config is: " + workingConfig);
+		
 	    if (!workingConfig.IsEmpty())
 	    {
 	        Workbench.Dialog(
@@ -95,14 +98,16 @@ class DAB_ToolInteractionManager
 		bool fileReady = rm.WaitForFile(absolutePath, 2000);
 		if(!fileReady) Print("File was created, but was not ready in time. This MIGHT cause issues", LogLevel.WARNING);
 		
-	    workingConfig = Workbench.GetResourceName(absolutePath);
+		string formattedResourceName = Workbench.GetResourceName(absolutePath);
+		parentTool.SetWorkingConfig(formattedResourceName);
 	    parentTool.UpdatePropertyPanel();
 		
 		Workbench.OpenModule(WorldEditor);
 	    Print("DAB_BoneManipulatorTool: created new config at " + absolutePath, LogLevel.NORMAL);
 	}
 	
-	void CopyToCinematicScene(ResourceName workingConfig, array<ResourceName> modificationStack, IEntity targetEntity, WorldEditorAPI api)
+	//-----------------------------------------------------------------------
+	static void CopyToCinematicScene(ResourceName workingConfig, array<ResourceName> modificationStack, IEntity targetEntity, WorldEditorAPI api)
 	{
 		if(!targetEntity)
 		{
@@ -116,7 +121,7 @@ class DAB_ToolInteractionManager
 	        return;
 	    }
 
-		map<string, CinematicEntity> currentScenes = RefreshCurrentScenes(api);
+		map<string, CinematicEntity> currentScenes = GetCurrentScenes(api);
 		
 		if (currentScenes.IsEmpty())
 	    {
@@ -126,7 +131,10 @@ class DAB_ToolInteractionManager
 	
 	    array<string> sceneNames = {};
 		for (MapIterator it = currentScenes.Begin(); it != currentScenes.End(); it = currentScenes.Next(it))
-		    sceneNames.Insert(currentScenes.GetIteratorKey(it));
+		{
+			sceneNames.Insert(currentScenes.GetIteratorKey(it));
+		}
+		    
 	
 	    array<int> selectedIndices = {};
 	    int result = api.ShowItemListDialog(
@@ -138,12 +146,18 @@ class DAB_ToolInteractionManager
 	        selectedIndices,
 	        0
 	    );
+		
+		if(result == -1 || selectedIndices.Count() == 0)
+		{
+			Print("Did not select a scene or canceled. Nothing was copied!");
+			return;
+		}
 	
 		bool didConfirm = ShowConfirmDialog("Copy to Scene(s)", "You are going to copy the ACTIVE manipilation to " + selectedIndices.Count() + " scenes. Are you sure?");
 		
-	    if (selectedIndices.IsEmpty())
+	    if (!didConfirm)
 	    {
-			Print("Did not select anything! Nothing was copied!");
+			Print("Did not confirm copy action! Nothing was copied!");
 			return;
 		}
 		
@@ -206,8 +220,41 @@ class DAB_ToolInteractionManager
 		}
 	}
 	
+	static void SaveEdits(DAB_BoneManipulatorTool tool, DAB_EditorController controller, bool askForSave = false)
+	{
+		if(askForSave)
+		{
+			bool didConfirm = ShowConfirmDialog("Confirm Save", "Do you want to save unsafed changes?");
+			if(!didConfirm) return;
+		}
+		
+		ResourceName config = tool.GetWorkingConfig();
+		if(config.IsEmpty())
+		{
+			Workbench.Dialog("No Config", "There is no config to safe to! Please create a new one!");
+			return;
+		}
+		
+		int boneCount = controller.GetDirtyBoneCount();
+		if(boneCount)
+		{
+			Workbench.Dialog("No Edits", "There are no edits to safe!");
+			return;
+		}
+		
+		bool didSave = controller.SaveDirtyBones();
+		
+		if(!didSave)
+		{
+			Workbench.Dialog("No Save", "The system could not save the changes. Please check the console for errors and report this!");
+			return;
+		}
+			
+		PrintFormat("Saved %1 changed bones to config %2", boneCount, config);
+	}
+	
 	//-----------------------------------------------------------------------
-	protected map<string, CinematicEntity> RefreshCurrentScenes(WorldEditorAPI api)
+	static protected map<string, CinematicEntity> GetCurrentScenes(WorldEditorAPI api)
 	{
 		map<string, CinematicEntity> currentScenes = new map<string, CinematicEntity>();
 
@@ -237,7 +284,7 @@ class DAB_ToolInteractionManager
 	}
 	
 	//-----------------------------------------------------------------------
-	protected bool ShowConfirmDialog(string title, string message)
+	static protected bool ShowConfirmDialog(string title, string message)
 	{
 	    DAB_ConfirmDialog dialog = new DAB_ConfirmDialog();
 	    return Workbench.ScriptDialog(title, message, dialog);

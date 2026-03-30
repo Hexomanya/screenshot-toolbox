@@ -49,6 +49,14 @@ class DAB_EditorController
 	//-----------------------------------------------------------------------
 	void OnDeActivate()
 	{
+		for (MapIterator it = m_ModifiedBones.Begin(); it != m_ModifiedBones.End(); it = m_ModifiedBones.Next(it))
+		{
+			string boneName = m_ModifiedBones.GetIteratorKey(it);
+			ResetBone(boneName);
+		}
+		
+		m_ModifiedBones.Clear();
+		
 		m_GizmoController.Clear(m_API);
 		m_Renderer.Clear();
 		m_sSelectedBoneName = "";
@@ -183,6 +191,10 @@ class DAB_EditorController
 		
 		LoadAndApplyWorkingConfig(true);
 	}
+	
+	// ── Public Getters ────────────────────────────────────────────────────
+	//-----------------------------------------------------------------------
+	int GetDirtyBoneCount(){ return m_DirtyBones.Count(); }
 	
 	// ── Private ────────────────────────────────────────────────────────────
 	//-----------------------------------------------------------------------
@@ -326,7 +338,8 @@ class DAB_EditorController
 	{
 		DAB_BoneTransform transform = m_ModifiedBones.Get(boneName);
 		if (!transform) return;
-
+		
+		Print("Resetting current bone...");
 		transform.m_vPositionOffset = vector.Zero;
 		transform.m_vRotationOffset = vector.Zero;
 		transform.m_fScale          = 1.0;
@@ -424,7 +437,11 @@ class DAB_EditorController
 	    if(m_DirtyBones.Count() == 0) return false;
 	    
 	    ResourceName configPath = m_ParentTool.GetWorkingConfig();
-	    if (configPath.IsEmpty()) return false;
+	    if (configPath.IsEmpty()) 
+		{
+			Workbench.Dialog("No config", "There is no working config set to safe to! Save was aported!");
+			return false;
+		}
 	
 	    Resource configResource = BaseContainerTools.LoadContainer(configPath);
 	    if (!configResource) return false;
