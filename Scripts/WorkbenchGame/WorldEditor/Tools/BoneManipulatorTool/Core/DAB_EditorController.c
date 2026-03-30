@@ -390,7 +390,7 @@ class DAB_EditorController
 		if (!skeletonInfo) return;
 
 		vector camPos = DAB_Helper.GetCameraPosition(m_API);
-		m_LastBoneDisplaySettings = m_ParentTool.GetNewDisplaySttings();
+		m_LastBoneDisplaySettings = m_ParentTool.GetNewDisplaySettings();
 
 		if (m_sSelectedBoneName.IsEmpty())
 			m_Renderer.DrawAllBones(targetEntity, skeletonInfo, m_sHoveredBoneName, camPos, m_LastBoneDisplaySettings, m_API);
@@ -415,7 +415,7 @@ class DAB_EditorController
 	protected void RefreshDisplaySettings()
 	{
 		//TODO: We set settings here but create them new again in RedrawOverlay
-		DAB_BoneDisplaySettings newSettings = m_ParentTool.GetNewDisplaySttings();
+		DAB_BoneDisplaySettings newSettings = m_ParentTool.GetNewDisplaySettings();
 		if (newSettings.IsSame(m_LastBoneDisplaySettings)) return;
 		RedrawOverlay();
 	}

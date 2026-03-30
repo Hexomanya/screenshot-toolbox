@@ -10,6 +10,12 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 {
 
 	// ── Tool attributes ────────────────────────────────────────────────────
+	[Attribute(defvalue: "1", uiwidget: UIWidgets.CheckBox, desc: "Hide IK target bones from the overlay", category: "Display")]
+	protected bool m_bHideIKTargetBones;
+	
+	[Attribute(defvalue: "1", uiwidget: UIWidgets.CheckBox, desc: "Hide Prop bones from the overlay", category: "Display")]
+	protected bool m_bHidePropBones;
+	
 	[Attribute(defvalue: "1", uiwidget: UIWidgets.CheckBox, desc: "Hide volume bones from the overlay", category: "Display")]
 	protected bool m_bHideVolumeBones;
 
@@ -138,7 +144,7 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 	//-----------------------------------------------------------------------
 	IEntity GetCurrentTargetEntity(){ return m_TargetEntity; }
 	IEntitySource GetCurrentTargetEntitySource(){ return m_TargetEntitySource; }
-	DAB_BoneDisplaySettings GetNewDisplaySttings(){ return new DAB_BoneDisplaySettings(m_bHideVolumeBones, m_bHideCameraBone, m_bHideFaceBones, m_bHideBoneConnections); }
+	DAB_BoneDisplaySettings GetNewDisplaySettings() { return new DAB_BoneDisplaySettings(m_bHideIKTargetBones, m_bHidePropBones, m_bHideVolumeBones, m_bHideCameraBone, m_bHideFaceBones, m_bHideBoneConnections); }
 	ResourceName GetWorkingConfig() { return m_sWorkingConfig; }
 	bool GetShouldAutoSave(){ return m_bShouldAutoSave; }
 	

@@ -156,6 +156,8 @@ class DAB_BoneOverlayRenderer
 	{
 		foreach (string boneName : skeletonInfo.GetBoneNames())
 		{
+			if (displaySettings.GetHideIKTargetBones() && boneName.Contains("_IK_")) continue;
+			if (displaySettings.GetHideVolumeBones() && boneName.EndsWith("Prop")) continue;
 			if (displaySettings.GetHideVolumeBones() && boneName.EndsWith("Volume")) continue;
 			if (displaySettings.GetHideCameraBone() && boneName == "Camera") continue;
 			if (displaySettings.GetHideFaceBones() && skeletonInfo.IsDescendantOf(boneName, "Head")) continue;
