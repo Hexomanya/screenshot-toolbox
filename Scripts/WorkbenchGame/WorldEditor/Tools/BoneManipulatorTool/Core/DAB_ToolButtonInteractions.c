@@ -236,7 +236,7 @@ class DAB_ToolButtonInteractions
 		}
 		
 		int boneCount = controller.GetDirtyBoneCount();
-		if(boneCount)
+		if(boneCount <= 0)
 		{
 			Workbench.Dialog("No Edits", "There are no edits to safe!");
 			return;
