@@ -291,14 +291,22 @@ class DAB_EditorController
 	//-----------------------------------------------------------------------
 	protected void SelectBone(string boneName)
 	{
-		m_sSelectedBoneName = boneName;
-
-		DAB_BoneTransform transform = m_ModifiedBones.Get(boneName);
-		if (!transform)
-			transform = CreateNewTransform(boneName);
-
-		m_GizmoController.Attach(m_ParentTool.GetCurrentTargetEntity(), transform, m_API, m_fCameraTargetDistance);
-		RedrawOverlay();
+	    m_sSelectedBoneName = boneName;
+	
+	    DAB_BoneTransform transform = m_ModifiedBones.Get(boneName);
+	    if (!transform)
+	    {
+	        transform = CreateNewTransform(boneName);
+	    }
+	    else
+	    {
+	        vector currentPos;
+	        if (DAB_BoneHelper.TryGetBonePosition(m_ParentTool.GetCurrentTargetEntity(), boneName, currentPos))
+	            transform.SetOriginalPosition(currentPos - transform.m_vPositionOffset);
+	    }
+	
+	    m_GizmoController.Attach(m_ParentTool.GetCurrentTargetEntity(), transform, m_API, m_fCameraTargetDistance);
+	    RedrawOverlay();
 	}
 
 	//-----------------------------------------------------------------------

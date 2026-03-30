@@ -19,6 +19,9 @@ class DAB_BoneTransform
 		m_vOriginalPosition = originalPosition;
 		m_vOriginalRotation = originalRotation;
 	}
+	
+	// ── Setters ────────────────────────────────────────────────────────────
+	void SetOriginalPosition(vector pos) { m_vOriginalPosition = pos; }
 
 	// ── Getters ────────────────────────────────────────────────────────────
 	//! Name of the bone this transform belongs to.
