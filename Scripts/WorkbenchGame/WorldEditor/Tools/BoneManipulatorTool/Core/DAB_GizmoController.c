@@ -56,24 +56,25 @@ class DAB_GizmoController
 	//! Call Clear() first if already attached.
 	void Attach(IEntity entity, DAB_BoneTransform boneToAttach, WorldEditorAPI api, float cameraDistance)
 	{
-		if (m_currentTransform)
-		{
-			Print("DAB_GizmoController.Attach: previous bone was not cleared first.", LogLevel.WARNING);
-			Clear(api);
-		}
-
-		m_currentTransform = boneToAttach;
-
-		vector entityWorld[4];
-		entity.GetTransform(entityWorld);
-		m_mEntityRotation[0] = entityWorld[0];
-		m_mEntityRotation[1] = entityWorld[1];
-		m_mEntityRotation[2] = entityWorld[2];
-
-		Math3D.MatrixIdentity3(m_mAccumRotation);
-
-		m_gizmoMode = DAB_GizmoMode.Rotation;
-		CreateRotationGizmo(api);
+	    if (m_currentTransform)
+	    {
+	        Print("DAB_GizmoController.Attach: previous bone was not cleared first.", LogLevel.WARNING);
+	        Clear(api);
+	    }
+	
+	    m_currentTransform = boneToAttach;
+	
+	    vector entityWorld[4];
+	    entity.GetTransform(entityWorld);
+	    m_mEntityRotation[0] = entityWorld[0];
+	    m_mEntityRotation[1] = entityWorld[1];
+	    m_mEntityRotation[2] = entityWorld[2];
+	
+	    vector existingRot = boneToAttach.m_vRotationOffset;
+	    Math3D.AnglesToMatrix(Vector(existingRot[1], existingRot[0], existingRot[2]), m_mAccumRotation);
+	
+	    m_gizmoMode = DAB_GizmoMode.Rotation;
+	    CreateRotationGizmo(api);
 	}
 
 	//-----------------------------------------------------------------------
