@@ -169,8 +169,6 @@ class DAB_BoneHelper
 		return boneParentDistances;
 	}
 
-	// ── Internal ───────────────────────────────────────────────────────────
-
 	//-----------------------------------------------------------------------
 	// Finds the parent bone by back-projecting the bone's local offset to the
 	// parent world position, then finding which other bone sits closest to it.
@@ -178,42 +176,36 @@ class DAB_BoneHelper
 	static string FindParentBoneName(Animation anim, string boneName, array<string> boneNames)
 	{
 		TNodeId boneId = anim.GetBoneIndex(boneName);
-
+	
 		vector boneLocal[4];
 		anim.GetBoneLocalMatrix(boneId, boneLocal);
 		if (boneLocal[3].LengthSq() < 0.0001) return "";
-
+	
 		vector boneWorld[4];
 		anim.GetBoneMatrix(boneId, boneWorld);
-
-		float itx = -vector.Dot(boneLocal[0], boneLocal[3]);
-		float ity = -vector.Dot(boneLocal[1], boneLocal[3]);
-		float itz = -vector.Dot(boneLocal[2], boneLocal[3]);
-
-		vector parentWorldPos = boneWorld[3]
-			+ boneWorld[0] * itx
-			+ boneWorld[1] * ity
-			+ boneWorld[2] * itz;
-
-		float  bestDist = 0.001;
+	
+		float bestDist = 0.001;
 		string bestName = "";
-
+	
 		foreach (string name : boneNames)
 		{
 			TNodeId candidateId = anim.GetBoneIndex(name);
 			if (candidateId == boneId) continue;
-
+	
 			vector candidateMat[4];
 			anim.GetBoneMatrix(candidateId, candidateMat);
-
-			float dist = vector.Distance(candidateMat[3], parentWorldPos);
+	
+			vector relativeMat[4];
+			Math3D.MatrixInvMultiply4(candidateMat, boneWorld, relativeMat);
+	
+			float dist = vector.Distance(relativeMat[3], boneLocal[3]);
 			if (dist < bestDist)
 			{
 				bestDist = dist;
 				bestName = name;
 			}
 		}
-
+	
 		return bestName;
 	}
 }

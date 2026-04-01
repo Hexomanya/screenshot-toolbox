@@ -23,7 +23,7 @@ class DAB_SkeletonInfo
 	//! Returns the name of the direct parent of \p childName, or an empty string for root bones.
 	string GetDirectParent(string childName)
 	{
-		string parent;
+		string parent = "";
 		if (!m_BoneParents.Find(childName, parent))
 			Print("GetDirectParent: bone '" + childName + "' not found in parent map.", LogLevel.ERROR);
 		return parent;

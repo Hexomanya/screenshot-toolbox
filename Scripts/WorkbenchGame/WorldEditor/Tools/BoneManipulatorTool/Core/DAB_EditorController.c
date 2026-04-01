@@ -176,6 +176,7 @@ class DAB_EditorController
 
 		if (!m_CachedSkeletons.Contains(skeletonKey))
 		{
+			Print("Creating new skeleton with key: " + skeletonKey);
 			array<string> boneNames = {};
 			anim.GetBoneNames(boneNames);
 			map<string, string> boneParents = DAB_BoneHelper.ComputeBoneParents(anim, boneNames);
