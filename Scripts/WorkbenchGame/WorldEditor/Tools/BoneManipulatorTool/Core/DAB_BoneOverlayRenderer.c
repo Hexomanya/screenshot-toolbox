@@ -41,13 +41,10 @@ class DAB_BoneOverlayRenderer
 			return;
 		}
 		
-		Print("Redrawing all bones");
-
 		vector entityWorld[4];
 		entity.GetTransform(entityWorld);
 
 		CacheBoneWorldPositions(anim, entityWorld, skeletonInfo, displaySettings);
-		PrintFormat("Cached %1 positions!", m_CachedWorldPositions.Count());
 		ComputeSpatialConstraints(skeletonInfo);
 		CombineConstraints(camPos);
 
@@ -286,8 +283,6 @@ class DAB_BoneOverlayRenderer
 
 			m_ConnectionShapes.Insert(Shape.Create(ShapeType.LINE, DAB_VisConfig.COLOR_BONE_CONNECTION, ShapeFlags.NOZBUFFER, childPos, parentPos));
 		}
-		
-		PrintFormat("Created %1 connection shapes!", m_ConnectionShapes.Count());
 	}
 
 	//-----------------------------------------------------------------------

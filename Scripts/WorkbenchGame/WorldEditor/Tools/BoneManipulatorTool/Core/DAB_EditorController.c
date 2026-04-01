@@ -350,7 +350,7 @@ class DAB_EditorController
 		DAB_BoneTransform transform = m_ModifiedBones.Get(boneName);
 		if (!transform) return;
 		
-		Print("Resetting current bone...");
+		// TODO: Reset to animation rotation not zero
 		transform.m_vPositionOffset = vector.Zero;
 		transform.m_vRotationOffset = vector.Zero;
 		transform.m_fScale          = 1.0;
@@ -503,7 +503,6 @@ class DAB_EditorController
 	    
 	    if (success)
 	    {
-	        m_API.BeginEntityAction("Bulk Update");
 	        array<ref ContainerIdPathEntry> path = {}; 
 	        m_API.SetVariableValue(config, null, "m_sName", poseInstance.m_sName); //TODO: Remove name but make sure it still save
 	        m_API.EndEntityAction();
@@ -527,7 +526,6 @@ class DAB_EditorController
 		IEntity targetEntity = m_ParentTool.GetCurrentTargetEntity();
 		if (!targetEntity) return;
 
-		// 1. Reset currently modified bones back to default on the entity
 		foreach (string boneName, DAB_BoneTransform transform : m_ModifiedBones)
 		{
 			transform.m_vPositionOffset = vector.Zero;
@@ -540,7 +538,6 @@ class DAB_EditorController
 		m_DirtyBones.Clear();
 		m_GizmoController.Clear(m_API);
 
-		// 2. Load new config if valid
 		if (currentConfig.IsEmpty())
 		{
 			RedrawOverlay();
@@ -555,7 +552,6 @@ class DAB_EditorController
 			return;
 		}
 
-		// 3. Parse modifications and apply them
 		BaseContainer config = configResource.GetResource().ToBaseContainer();
 		BaseContainerList modificationsArr = config.GetObjectArray("m_aBoneModifications");
 

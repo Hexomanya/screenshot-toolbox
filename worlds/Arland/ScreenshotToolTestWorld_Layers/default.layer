@@ -33,7 +33,7 @@ CinematicEntity Test {
       Keyframes {
        StringCinematicKeyframe "{690303973810F7E6}" {
         FrameNumber 0
-        Value "Configs/PoseModifications/THEENDISNEVERTHEEND.conf"
+        Value "Configs/PoseModifications/Slider.conf"
        }
       }
      }
