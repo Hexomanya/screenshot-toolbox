@@ -12,7 +12,7 @@ class DAB_PoseManipulationTrack : CinematicTrackBase
 
     private GenericEntity m_TargetEntity;
     protected SlotManagerComponent m_SlotManager;
-    protected World m_World; // Stored from OnInit
+    protected World m_World;
 	
     // Cache to prevent re-parsing .conf files every frame
     protected ref map<ResourceName, ref DAB_PoseModification> m_CachedModifications = new map<ResourceName, ref DAB_PoseModification>();
@@ -63,6 +63,7 @@ class DAB_PoseManipulationTrack : CinematicTrackBase
             return cached;
 
         Resource configResource = BaseContainerTools.LoadContainer(modificationName);
+		Print("modificationName that errors is: " + modificationName);
         if (!configResource || !configResource.IsValid()) return null;
         
         BaseContainer container = configResource.GetResource().ToBaseContainer();

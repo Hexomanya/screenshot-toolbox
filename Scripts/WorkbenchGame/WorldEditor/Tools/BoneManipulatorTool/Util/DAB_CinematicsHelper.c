@@ -1,5 +1,36 @@
 class DAB_CinematicsHelper
 {
+	//-----------------------------------------------------------------------
+	static map<string, CinematicEntity> GetCurrentScenes(WorldEditorAPI api)
+	{
+		map<string, CinematicEntity> currentScenes = new map<string, CinematicEntity>();
+
+		int entityCount = api.GetEditorEntityCount();
+		for(int i = 0; i < entityCount; i++)
+		{
+			IEntitySource candidate = api.GetEditorEntity(i);
+			if(!candidate) continue;
+			
+			IEntity entity = api.SourceToEntity(candidate);
+			if(!entity) continue;
+
+			CinematicEntity sceneEntity = CinematicEntity.Cast(entity);
+			if(!sceneEntity) continue;
+			
+			string sceneName = entity.GetName();
+			if (sceneName.IsEmpty())
+			{
+				Workbench.Dialog("Name Missing!", "Please make sure to name all your cinematic scenes!");
+				sceneName = api.GetEntityNiceName(candidate);
+			}
+			    
+			currentScenes.Set(sceneName, sceneEntity);
+		}
+		
+		return currentScenes;
+	}
+	
+	//-----------------------------------------------------------------------
 	static BaseContainer GetCinematicScene(CinematicEntity cinematicEntity, WorldEditorAPI api)
 	{
 	    if (!cinematicEntity)
@@ -32,6 +63,7 @@ class DAB_CinematicsHelper
 	    return sceneContainer;
 	}
 	
+	//-----------------------------------------------------------------------
 	static array<CinematicTrackBase> GetTracksFromScene(BaseContainer sceneContainer)
 	{
 	    if (!sceneContainer)
@@ -69,6 +101,7 @@ class DAB_CinematicsHelper
 	    return tracks;
 	}
 	
+	//-----------------------------------------------------------------------
 	static bool ContainsTracksOfClass(array<CinematicTrackBase> tracks, typename classToCheck, out array<int> indices)
 	{
 	    indices = {};
@@ -83,6 +116,7 @@ class DAB_CinematicsHelper
 	    return !indices.IsEmpty();
 	}
 	
+	//-----------------------------------------------------------------------
 	static string GetTrackEntityName(CinematicTrackBase track)
 	{
 	    DAB_PoseManipulationTrack poseTrack = DAB_PoseManipulationTrack.Cast(track);
@@ -93,6 +127,7 @@ class DAB_CinematicsHelper
 	    return strs.Get(0);
 	}
 	
+	//-----------------------------------------------------------------------
 	static bool HasSlotBoneTrackForEntity(BaseContainer sceneContainer, string entityName)
 	{
 	    BaseContainerList trackList = sceneContainer.GetObjectArray("Tracks");
@@ -116,6 +151,7 @@ class DAB_CinematicsHelper
 	    return false;
 	}
 
+	//-----------------------------------------------------------------------
 	static int CountOwnedPoseTracks(BaseContainer sceneContainer, string entityName)
 	{
 	    BaseContainerList trackList = sceneContainer.GetObjectArray("Tracks");
@@ -171,6 +207,25 @@ class DAB_CinematicsHelper
 	    return count;
 	}
 	
+	//-----------------------------------------------------------------------
+	// Returns number of scenes refreshed
+	static int RefreshAllScenes(WorldEditorAPI api)
+	{
+		map<string, CinematicEntity> currentScenes = GetCurrentScenes(api);
+		
+		for (MapIterator it = currentScenes.Begin(); it != currentScenes.End(); it = currentScenes.Next(it))
+		{
+			string name = currentScenes.GetIteratorKey(it);
+			CinematicEntity entity = currentScenes.GetIteratorElement(it);
+			
+			entity.Play();
+			entity.Stop();
+		}
+		
+		return currentScenes.Count();
+	}
+	
+	//-----------------------------------------------------------------------
 	static bool TryUpdatePoseTrackConfigs(IEntitySource entitySource, string entityName, array<ResourceName> configs, WorldEditorAPI api)
 	{
 	    BaseContainer entityContainer = entitySource.ToBaseContainer();
@@ -250,6 +305,7 @@ class DAB_CinematicsHelper
 	    return false;
 	}
 
+	//-----------------------------------------------------------------------
 	static bool TryAddPoseTrackToScene(IEntitySource entitySource, string entityName, array<ResourceName> configs, WorldEditorAPI api)
 	{
 	    if (!entitySource)

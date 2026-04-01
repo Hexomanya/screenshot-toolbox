@@ -60,6 +60,8 @@ class DAB_EditorController
 		m_GizmoController.Clear(m_API);
 		m_Renderer.Clear();
 		m_sSelectedBoneName = "";
+		
+		DAB_CinematicsHelper.RefreshAllScenes(m_API);
 	}
 	
 	//-----------------------------------------------------------------------
@@ -502,7 +504,7 @@ class DAB_EditorController
 	    {
 	        m_API.BeginEntityAction("Bulk Update");
 	        array<ref ContainerIdPathEntry> path = {}; 
-	        m_API.SetVariableValue(config, null, "m_sName", poseInstance.m_sName);
+	        m_API.SetVariableValue(config, null, "m_sName", poseInstance.m_sName); //TODO: Remove name but make sure it still save
 	        m_API.EndEntityAction();
 	    }
 	

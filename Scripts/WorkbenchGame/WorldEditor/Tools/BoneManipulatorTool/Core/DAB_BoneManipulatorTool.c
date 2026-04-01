@@ -10,6 +10,7 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 {
 
 	// ── Tool attributes ────────────────────────────────────────────────────
+	// ── Display ──
 	[Attribute(defvalue: "1", uiwidget: UIWidgets.CheckBox, desc: "Hide IK target bones from the overlay", category: "Display")]
 	protected bool m_bHideIKTargetBones;
 	
@@ -28,9 +29,14 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 	[Attribute(defvalue: "0", uiwidget: UIWidgets.CheckBox, desc: "Hide lines connecting bones to their parents", category: "Display")]
 	protected bool m_bHideBoneConnections;
 	
+	[Attribute(defvalue: "", desc: "Show only bones that include this string. Does nothing when empty", category: "Display")]
+	protected string m_sFilterBoneName;
+	
+	// ── Saving ──
 	[Attribute(defvalue: "0", uiwidget: UIWidgets.CheckBox, desc: "Turns on auto-saves. This will lead to some lage after each edit", category: "Saving")]
 	protected bool m_bShouldAutoSave;
 	
+	// ── Current Pose Config ──
 	[Attribute(
 	    uiwidget: UIWidgets.ResourceNamePicker,
 	    desc: "Select an existing pose modification to load and edit",
@@ -45,8 +51,9 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 	    params: "conf DAB_PoseModification",
 	    category: "Current Pose Config"
 	)]
-	protected ref array<ResourceName> m_aPreviewConfigs;
+	protected ref array<ResourceName> m_aStackedConfigs;
 	
+	// ── New Config Creation ──
 	[Attribute(
 	    uiwidget: UIWidgets.ResourceNamePicker,
 	    desc: "Select the folder you are currently working in. New configs will be created there!",
@@ -54,6 +61,10 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 	    category: "New Config Creation"
 	)]
 	protected ResourceName m_sWorkingConfigFolder;
+	
+	// ── Constructors ──────────────────────────────────────────────────────────
+	void DAB_BoneManipulatorTool();
+	void ~DAB_BoneManipulatorTool();
 	
 	// ── Runtime state ──────────────────────────────────────────────────────
 	protected IEntity       m_TargetEntity;
@@ -78,15 +89,14 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 	[ButtonAttribute("Copy To Scene")]
 	void CopyToCinematicScene()
 	{
-		DAB_ToolButtonInteractions.CopyToCinematicScene(m_sWorkingConfig, m_aPreviewConfigs, m_TargetEntity, m_API);
+		DAB_ToolButtonInteractions.CopyToCinematicScene(m_sWorkingConfig, m_aStackedConfigs, m_TargetEntity, m_API);
 	}
 	
 	// ── Lifecycle ──────────────────────────────────────────────────────────
 	//-----------------------------------------------------------------------
 	override void OnActivate()
 	{
-		m_EditorController = DAB_EditorController(this, m_API);
-		
+		m_EditorController = DAB_EditorController(this, m_API); // Can not be in constructor, because api is null otherwise
 		RefreshTargetEntity();
 		m_EditorController.OnActivate();
 	}
@@ -144,7 +154,7 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 	//-----------------------------------------------------------------------
 	IEntity GetCurrentTargetEntity(){ return m_TargetEntity; }
 	IEntitySource GetCurrentTargetEntitySource(){ return m_TargetEntitySource; }
-	DAB_BoneDisplaySettings GetNewDisplaySettings() { return new DAB_BoneDisplaySettings(m_bHideIKTargetBones, m_bHidePropBones, m_bHideVolumeBones, m_bHideCameraBone, m_bHideFaceBones, m_bHideBoneConnections); }
+	DAB_BoneDisplaySettings GetNewDisplaySettings() { return new DAB_BoneDisplaySettings(m_bHideIKTargetBones, m_bHidePropBones, m_bHideVolumeBones, m_bHideCameraBone, m_bHideFaceBones, m_bHideBoneConnections, m_sFilterBoneName); }
 	ResourceName GetWorkingConfig() { return m_sWorkingConfig; }
 	bool GetShouldAutoSave(){ return m_bShouldAutoSave; }
 	
@@ -160,6 +170,7 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 		if (m_TargetEntitySource)
 			m_TargetEntity = m_API.SourceToEntity(m_TargetEntitySource);
 
-		m_EditorController.OnTargetEntityChanged(m_TargetEntity);
+		if(m_EditorController)
+			m_EditorController.OnTargetEntityChanged(m_TargetEntity);
 	}
 }

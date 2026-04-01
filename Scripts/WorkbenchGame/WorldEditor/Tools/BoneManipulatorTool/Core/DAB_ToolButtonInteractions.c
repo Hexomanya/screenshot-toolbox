@@ -121,7 +121,7 @@ class DAB_ToolButtonInteractions
 	        return;
 	    }
 
-		map<string, CinematicEntity> currentScenes = GetCurrentScenes(api);
+		map<string, CinematicEntity> currentScenes = DAB_CinematicsHelper.GetCurrentScenes(api);
 		
 		if (currentScenes.IsEmpty())
 	    {
@@ -253,35 +253,7 @@ class DAB_ToolButtonInteractions
 		PrintFormat("Saved %1 changed bones to config %2", boneCount, config);
 	}
 	
-	//-----------------------------------------------------------------------
-	static protected map<string, CinematicEntity> GetCurrentScenes(WorldEditorAPI api)
-	{
-		map<string, CinematicEntity> currentScenes = new map<string, CinematicEntity>();
-
-		int entityCount = api.GetEditorEntityCount();
-		for(int i = 0; i < entityCount; i++)
-		{
-			IEntitySource candidate = api.GetEditorEntity(i);
-			if(!candidate) continue;
-			
-			IEntity entity = api.SourceToEntity(candidate);
-			if(!entity) continue;
-
-			CinematicEntity sceneEntity = CinematicEntity.Cast(entity);
-			if(!sceneEntity) continue;
-			
-			string sceneName = entity.GetName();
-			if (sceneName.IsEmpty())
-			{
-				Workbench.Dialog("Name Missing!", "Please make sure to name all your cinematic scenes!");
-				sceneName = api.GetEntityNiceName(candidate);
-			}
-			    
-			currentScenes.Set(sceneName, sceneEntity);
-		}
-		
-		return currentScenes;
-	}
+	
 	
 	//-----------------------------------------------------------------------
 	static protected bool ShowConfirmDialog(string title, string message)
