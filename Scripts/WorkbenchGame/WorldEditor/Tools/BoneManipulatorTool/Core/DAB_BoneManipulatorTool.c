@@ -8,7 +8,6 @@
 //! position (I) or scale (O) gizmos. Press J to reset the selected bone.
 class DAB_BoneManipulatorTool : WorldEditorTool
 {
-
 	// ── Tool attributes ────────────────────────────────────────────────────
 	// ── Display ──
 	[Attribute(defvalue: "1", uiwidget: UIWidgets.CheckBox, desc: "Hide IK target bones from the overlay", category: "Display")]
@@ -71,7 +70,6 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 	protected IEntitySource m_TargetEntitySource;
 	protected ref DAB_EditorController m_EditorController;
 	
-	
 	// ── Tool Interaction ───────────────────────────────────────────────────────
 	//-----------------------------------------------------------------------
 	[ButtonAttribute("Save Edits")]
@@ -96,8 +94,8 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 	//-----------------------------------------------------------------------
 	override void OnActivate()
 	{
-		m_EditorController = DAB_EditorController(this, m_API); // Can not be in constructor, because api is null otherwise
 		RefreshTargetEntity();
+		if(!m_EditorController) m_EditorController = DAB_EditorController(this, m_API);
 		m_EditorController.OnActivate();
 	}
 
@@ -108,20 +106,28 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 			DAB_ToolButtonInteractions.SaveEdits(this, m_EditorController, true); 
 		
 		m_EditorController.OnDeActivate();
-		m_EditorController = null;
 	}
 
 	//-----------------------------------------------------------------------
 	override void OnAfterLoadWorld()
 	{
 		RefreshTargetEntity();
+		m_EditorController = DAB_EditorController(this, m_API); // Can not be in constructor, because api is null otherwise
 		m_EditorController.OnAfterLoadWorld();
+	}
+	
+	//-----------------------------------------------------------------------
+	override void OnBeforeUnloadWorld()
+	{
+		m_EditorController.OnBeforeUnloadWorld();
+		m_EditorController = null;
 	}
 
 	// ── Input ──────────────────────────────────────────────────────────────
 	//-----------------------------------------------------------------------
 	protected override void OnEnterEvent()
 	{
+		if(!m_EditorController) return;
 		m_EditorController.OnEnterEvent();
 	}
 	
