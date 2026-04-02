@@ -6,10 +6,8 @@
 - For some reason the face breaks sometimes
 - The object sometimes switches places when activating the timeline (only when moving root(hip))
 - When resetting a bone the all gizmos do not update position
-- We need to cache the last used gizmo.
+
 
 # TODO
 - Restructure gizmo code
 - We save the name in the config though we should take the name of the config. Otherwise renaming gets annoying
-
-Ok the same bug still persists. 

@@ -14,30 +14,29 @@ typedef func DAB_GizmoController_OnTransformChanged;
 class DAB_GizmoController
 {
 	// ── State ──────────────────────────────────────────────────────────────
-	protected DAB_GizmoMode m_gizmoMode;
+	protected DAB_GizmoMode m_GizmoMode;
+	protected DAB_GizmoMode m_LastActiveMode;
 
 	protected ref DAB_RotationGizmo m_RotationGizmo;
-	protected ref DAB_MoveGizmo     m_PositionGizmo;
-	protected ref DAB_ScaleGizmo    m_ScaleGizmo;
+	protected ref DAB_MoveGizmo m_PositionGizmo;
+	protected ref DAB_ScaleGizmo m_ScaleGizmo;
 
 	protected ref ScriptInvokerBase<DAB_GizmoController_OnTransformChanged> m_OnTransformChanged;
 
 	protected ref DAB_BoneTransform m_currentTransform;
-	protected IEntity               m_AttachedEntity;
+	protected IEntity m_AttachedEntity;
 
-	// Accumulated rotation since Attach() — applies bone-local frame rotations.
-	protected vector m_mAccumRotation[3];
-
-	// Entity world rotation captured at Attach() time.
-	protected vector m_mEntityRotation[3];
+	protected vector m_mAccumRotation[3]; // Accumulated rotation since Attach() — applies bone-local frame rotations.
+	protected vector m_mEntityRotation[3]; // Entity world rotation captured at Attach() time.
 
 	protected WorldEditorAPI m_API;
 
 	//-----------------------------------------------------------------------
 	void DAB_GizmoController(WorldEditorAPI api)
 	{
-		m_gizmoMode = DAB_GizmoMode.Deactivated;
-		m_API       = api;
+		m_GizmoMode = DAB_GizmoMode.Deactivated;
+		m_LastActiveMode = DAB_GizmoMode.Rotation; // Default to rotation
+		m_API = api;
 	}
 
 	//-----------------------------------------------------------------------
@@ -79,20 +78,20 @@ class DAB_GizmoController
 		vector existingRot = boneToAttach.m_vRotationOffset;
 		Math3D.AnglesToMatrix(Vector(existingRot[1], existingRot[0], existingRot[2]), m_mAccumRotation);
 
-		m_gizmoMode = DAB_GizmoMode.Rotation;
-		CreateRotationGizmo(api);
+		SwitchMode(m_LastActiveMode, m_API);
 	}
 
 	//-----------------------------------------------------------------------
 	//! Switches to a different gizmo mode while a bone is attached. No-op if already in that mode.
 	void SwitchMode(DAB_GizmoMode newMode, WorldEditorAPI api)
 	{
-		if (!m_currentTransform || m_gizmoMode == newMode) return;
+		if (!m_currentTransform || m_GizmoMode == newMode) return;
 
 		DestroyActiveGizmo();
-		m_gizmoMode = newMode;
+		m_GizmoMode = newMode;
+		if(m_GizmoMode != DAB_GizmoMode.Deactivated) m_LastActiveMode = m_GizmoMode;
 
-		switch (m_gizmoMode)
+		switch (m_GizmoMode)
 		{
 			case DAB_GizmoMode.Rotation: CreateRotationGizmo(api); break;
 			case DAB_GizmoMode.Position: CreatePositionGizmo(api); break;
@@ -104,9 +103,9 @@ class DAB_GizmoController
 	//! Detaches from the current bone and destroys all gizmos.
 	void Clear(WorldEditorAPI api)
 	{
-		m_AttachedEntity   = null;
+		m_AttachedEntity = null;
 		m_currentTransform = null;
-		m_gizmoMode        = DAB_GizmoMode.Deactivated;
+		m_GizmoMode = DAB_GizmoMode.Deactivated;
 		DestroyActiveGizmo();
 	}
 
@@ -115,7 +114,7 @@ class DAB_GizmoController
 	void OnMouseMove(float x, float y, WorldEditorAPI api)
 	{
 		if (!m_currentTransform) return;
-		switch (m_gizmoMode)
+		switch (m_GizmoMode)
 		{
 			case DAB_GizmoMode.Rotation: if (m_RotationGizmo) m_RotationGizmo.OnMouseMove(x, y, api); break;
 			case DAB_GizmoMode.Position: if (m_PositionGizmo) m_PositionGizmo.OnMouseMove(x, y, api); break;
@@ -128,7 +127,7 @@ class DAB_GizmoController
 	void OnMousePress(float x, float y, WETMouseButtonFlag buttons, WorldEditorAPI api)
 	{
 		if (!m_currentTransform) return;
-		switch (m_gizmoMode)
+		switch (m_GizmoMode)
 		{
 			case DAB_GizmoMode.Rotation: if (m_RotationGizmo) m_RotationGizmo.OnMousePress(x, y, buttons, api); break;
 			case DAB_GizmoMode.Position: if (m_PositionGizmo) m_PositionGizmo.OnMousePress(x, y, buttons, api); break;
@@ -141,7 +140,7 @@ class DAB_GizmoController
 	void OnMouseRelease(float x, float y, WETMouseButtonFlag buttons, WorldEditorAPI api)
 	{
 		if (!m_currentTransform) return;
-		switch (m_gizmoMode)
+		switch (m_GizmoMode)
 		{
 			case DAB_GizmoMode.Rotation: if (m_RotationGizmo) m_RotationGizmo.OnMouseRelease(buttons, api); break;
 			case DAB_GizmoMode.Position: if (m_PositionGizmo) m_PositionGizmo.OnMouseRelease(buttons);      break;
@@ -160,7 +159,7 @@ class DAB_GizmoController
 		vector worldAngles = GetCurrentWorldAngles();
 	
 		// TODO: Use nicer structure for gizmo so we do not need to do this
-		switch (m_gizmoMode)
+		switch (m_GizmoMode)
 		{
 			case DAB_GizmoMode.Rotation:
 				if (!m_RotationGizmo) break;
@@ -197,7 +196,7 @@ class DAB_GizmoController
 	{
 		Math3D.MatrixIdentity3(m_mAccumRotation);
 
-		switch (m_gizmoMode)
+		switch (m_GizmoMode)
 		{
 			case DAB_GizmoMode.Rotation: UpdateRotationGizmo(); break;
 			case DAB_GizmoMode.Position: UpdatePositionGizmo(); break;
@@ -207,7 +206,7 @@ class DAB_GizmoController
 
 	//-----------------------------------------------------------------------
 	//! Returns the currently active gizmo mode.
-	DAB_GizmoMode GetGizmoMode() { return m_gizmoMode; }
+	DAB_GizmoMode GetGizmoMode() { return m_GizmoMode; }
 
 	// ── Private ────────────────────────────────────────────────────────────
 

@@ -35,6 +35,7 @@ class DAB_EditorController
 	
 	void ~DAB_EditorController()
 	{
+		m_GizmoController = null;
 		m_ParentTool = null;
 		m_API = null;
 	}
@@ -55,11 +56,11 @@ class DAB_EditorController
 			ResetBone(boneName);
 		}
 		
-		m_ModifiedBones.Clear();
 		
-		m_GizmoController.Clear(m_API);
+		m_ModifiedBones.Clear();
 		m_Renderer.Clear();
 		m_sSelectedBoneName = "";
+		m_GizmoController.Clear(m_API);
 		
 		DAB_CinematicsHelper.RefreshAllScenes(m_API);
 	}
