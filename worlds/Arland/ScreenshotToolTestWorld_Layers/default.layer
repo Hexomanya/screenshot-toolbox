@@ -39,6 +39,18 @@ CinematicEntity Test {
      }
     }
    }
+   AnimationCinematicTrack "{6904B420DA4D9268}" {
+    TrackName "Tester1"
+    Play BooleanCinematicTrack "{6904B420DA4D925F}" {
+     TrackName "Play"
+     Keyframes {
+      BooleanCinematicKeyframe "{6904B4202BC5A290}" {
+       FrameNumber 0
+       Value 1
+      }
+     }
+    }
+   }
   }
  }
 }
@@ -152,6 +164,19 @@ $grp SCR_ChimeraCharacter : "{2619482C6C4202E0}Prefabs/Characters/Campaign/Final
    }
   }
   coords 2725.693 77.469 1633.325
+  angles 0 -22.683 0
+ }
+ Tester1 {
+  components {
+   CharacterWeaponSlotComponent "{520EA1D2F659CFAB}" {
+    Enabled 0
+   }
+   AnimationPlayerComponent "{68D772DA924179D5}" {
+    Animation "{3056F5E8DECA8704}anims/anm/player/actions/gestures/p_erc_gest_salute_ADD.anm"
+    Loop 1
+   }
+  }
+  coords 2724.248 77.469 1631.501
   angles 0 -22.683 0
  }
 }

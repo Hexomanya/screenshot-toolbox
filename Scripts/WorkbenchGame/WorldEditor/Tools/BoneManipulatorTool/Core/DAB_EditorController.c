@@ -301,22 +301,29 @@ class DAB_EditorController
 	//-----------------------------------------------------------------------
 	protected void SelectBone(string boneName)
 	{
-	    m_sSelectedBoneName = boneName;
+		m_sSelectedBoneName = boneName;
 	
-	    DAB_BoneTransform transform = m_ModifiedBones.Get(boneName);
-	    if (!transform)
-	    {
-	        transform = CreateNewTransform(boneName);
-	    }
-	    else
-	    {
-	        vector currentPos;
-	        if (DAB_BoneHelper.TryGetBonePosition(m_ParentTool.GetCurrentTargetEntity(), boneName, currentPos))
-	            transform.SetOriginalPosition(currentPos - transform.m_vPositionOffset);
-	    }
+		DAB_BoneTransform transform = m_ModifiedBones.Get(boneName);
+		if (!transform)
+		{
+			transform = CreateNewTransform(boneName);
+		}
+		else
+		{
+			IEntity targetEntity = m_ParentTool.GetCurrentTargetEntity();
+			TNodeId boneId = DAB_BoneHelper.GetBoneId(targetEntity, boneName);
 	
-	    m_GizmoController.Attach(m_ParentTool.GetCurrentTargetEntity(), transform, m_API, m_fCameraTargetDistance);
-	    RedrawOverlay();
+			vector currentPos;
+			if (DAB_BoneHelper.TryGetBonePosition(targetEntity, boneName, currentPos))
+				transform.SetOriginalPosition(currentPos - transform.m_vPositionOffset);
+	
+			vector currentRot;
+			if (DAB_BoneHelper.TryGetBoneLocalRotation(targetEntity, boneId, currentRot))
+				transform.SetOriginalRotation(currentRot - transform.m_vRotationOffset);
+		}
+	
+		m_GizmoController.Attach(m_ParentTool.GetCurrentTargetEntity(), transform, m_API, m_fCameraTargetDistance);
+		RedrawOverlay();
 	}
 
 	//-----------------------------------------------------------------------
@@ -356,16 +363,28 @@ class DAB_EditorController
 	{
 		DAB_BoneTransform transform = m_ModifiedBones.Get(boneName);
 		if (!transform) return;
-		
-		// TODO: Reset to animation rotation not zero
+	
+		IEntity targetEntity = m_ParentTool.GetCurrentTargetEntity();
+		if (!targetEntity) return;
+	
+		TNodeId boneId = DAB_BoneHelper.GetBoneId(targetEntity, boneName);
+	
+		vector currentPos;
+		if (DAB_BoneHelper.TryGetBonePosition(targetEntity, boneName, currentPos))
+			transform.SetOriginalPosition(currentPos);
+	
+		vector currentRot;
+		if (DAB_BoneHelper.TryGetBoneLocalRotation(targetEntity, boneId, currentRot))
+			transform.SetOriginalRotation(currentRot);
+	
 		transform.m_vPositionOffset = vector.Zero;
 		transform.m_vRotationOffset = vector.Zero;
-		transform.m_fScale          = 1.0;
-
+		transform.m_fScale = 1.0;
+	
 		m_DirtyBones.Insert(boneName);
 		RefreshBone(boneName);
 		m_GizmoController.ResetAccumulatedTransform(m_API);
-		m_Renderer.DrawSelectedBone(m_ParentTool.GetCurrentTargetEntity(), boneName, m_API);
+		m_Renderer.DrawSelectedBone(targetEntity, boneName, m_API);
 	}
 
 	//-----------------------------------------------------------------------
