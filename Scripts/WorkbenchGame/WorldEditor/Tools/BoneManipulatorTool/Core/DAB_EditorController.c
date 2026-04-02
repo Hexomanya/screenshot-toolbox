@@ -542,16 +542,16 @@ class DAB_EditorController
 	void LoadAndApplyWorkingConfig(bool forceApply = false)
 	{
 		ResourceName currentConfig = m_ParentTool.GetWorkingConfig();
-
+	
 		// If nothing changed and we aren't forcing an update (like an entity swap), do nothing
 		if (!forceApply && currentConfig == m_sLastLoadedConfig)
 			return;
-
+	
 		m_sLastLoadedConfig = currentConfig;
-
+	
 		IEntity targetEntity = m_ParentTool.GetCurrentTargetEntity();
 		if (!targetEntity) return;
-
+	
 		foreach (string boneName, DAB_BoneTransform transform : m_ModifiedBones)
 		{
 			transform.m_vPositionOffset = vector.Zero;
@@ -562,14 +562,14 @@ class DAB_EditorController
 		
 		m_ModifiedBones.Clear();
 		m_DirtyBones.Clear();
-		m_GizmoController.Clear(m_API);
-
+		DeselectBone();
+	
 		if (currentConfig.IsEmpty())
 		{
 			RedrawOverlay();
 			return;
 		}
-
+	
 		Resource configResource = BaseContainerTools.LoadContainer(currentConfig);
 		if (!configResource)
 		{
@@ -577,10 +577,10 @@ class DAB_EditorController
 			RedrawOverlay();
 			return;
 		}
-
+	
 		BaseContainer config = configResource.GetResource().ToBaseContainer();
 		BaseContainerList modificationsArr = config.GetObjectArray("m_aBoneModifications");
-
+	
 		if (modificationsArr)
 		{
 			for (int i = 0; i < modificationsArr.Count(); i++)
@@ -589,12 +589,12 @@ class DAB_EditorController
 				string boneName;
 				vector rotOffset, posOffset;
 				float scale = 1.0;
-
+	
 				entry.Get("m_sBoneName", boneName);
 				entry.Get("m_vRotationOffset", rotOffset);
 				entry.Get("m_vPositionOffset", posOffset);
 				entry.Get("m_fScale", scale);
-
+	
 				// Create transform to capture the default base/original orientation
 				DAB_BoneTransform newTransform = CreateNewTransform(boneName);
 				if (newTransform)
@@ -602,13 +602,13 @@ class DAB_EditorController
 					newTransform.m_vRotationOffset = rotOffset;
 					newTransform.m_vPositionOffset = posOffset;
 					newTransform.m_fScale = scale;
-
+	
 					m_ModifiedBones.Set(boneName, newTransform);
 					RefreshBone(boneName);
 				}
 			}
 		}
-
+	
 		RedrawOverlay();
 	}
 }

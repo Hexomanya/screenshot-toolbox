@@ -51,6 +51,30 @@ CinematicEntity Test {
      }
     }
    }
+   CustomCinematicTrack "{6904B427B1520F43}" {
+    TrackName "Tester1_Pose"
+    ClassName "DAB_PoseManipulationTrack"
+    ChildTracks {
+     StringCinematicTrack "{6904B427B1527F52}" {
+      TrackName "m_sEntityName"
+      Keyframes {
+       StringCinematicKeyframe "{6904B427B1527861}" {
+        FrameNumber 0
+        Value "Tester1"
+       }
+      }
+     }
+     StringCinematicTrack "{6904B427B1527DEF}" {
+      TrackName "m_sSerializedConfigs"
+      Keyframes {
+       StringCinematicKeyframe "{6904B427B1525081}" {
+        FrameNumber 0
+        Value "Configs/PoseModifications/Tester1.conf"
+       }
+      }
+     }
+    }
+   }
   }
  }
 }

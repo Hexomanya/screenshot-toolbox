@@ -1,7 +1,6 @@
 # screenshot-toolbox
 
 # Known Bugs
-- If so switch the config while editing the bone, editin breaks.
 - We save the name in the config though we should take the name of the config. Otherwise renaming gets annoying
 - The rotation gizmo gets the wrong rotation. Maybe after the parent moves
 - When using anims, the overlay sometimes breaks
