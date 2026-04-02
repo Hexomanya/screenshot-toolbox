@@ -276,6 +276,8 @@ class DAB_EditorController
 		localOff[1] = vector.Dot(worldOff, boneOrigWorldRot[1]);
 		localOff[2] = vector.Dot(worldOff, boneOrigWorldRot[2]);
 
+		if(boneName == "Hips") PrintFormat("Controller: Setting hips to pos: %1, rot: %2", localOff, rotRadCorrected);
+		
 		anim.SetBone(targetEntity, boneId, rotRadCorrected, localOff, transform.m_fScale);
 		targetEntity.Update();
 		m_Renderer.DrawSelectedBone(targetEntity, boneName, m_API);
@@ -321,9 +323,20 @@ class DAB_EditorController
 	}
 
 	//-----------------------------------------------------------------------
+	//-----------------------------------------------------------------------
 	protected DAB_BoneTransform CreateNewTransform(string boneName)
 	{
 		IEntity targetEntity = m_ParentTool.GetCurrentTargetEntity();
+		
+		Animation anim = GetSlotDependentAnim(boneName);
+		TNodeId boneId = DAB_BoneHelper.GetBoneId(targetEntity, boneName);
+		
+		if (anim && boneId != -1)
+		{
+			anim.SetBone(targetEntity, boneId, vector.Zero, vector.Zero, 1.0);
+			targetEntity.Update();
+		}
+
 		vector bonePosition;
 		if (!DAB_BoneHelper.TryGetBonePosition(targetEntity, boneName, bonePosition))
 		{
@@ -331,7 +344,6 @@ class DAB_EditorController
 			return null;
 		}
 
-		TNodeId boneId = DAB_BoneHelper.GetBoneId(targetEntity, boneName);
 		vector  boneRotation;
 		if (!DAB_BoneHelper.TryGetBoneLocalRotation(targetEntity, boneId, boneRotation))
 		{

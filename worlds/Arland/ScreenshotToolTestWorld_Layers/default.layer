@@ -15,6 +15,18 @@ CinematicEntity Test {
      }
     }
    }
+   AnimationCinematicTrack "{6904B435C3DFFE42}" {
+    TrackName "Slider2"
+    Play BooleanCinematicTrack "{6904B435C3DFFE5D}" {
+     TrackName "Play"
+     Keyframes {
+      BooleanCinematicKeyframe "{6904B435C3DFFE58}" {
+       FrameNumber 0
+       Value 1
+      }
+     }
+    }
+   }
    CustomCinematicTrack "{69030397F0ECC0FF}" {
     TrackName "Slider_Pose"
     ClassName "DAB_PoseManipulationTrack"
@@ -47,6 +59,30 @@ CinematicEntity Test {
       BooleanCinematicKeyframe "{6904B4253BAAF9E9}" {
        FrameNumber 0
        Value 1
+      }
+     }
+    }
+   }
+   CustomCinematicTrack "{6904B4396094519C}" {
+    TrackName "Slider2_Pose"
+    ClassName "DAB_PoseManipulationTrack"
+    ChildTracks {
+     StringCinematicTrack "{6904B43960944133}" {
+      TrackName "m_sEntityName"
+      Keyframes {
+       StringCinematicKeyframe "{6904B43960944D1C}" {
+        FrameNumber 0
+        Value "Slider2"
+       }
+      }
+     }
+     StringCinematicTrack "{6904B43960944E9B}" {
+      TrackName "m_sSerializedConfigs"
+      Keyframes {
+       StringCinematicKeyframe "{6904B4396094A541}" {
+        FrameNumber 0
+        Value "Configs/PoseModifications/Slider.conf"
+       }
       }
      }
     }
@@ -172,7 +208,7 @@ $grp SCR_ChimeraCharacter : "{2619482C6C4202E0}Prefabs/Characters/Campaign/Final
     Enabled 0
    }
    AnimationPlayerComponent "{68D772DA924179D5}" {
-    Animation "{3056F5E8DECA8704}anims/anm/player/actions/gestures/p_erc_gest_salute_ADD.anm"
+    Animation "{3D47BBCDF90C1E28}anims/anm/NPC/male/Loitering/p_loitering_rfl_var01.anm"
     Loop 1
    }
   }
@@ -191,6 +227,18 @@ $grp SCR_ChimeraCharacter : "{2619482C6C4202E0}Prefabs/Characters/Campaign/Final
   }
   coords 2722.013 77.436 1630.568
   angles 0 -22.683 0
+ }
+ Slider2 {
+  components {
+   CharacterWeaponSlotComponent "{520EA1D2F659CFAB}" {
+    Enabled 0
+   }
+   AnimationPlayerComponent "{68D772DA924179D5}" {
+    Animation "{3056F5E8DECA8704}anims/anm/player/actions/gestures/p_erc_gest_salute_ADD.anm"
+    Loop 1
+   }
+  }
+  coords 2724.113 77.451 1633.372
  }
 }
 Turret : "{337D05CC762A1A21}Prefabs/Vehicles/Wheeled/BTR70/VehParts/Turret/BTR70_Turret_Anim.et" {

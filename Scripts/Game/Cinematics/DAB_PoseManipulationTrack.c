@@ -14,12 +14,15 @@ class DAB_PoseManipulationTrack : CinematicTrackBase
     protected SlotManagerComponent m_SlotManager;
     protected World m_World;
 	
-    // Cache to prevent re-parsing .conf files every frame
     protected ref map<ResourceName, ref DAB_PoseModification> m_CachedModifications = new map<ResourceName, ref DAB_PoseModification>();
+	protected ref map<string, vector> m_BaseRotationCache = new map<string, vector>();
 
     //-----------------------------------------------------------------------
     override void OnInit(World world)
     {
+		m_CachedModifications.Clear();
+		m_BaseRotationCache.Clear();
+		
         m_World = world;
         if (!m_World) return;
         
@@ -29,6 +32,7 @@ class DAB_PoseManipulationTrack : CinematicTrackBase
     //-----------------------------------------------------------------------
     override void OnApply(float time)
     {
+		m_CachedModifications.Clear();
         if (!m_World) return;
 
         // Ensure we are targeting the right entity
@@ -63,15 +67,12 @@ class DAB_PoseManipulationTrack : CinematicTrackBase
             return cached;
 
         Resource configResource = BaseContainerTools.LoadContainer(modificationName);
-		Print("modificationName that errors is: " + modificationName);
         if (!configResource || !configResource.IsValid()) return null;
         
         BaseContainer container = configResource.GetResource().ToBaseContainer();
         if (!container) return null;
 
         DAB_PoseModification poseData = new DAB_PoseModification();
-        
-        // FIX: Using WriteToInstance to map Container -> Script Object
         BaseContainerTools.WriteToInstance(poseData, container);
         
         if (poseData)
@@ -94,12 +95,16 @@ class DAB_PoseManipulationTrack : CinematicTrackBase
     {	
         TNodeId boneId = DAB_BoneHelper.GetBoneId(m_TargetEntity, boneModification.m_sBoneName);	
         
-        // Removed guards as -1 is considered a valid bone index in this context
         vector originalRotation;
-        if (!DAB_BoneHelper.TryGetBoneLocalRotation(m_TargetEntity, boneId, originalRotation))
-            return;
+        
+        if (!m_BaseRotationCache.Find(boneModification.m_sBoneName, originalRotation))
+        {
+            if (!DAB_BoneHelper.TryGetBoneLocalRotation(m_TargetEntity, boneId, originalRotation))
+                return;
+            
+            m_BaseRotationCache.Insert(boneModification.m_sBoneName, originalRotation);
+        }
 
-        // Alignment with DAB_EditorController.c swizzling (Pitch, Yaw, Roll)
         vector rotRad = boneModification.m_vRotationOffset * Math.DEG2RAD;
         vector rotRadCorrected = Vector(rotRad[1], rotRad[0], rotRad[2]);
 
@@ -113,7 +118,7 @@ class DAB_PoseManipulationTrack : CinematicTrackBase
         entityRot3[1] = entityWorld[1];
         entityRot3[2] = entityWorld[2];
 
-        // Create the base orientation matrix
+        // Create the base orientation matrix using the cached CLEAN rotation
         vector boneOrigLocal3[3];
         Math3D.AnglesToMatrix(Vector(originalRotation[1], originalRotation[0], originalRotation[2]), boneOrigLocal3);
 
@@ -127,6 +132,9 @@ class DAB_PoseManipulationTrack : CinematicTrackBase
         localOff[1] = vector.Dot(worldOff, boneOrigWorldRot[1]);
         localOff[2] = vector.Dot(worldOff, boneOrigWorldRot[2]);
 
+        if(boneModification.m_sBoneName == "Hips") 
+            PrintFormat("Track: Setting hips to pos: %1, rot: %2", localOff, rotRadCorrected);
+		
         anim.SetBone(m_TargetEntity, boneId, rotRadCorrected, localOff, boneModification.m_fScale);
         m_TargetEntity.Update();
     }
@@ -143,7 +151,8 @@ class DAB_PoseManipulationTrack : CinematicTrackBase
         
         foreach (string path : paths)
         {
-            configs.Insert(path);
+			ResourceName configPath = Workbench.GetResourceName(path);
+            configs.Insert(configPath);
         }
         return configs;
     }

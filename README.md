@@ -3,10 +3,7 @@
 # Known Bugs
 - If you create a new working config it does not register when trying to copy it over to the timeline
 - When recompiling while tool is open we loose the skeletons
-- For some reason the face breaks sometimes
-- The object sometimes switches places when activating the timeline (only when moving root(hip))
-- When resetting a bone the all gizmos do not update position
-
+- Movement gizmo bugs out when dragging it over camera switch point. Need to restrict that
 
 # TODO
 - Restructure gizmo code
