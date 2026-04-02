@@ -82,7 +82,15 @@ class DAB_EditorController
 	{
 		RefreshDisplaySettings();
 		LoadAndApplyWorkingConfig();
-		RedrawOverlay();
+		
+		if (!m_sSelectedBoneName.IsEmpty())
+		{
+			SelectBone(m_sSelectedBoneName); // Reselect so gizmo updates correctly
+		}
+		else
+		{
+			RedrawOverlay();
+		}
 	}
 	
 	//-----------------------------------------------------------------------
