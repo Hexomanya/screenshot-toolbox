@@ -94,8 +94,8 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 	//-----------------------------------------------------------------------
 	override void OnActivate()
 	{
-		RefreshTargetEntity();
 		if(!m_EditorController) m_EditorController = DAB_EditorController(this, m_API);
+		RefreshTargetEntity();
 		m_EditorController.OnActivate();
 	}
 
@@ -111,8 +111,8 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 	//-----------------------------------------------------------------------
 	override void OnAfterLoadWorld()
 	{
+		if(!m_EditorController) m_EditorController = DAB_EditorController(this, m_API); // Can not be in constructor, because api is null otherwise
 		RefreshTargetEntity();
-		m_EditorController = DAB_EditorController(this, m_API); // Can not be in constructor, because api is null otherwise
 		m_EditorController.OnAfterLoadWorld();
 	}
 	
@@ -176,7 +176,7 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 		if (m_TargetEntitySource)
 			m_TargetEntity = m_API.SourceToEntity(m_TargetEntitySource);
 
-		if(m_EditorController)
-			m_EditorController.OnTargetEntityChanged(m_TargetEntity);
+	
+		m_EditorController.OnTargetEntityChanged(m_TargetEntity);
 	}
 }

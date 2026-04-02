@@ -2,8 +2,6 @@
 
 # Known Bugs
 - If you create a new working config it does not register when trying to copy it over to the timeline
-- When recompiling while tool is open we loose the skeletons
-- Movement gizmo bugs out when dragging it over camera switch point. Need to restrict that
 
 # TODO
 - Restructure gizmo code
