@@ -39,38 +39,14 @@ CinematicEntity Test {
      }
     }
    }
-   AnimationCinematicTrack "{6904B420DA4D9268}" {
+   AnimationCinematicTrack "{6904B42530E74345}" {
     TrackName "Tester1"
-    Play BooleanCinematicTrack "{6904B420DA4D925F}" {
+    Play BooleanCinematicTrack "{6904B42530E740B6}" {
      TrackName "Play"
      Keyframes {
-      BooleanCinematicKeyframe "{6904B4202BC5A290}" {
+      BooleanCinematicKeyframe "{6904B4253BAAF9E9}" {
        FrameNumber 0
        Value 1
-      }
-     }
-    }
-   }
-   CustomCinematicTrack "{6904B427B1520F43}" {
-    TrackName "Tester1_Pose"
-    ClassName "DAB_PoseManipulationTrack"
-    ChildTracks {
-     StringCinematicTrack "{6904B427B1527F52}" {
-      TrackName "m_sEntityName"
-      Keyframes {
-       StringCinematicKeyframe "{6904B427B1527861}" {
-        FrameNumber 0
-        Value "Tester1"
-       }
-      }
-     }
-     StringCinematicTrack "{6904B427B1527DEF}" {
-      TrackName "m_sSerializedConfigs"
-      Keyframes {
-       StringCinematicKeyframe "{6904B427B1525081}" {
-        FrameNumber 0
-        Value "Configs/PoseModifications/Tester1.conf"
-       }
       }
      }
     }
@@ -201,6 +177,19 @@ $grp SCR_ChimeraCharacter : "{2619482C6C4202E0}Prefabs/Characters/Campaign/Final
    }
   }
   coords 2724.248 77.469 1631.501
+  angles 0 -22.683 0
+ }
+ NoAnim {
+  components {
+   CharacterWeaponSlotComponent "{520EA1D2F659CFAB}" {
+    Enabled 0
+   }
+   AnimationPlayerComponent "{68D772DA924179D5}" {
+    Enabled 0
+    Loop 1
+   }
+  }
+  coords 2722.013 77.436 1630.568
   angles 0 -22.683 0
  }
 }

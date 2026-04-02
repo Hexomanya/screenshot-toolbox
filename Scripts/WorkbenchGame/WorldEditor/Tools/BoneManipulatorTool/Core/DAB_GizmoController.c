@@ -23,6 +23,7 @@ class DAB_GizmoController
 	protected ref ScriptInvokerBase<DAB_GizmoController_OnTransformChanged> m_OnTransformChanged;
 
 	protected ref DAB_BoneTransform m_currentTransform;
+	protected IEntity               m_AttachedEntity;
 
 	// Accumulated rotation since Attach() — applies bone-local frame rotations.
 	protected vector m_mAccumRotation[3];
@@ -40,7 +41,11 @@ class DAB_GizmoController
 	}
 
 	//-----------------------------------------------------------------------
-	void ~DAB_GizmoController() { m_API = null; }
+	void ~DAB_GizmoController() 
+	{ 
+		m_API = null; 
+		m_AttachedEntity = null;
+	}
 
 	//-----------------------------------------------------------------------
 	//! ScriptInvoker fired whenever the attached bone's transform changes.
@@ -56,25 +61,26 @@ class DAB_GizmoController
 	//! Call Clear() first if already attached.
 	void Attach(IEntity entity, DAB_BoneTransform boneToAttach, WorldEditorAPI api, float cameraDistance)
 	{
-	    if (m_currentTransform)
-	    {
-	        Print("DAB_GizmoController.Attach: previous bone was not cleared first.", LogLevel.WARNING);
-	        Clear(api);
-	    }
-	
-	    m_currentTransform = boneToAttach;
-	
-	    vector entityWorld[4];
-	    entity.GetTransform(entityWorld);
-	    m_mEntityRotation[0] = entityWorld[0];
-	    m_mEntityRotation[1] = entityWorld[1];
-	    m_mEntityRotation[2] = entityWorld[2];
-	
-	    vector existingRot = boneToAttach.m_vRotationOffset;
-	    Math3D.AnglesToMatrix(Vector(existingRot[1], existingRot[0], existingRot[2]), m_mAccumRotation);
-	
-	    m_gizmoMode = DAB_GizmoMode.Rotation;
-	    CreateRotationGizmo(api);
+		if (m_currentTransform)
+		{
+			Print("DAB_GizmoController.Attach: previous bone was not cleared first.", LogLevel.WARNING);
+			Clear(api);
+		}
+
+		m_AttachedEntity  = entity;
+		m_currentTransform = boneToAttach;
+
+		vector entityWorld[4];
+		entity.GetTransform(entityWorld);
+		m_mEntityRotation[0] = entityWorld[0];
+		m_mEntityRotation[1] = entityWorld[1];
+		m_mEntityRotation[2] = entityWorld[2];
+
+		vector existingRot = boneToAttach.m_vRotationOffset;
+		Math3D.AnglesToMatrix(Vector(existingRot[1], existingRot[0], existingRot[2]), m_mAccumRotation);
+
+		m_gizmoMode = DAB_GizmoMode.Rotation;
+		CreateRotationGizmo(api);
 	}
 
 	//-----------------------------------------------------------------------
@@ -98,6 +104,7 @@ class DAB_GizmoController
 	//! Detaches from the current bone and destroys all gizmos.
 	void Clear(WorldEditorAPI api)
 	{
+		m_AttachedEntity   = null;
 		m_currentTransform = null;
 		m_gizmoMode        = DAB_GizmoMode.Deactivated;
 		DestroyActiveGizmo();
@@ -147,15 +154,39 @@ class DAB_GizmoController
 	void OnCameraDistanceChange(float newCameraDistance, WorldEditorAPI api)
 	{
 		if (!m_currentTransform) return;
-
-		vector gizmoPos  = m_currentTransform.GetAdjustedPosition();
-		float  newRadius = DAB_VisConfig.ComputeGizmoRadius(api, gizmoPos);
-
+	
+		vector gizmoPos    = GetCurrentGizmoPosition();
+		float  newRadius   = DAB_VisConfig.ComputeGizmoRadius(api, gizmoPos);
+		vector worldAngles = GetCurrentWorldAngles();
+	
+		// TODO: Use nicer structure for gizmo so we do not need to do this
 		switch (m_gizmoMode)
 		{
-			case DAB_GizmoMode.Rotation: if (m_RotationGizmo) { m_RotationGizmo.SetRadius(newRadius); m_RotationGizmo.Render(api); } break;
-			case DAB_GizmoMode.Position: if (m_PositionGizmo) { m_PositionGizmo.SetRadius(newRadius); m_PositionGizmo.Render(api); } break;
-			case DAB_GizmoMode.Scale:    if (m_ScaleGizmo)    { m_ScaleGizmo.SetRadius(newRadius);    m_ScaleGizmo.Render(api);    } break;
+			case DAB_GizmoMode.Rotation:
+				if (!m_RotationGizmo) break;
+				
+				m_RotationGizmo.SetPosition(gizmoPos);
+				m_RotationGizmo.SetRadius(newRadius);
+				m_RotationGizmo.SetRotation(worldAngles);
+				m_RotationGizmo.Render(api);
+				break;
+	
+			case DAB_GizmoMode.Position:
+				if (!m_PositionGizmo) break;
+				
+				m_PositionGizmo.SetPosition(gizmoPos);
+				m_PositionGizmo.SetRadius(newRadius);
+				m_PositionGizmo.SetRotation(worldAngles);
+				m_PositionGizmo.Render(api);
+				break;
+	
+			case DAB_GizmoMode.Scale:
+				if (!m_ScaleGizmo) break;
+				
+				m_ScaleGizmo.SetPosition(gizmoPos);
+				m_ScaleGizmo.SetRadius(newRadius);
+				m_ScaleGizmo.Render(api);
+				break;
 		}
 	}
 
@@ -179,6 +210,20 @@ class DAB_GizmoController
 	DAB_GizmoMode GetGizmoMode() { return m_gizmoMode; }
 
 	// ── Private ────────────────────────────────────────────────────────────
+
+	//-----------------------------------------------------------------------
+	//! Uses the actual current bone world position if available.
+	protected vector GetCurrentGizmoPosition()
+	{
+		if (m_AttachedEntity && m_currentTransform)
+		{
+			vector liveBonePos;
+			if (DAB_BoneHelper.TryGetBonePosition(m_AttachedEntity, m_currentTransform.GetBoneName(), liveBonePos))
+				return liveBonePos;
+		}
+
+		return m_currentTransform.GetAdjustedPosition();
+	}
 
 	//-----------------------------------------------------------------------
 	// Computes combined = entityRotation × boneOriginalRotation × accumRotation.
@@ -208,7 +253,7 @@ class DAB_GizmoController
 	//-----------------------------------------------------------------------
 	protected void CreateRotationGizmo(WorldEditorAPI api)
 	{
-		vector position = m_currentTransform.GetAdjustedPosition();
+		vector position = GetCurrentGizmoPosition();
 		m_RotationGizmo = new DAB_RotationGizmo(
 			position,
 			GetCurrentWorldAngles(),
@@ -221,7 +266,7 @@ class DAB_GizmoController
 	//-----------------------------------------------------------------------
 	protected void CreatePositionGizmo(WorldEditorAPI api)
 	{
-		vector position = m_currentTransform.GetAdjustedPosition();
+		vector position = GetCurrentGizmoPosition();
 		m_PositionGizmo = new DAB_MoveGizmo(
 			position,
 			GetCurrentWorldAngles(),
@@ -234,7 +279,7 @@ class DAB_GizmoController
 	//-----------------------------------------------------------------------
 	protected void CreateScaleGizmo(WorldEditorAPI api)
 	{
-		vector position = m_currentTransform.GetAdjustedPosition();
+		vector position = GetCurrentGizmoPosition();
 		m_ScaleGizmo = new DAB_ScaleGizmo(position, DAB_VisConfig.ComputeGizmoRadius(api, position));
 		m_ScaleGizmo.GetOnScale().Insert(this.OnGizmoScale);
 		m_ScaleGizmo.Render(api);
@@ -315,7 +360,7 @@ class DAB_GizmoController
 	{
 		if (!m_RotationGizmo || !m_currentTransform) return;
 
-		vector gizmoPos = m_currentTransform.GetAdjustedPosition();
+		vector gizmoPos = GetCurrentGizmoPosition();
 		m_RotationGizmo.SetPosition(gizmoPos);
 		m_RotationGizmo.SetRadius(DAB_VisConfig.ComputeGizmoRadius(m_API, gizmoPos));
 		m_RotationGizmo.SetRotation(GetCurrentWorldAngles());
@@ -326,10 +371,11 @@ class DAB_GizmoController
 	protected void UpdatePositionGizmo()
 	{
 		if (!m_PositionGizmo || !m_currentTransform) return;
-
-		vector gizmoPos = m_currentTransform.GetAdjustedPosition();
+	
+		vector gizmoPos = GetCurrentGizmoPosition();
 		m_PositionGizmo.SetPosition(gizmoPos);
 		m_PositionGizmo.SetRadius(DAB_VisConfig.ComputeGizmoRadius(m_API, gizmoPos));
+		m_PositionGizmo.SetRotation(GetCurrentWorldAngles());
 		m_PositionGizmo.Render(m_API);
 	}
 
@@ -338,7 +384,7 @@ class DAB_GizmoController
 	{
 		if (!m_ScaleGizmo || !m_currentTransform) return;
 
-		vector gizmoPos = m_currentTransform.GetAdjustedPosition();
+		vector gizmoPos = GetCurrentGizmoPosition();
 		m_ScaleGizmo.SetPosition(gizmoPos);
 		m_ScaleGizmo.SetRadius(DAB_VisConfig.ComputeGizmoRadius(m_API, gizmoPos));
 		m_ScaleGizmo.Render(m_API);
