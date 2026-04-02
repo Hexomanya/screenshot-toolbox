@@ -82,6 +82,7 @@ class DAB_EditorController
 	{
 		RefreshDisplaySettings();
 		LoadAndApplyWorkingConfig();
+		RedrawOverlay();
 	}
 	
 	//-----------------------------------------------------------------------
