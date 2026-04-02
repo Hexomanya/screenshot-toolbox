@@ -75,11 +75,13 @@ class DAB_MoveGizmo
 		vector camPos, rayEnd, rayDir;
 		api.TraceWorldPos(api.GetScreenWidth() / 2, api.GetScreenHeight() / 2, TraceFlags.WORLD, camPos, rayEnd, rayDir);
 
-		// Flip each arrow sign so it always faces the camera
-		vector camDir = (camPos - m_vCenter).Normalized();
-		if (vector.Dot(m_mRotation[0], camDir) >= 0) m_fXSign =  1.0; else m_fXSign = -1.0;
-		if (vector.Dot(m_mRotation[1], camDir) >= 0) m_fYSign =  1.0; else m_fYSign = -1.0;
-		if (vector.Dot(m_mRotation[2], camDir) >= 0) m_fZSign =  1.0; else m_fZSign = -1.0;
+		if (!m_bIsDragging)
+	    {
+	        vector camDir = (camPos - m_vCenter).Normalized();
+	        if (vector.Dot(m_mRotation[0], camDir) >= 0) m_fXSign =  1.0; else m_fXSign = -1.0;
+	        if (vector.Dot(m_mRotation[1], camDir) >= 0) m_fYSign =  1.0; else m_fYSign = -1.0;
+	        if (vector.Dot(m_mRotation[2], camDir) >= 0) m_fZSign =  1.0; else m_fZSign = -1.0;
+	    }
 
 		float shaftRadius = m_fRadius * 0.035;
 		float coneRadius  = m_fRadius * 0.10;
