@@ -226,177 +226,33 @@ class DAB_CinematicsHelper
 	}
 	
 	//-----------------------------------------------------------------------
-	static bool TryUpdatePoseTrackConfigs(IEntitySource entitySource, string entityName, array<ResourceName> configs, WorldEditorAPI api)
+	static bool TryAddPoseTrack(IEntitySource sceneSource, string trackName, WorldEditorAPI api)
 	{
-	    BaseContainer entityContainer = entitySource.ToBaseContainer();
-	    BaseContainer sceneContainer = entityContainer.GetObject("Scene");
-	    if (!sceneContainer)
-	        return false;
+	    if (!sceneSource) return false;
 	
-	    BaseContainerList trackList = sceneContainer.GetObjectArray("Tracks");
-	    if (!trackList)
-	        return false;
+	    BaseContainer entityContainer = sceneSource.ToBaseContainer();
+	    if (!entityContainer) return false;
 	
-	    for (int j = 0; j < trackList.Count(); j++)
-	    {
-	        BaseContainer trackContainer = trackList.Get(j);
-	        if (!trackContainer)
-	            continue;
-	
-	        string trackClassName;
-	        trackContainer.Get("ClassName", trackClassName);
-	        if (trackClassName != "DAB_PoseManipulationTrack")
-	            continue;
-	
-	        string trackName;
-	        trackContainer.Get("TrackName", trackName);
-	        if (trackName != entityName + "_Pose")
-	            continue;
-	
-	        BaseContainerList childTracks = trackContainer.GetObjectArray("ChildTracks");
-	        if (!childTracks)
-	            return false;
-	
-	        // Path built from live entityContainer — j is now trustworthy
-	        array<ref ContainerIdPathEntry> path = { new ContainerIdPathEntry("Scene") };
-	        path.Insert(new ContainerIdPathEntry("Tracks", j));
-	
-	        string configsStr = DAB_Helper.GetCombinedConfigString(configs);
-	
-	        api.BeginEntityAction();
-	        api.BeginEditSequence(entitySource);
-	
-	        for (int i = 0; i < childTracks.Count(); i++)
-	        {
-	            BaseContainer childTrack = childTracks.Get(i);
-	            string childTrackName;
-	            childTrack.Get("TrackName", childTrackName);
-	
-	            string newValue;
-	            if (childTrackName == "m_sEntityName")
-	                newValue = entityName;
-	            else if (childTrackName == "m_sSerializedConfigs")
-	                newValue = configsStr;
-	            else
-	                continue;
-	
-	            array<ref ContainerIdPathEntry> keyframePath = {};
-	            foreach (ContainerIdPathEntry entry : path)
-				{
-					 keyframePath.Insert(entry);
-				}
-	               
-	            keyframePath.Insert(new ContainerIdPathEntry("ChildTracks", i));
-	            keyframePath.Insert(new ContainerIdPathEntry("Keyframes", 0));
-	
-	            foreach (ContainerIdPathEntry e : keyframePath)
-	                Print("  " + e.PropertyName + "[" + e.Index + "]");
-	
-	            api.SetVariableValue(entityContainer, keyframePath, "FrameNumber", "0");
-	            api.SetVariableValue(entityContainer, keyframePath, "Value", newValue);
-	        }
-	
-	        api.EndEditSequence(entitySource);
-	        api.EndEntityAction();
-	
-	        return true;
-	    }
-	
-	    return false;
-	}
-
-	//-----------------------------------------------------------------------
-	static bool TryAddPoseTrackToScene(IEntitySource entitySource, string entityName, array<ResourceName> configs, WorldEditorAPI api)
-	{
-	    if (!entitySource)
-	        return false;
-	
-	    BaseContainer entityContainer = entitySource.ToBaseContainer();
-	    BaseContainer sceneContainer = entityContainer.GetObject("Scene");
-	    if (!sceneContainer)
-	        return false;
-	
-	    BaseContainerList trackList = sceneContainer.SetObjectArray("Tracks");
-	    if (!trackList)
-	        return false;
-	
-	    int newIndex = trackList.Count();
 	    array<ref ContainerIdPathEntry> path = { new ContainerIdPathEntry("Scene") };
 	
 	    api.BeginEntityAction();
-	    api.BeginEditSequence(entitySource);
 	
-	    if (!api.CreateObjectArrayVariableMember(entityContainer, path, "Tracks", "CustomCinematicTrack", newIndex))
+	    if (!api.CreateObjectArrayVariableMember(entityContainer, path, "Tracks", "CustomCinematicTrack", -1))
 	    {
-	        api.EndEditSequence(entitySource);
 	        api.EndEntityAction();
 	        return false;
 	    }
-		
-		
-		
-	    path.Insert(new ContainerIdPathEntry("Tracks", newIndex));
+	    
+	    BaseContainer sceneContainer = entityContainer.GetObject("Scene");
+	    BaseContainerList tracks = sceneContainer.GetObjectArray("Tracks");
+	    int newIdx = tracks.Count() - 1;
+	
+	    path.Insert(new ContainerIdPathEntry("Tracks", newIdx));
+	
 	    api.SetVariableValue(entityContainer, path, "ClassName", "DAB_PoseManipulationTrack");
-	    api.SetVariableValue(entityContainer, path, "TrackName", entityName + "_Pose");
+	    api.SetVariableValue(entityContainer, path, "TrackName", trackName);
 	
-	    // Reinitialize the edit sequence to force the API to recognize the newly created sub-tracks 
-	    // generated by the DAB_PoseManipulationTrack ClassName
-	    api.EndEditSequence(entitySource);
-	    api.BeginEditSequence(entitySource);
-	
-	    BaseContainer wrapperContainer = trackList.Get(newIndex);
-	    BaseContainerList childTracks = wrapperContainer.GetObjectArray("ChildTracks");
-	    if (!childTracks)
-	    {
-	        api.EndEditSequence(entitySource);
-	        api.EndEntityAction();
-	        return false;
-	    }
-	
-	    string configsStr = DAB_Helper.GetCombinedConfigString(configs);
-	
-	    map<string, string> trackValues = new map<string, string>();
-	    trackValues.Insert("m_sEntityName", entityName);
-	    trackValues.Insert("m_sSerializedConfigs", configsStr);
-	
-	    for (int i = 0; i < childTracks.Count(); i++)
-	    {
-	        BaseContainer childTrack = childTracks.Get(i);
-	        string trackName;
-	        childTrack.Get("TrackName", trackName);
-	
-	        if (!trackValues.Contains(trackName))
-	        {
-	            continue;
-	        }
-	
-	        array<ref ContainerIdPathEntry> childPath = {};
-	        foreach (ContainerIdPathEntry entry : path)
-	        {
-	            childPath.Insert(entry);
-	        }
-	        childPath.Insert(new ContainerIdPathEntry("ChildTracks", i));
-	
-	        if (api.CreateObjectArrayVariableMember(entityContainer, childPath, "Keyframes", "StringCinematicKeyframe", 0))
-	        {
-	            array<ref ContainerIdPathEntry> keyframePath = {};
-	            foreach (ContainerIdPathEntry entry : childPath)
-	            {
-	                keyframePath.Insert(entry);
-	            }
-	            keyframePath.Insert(new ContainerIdPathEntry("Keyframes", 0));
-				
-            	foreach (ContainerIdPathEntry e : keyframePath)
-                	Print("  " + e.PropertyName + "[" + e.Index + "]");
-	
-	            api.SetVariableValue(entityContainer, keyframePath, "FrameNumber", "0");
-	            api.SetVariableValue(entityContainer, keyframePath, "Value", trackValues[trackName]);
-	        }
-	    }
-	
-	    api.EndEditSequence(entitySource);
 	    api.EndEntityAction();
-	
 	    return true;
 	}
 }

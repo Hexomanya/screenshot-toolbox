@@ -171,6 +171,9 @@ $grp SCR_ChimeraCharacter : "{2619482C6C4202E0}Prefabs/Characters/Campaign/Final
  }
  Tester1 {
   components {
+   DAB_PoseModificationComponent "{690F1D1E9F36E12E}" {
+    m_sWorkingPoseModification "{653A5A98963DD123}Configs/PoseModifications/asdasdasd.conf"
+   }
    CharacterWeaponSlotComponent "{520EA1D2F659CFAB}" {
     Enabled 0
    }
@@ -179,7 +182,7 @@ $grp SCR_ChimeraCharacter : "{2619482C6C4202E0}Prefabs/Characters/Campaign/Final
     Loop 1
    }
   }
-  coords 2724.248 77.469 1631.501
+  coords 2723.504 77.444 1631.19
   angles 0 -22.683 0
  }
  NoAnim {

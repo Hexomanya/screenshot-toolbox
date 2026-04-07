@@ -88,7 +88,7 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 	[ButtonAttribute("Create Track")]
 	void CreateCinematicTrack()
 	{
-	
+		DAB_ToolButtonInteractions.CreateCinematicTrack(m_TargetEntity, m_API);
 	}
 	
 	[ButtonAttribute("Create Component")]
@@ -96,12 +96,7 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 	{
 		DAB_ToolButtonInteractions.CreateComponent(this, m_API);
 	}
-	/*
-	[ButtonAttribute("Copy To Scene")]
-	void CopyToCinematicScene()
-	{
-		DAB_ToolButtonInteractions.CopyToCinematicScene(m_sWorkingConfig, m_aStackedConfigs, m_TargetEntity, m_API);
-	}*/
+	
 	
 	// ── Lifecycle ──────────────────────────────────────────────────────────
 	//-----------------------------------------------------------------------

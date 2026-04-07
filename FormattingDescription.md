@@ -23,11 +23,14 @@ We deviate from BI on arrays and maps, to make variable easier to search for.
 * **Commenting Philosophy**: 
     * No describing comments. Do not explain *what* the code is doing (e.g., "looping through array").
     * Comments are only permitted to explain **WHY** the code is there, such as fixing specific engine bugs or handling non-obvious editor behaviors.
+* **Print**: Print() or PrintFormat() are only allowed when using a LogLevel. Debug prints need to be removed or tagged with the comment: `// TODO: Remove Debug Print`.
+    * When a function that is triggered by a button exits early a Workbench.Dialog() should be added before the print.
 
 ## 4. Class Organization
-* **Attributes**: Place all `[Attribute]` fields at the top of the class for easy configuration within the Workbench.
+* **Attributes**: Place all `[Attribute]` fields at the top of the class for easy configuration within the Workbench. If they have a category defined sort them by it.
 * **Member Variables**: Group internal variables (non-attributes) immediately below the attributes.
 * **Methods**: Organize methods by their access level or lifecycle: `override` methods first, followed by `public`, then `protected`.
+    * In their own category methods are sorted alphabetically
 
 ---
 
@@ -50,7 +53,7 @@ class DAB_ExampleComponent : ScriptComponent
     protected void InternalProcess()
     {
         if (!m_bEnableLogic) return;
-        
+
         m_aNames.Clear(); //The Workbench fails to clear this buffer when the entity is deselected, leading to memory leaks.
     }
 }

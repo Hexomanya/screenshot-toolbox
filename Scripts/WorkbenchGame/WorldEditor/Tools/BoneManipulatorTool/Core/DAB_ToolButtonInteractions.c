@@ -53,104 +53,85 @@ class DAB_ToolButtonInteractions
 	}
 
 	//-----------------------------------------------------------------------
-	static void CopyToCinematicScene(ResourceName workingConfig, array<ResourceName> modificationStack, IEntity targetEntity, WorldEditorAPI api)
+	static void CreateCinematicTrack(IEntity targetEntity, WorldEditorAPI api)
 	{
-		if (!targetEntity)
-		{
-			Workbench.Dialog("No Entity", "Select an entity first.");
-			return;
-		}
-
-		if (workingConfig.IsEmpty())
-		{
-			Workbench.Dialog("No Config", "Select a working config first.");
-			return;
-		}
-
-		map<string, CinematicEntity> currentScenes = DAB_CinematicsHelper.GetCurrentScenes(api);
-		if (currentScenes.IsEmpty())
-		{
-			Workbench.Dialog("No Scenes Found", "No cinematic scenes exist in this world.");
-			return;
-		}
-
-		array<string> sceneNames = {};
-		for (MapIterator it = currentScenes.Begin(); it != currentScenes.End(); it = currentScenes.Next(it))
-			sceneNames.Insert(currentScenes.GetIteratorKey(it));
-
-		array<int> selectedIndices = {};
-		int result = api.ShowItemListDialog(
-			"Select Cinematic Scene",
-			"Choose which scene to add '" + workingConfig + "' to:",
-			400, 300,
-			sceneNames,
-			selectedIndices,
-			0
-		);
-
-		if (result == -1 || selectedIndices.Count() == 0)
-		{
-			Print("CopyToCinematicScene: cancelled or no scene selected.");
-			return;
-		}
-
-		if (!ShowConfirmDialog("Copy to Scene(s)", "You are about to copy the active manipulation to " + selectedIndices.Count() + " scene(s). Are you sure?"))
-		{
-			Print("CopyToCinematicScene: user cancelled.");
-			return;
-		}
-
-		string currentEntityName = targetEntity.GetName();
-
-		foreach (int sceneIndex : selectedIndices)
-		{
-			string key = sceneNames[sceneIndex];
-			if (key.IsEmpty()) continue;
-
-			CinematicEntity sceneEntity;
-			if (!currentScenes.Find(key, sceneEntity) || !sceneEntity) continue;
-
-			BaseContainer scene = DAB_CinematicsHelper.GetCinematicScene(sceneEntity, api);
-			if (!scene) continue;
-
-			if (DAB_CinematicsHelper.HasSlotBoneTrackForEntity(scene, currentEntityName))
-			{
-				if (!ShowConfirmDialog(
-					"SlotBoneAnimationCinematicTrack Detected",
-					"The entity '" + currentEntityName + "' has a SlotBoneAnimationCinematicTrack in scene '" + key + "'.\n\nThis may conflict with pose modifications. Do you want to continue anyway?"))
-					continue;
-			}
-
-			int ownedPoseTrackCount = DAB_CinematicsHelper.CountOwnedPoseTracks(scene, currentEntityName);
-			if (ownedPoseTrackCount > 1)
-			{
-				Workbench.Dialog(
-					"Too Many Pose Tracks",
-					"The entity '" + currentEntityName + "' has " + ownedPoseTrackCount + " DAB Pose Manipulation Tracks assigned.\n\nOnly one track per entity is supported. Please remove the extra " + (ownedPoseTrackCount - 1) + " track(s) before continuing."
-				);
-				return;
-			}
-
-			array<ResourceName> configs = {};
-			foreach (ResourceName modification : modificationStack)
-			{
-				if (!modification.IsEmpty())
-					configs.Insert(modification);
-			}
-			configs.Insert(workingConfig);
-
-			IEntitySource sceneEntitySource = api.EntityToSource(sceneEntity);
-			bool success;
-			if (ownedPoseTrackCount == 0)
-				success = DAB_CinematicsHelper.TryAddPoseTrackToScene(sceneEntitySource, currentEntityName, configs, api);
-			else
-				success = DAB_CinematicsHelper.TryUpdatePoseTrackConfigs(sceneEntitySource, currentEntityName, configs, api);
-
-			if (!success)
-				Workbench.Dialog("Failed", "Could not update the pose track in scene '" + key + "'.");
-			else
-				Print("CopyToCinematicScene: successfully updated scene '" + key + "'.", LogLevel.NORMAL);
-		}
+	    if (!targetEntity)
+	    {
+	        Workbench.Dialog("No Entity", "Please select an entity in the world first.");
+	        Print("CreateCinematicTrack: No target entity provided.", LogLevel.WARNING);
+	        return;
+	    }
+	
+	    string entityName = targetEntity.GetName();
+	    if (entityName.IsEmpty())
+	    {
+	        Workbench.Dialog("Unnamed Entity", "The entity must have a unique Name (not just a label) to link to a track.");
+	        Print("CreateCinematicTrack: Entity has no name.", LogLevel.ERROR);
+	        return;
+	    }
+	
+	    map<string, CinematicEntity> scenes = DAB_CinematicsHelper.GetCurrentScenes(api);
+	    if (scenes.IsEmpty())
+	    {
+	        Workbench.Dialog("No Scenes", "No Cinematic Scenes found in the current world.");
+	        Print("CreateCinematicTrack: No scenes found.", LogLevel.WARNING);
+	        return;
+	    }
+	
+	    array<string> sceneNames = {};
+	    for (int i = 0; i < scenes.Count(); i++)
+	    {
+	        sceneNames.Insert(scenes.GetKey(i));
+	    }
+		
+	    array<int> selectedIndices = {};
+	    int result = api.ShowItemListDialog("Select Scenes", "Add pose track to:", 400, 300, sceneNames, selectedIndices, 0);
+	
+	    if (result == -1 || selectedIndices.Count() == 0)
+	    {
+	        Print("CreateCinematicTrack: User cancelled selection.", LogLevel.NORMAL);
+	        return;
+	    }
+	
+	    // Define the track name. The track uses everything before the '_' as the target entity name.
+	    string trackName = entityName + "_PoseTrack";
+	
+	    foreach (int index : selectedIndices)
+	    {
+	        string key = sceneNames[index];
+	        CinematicEntity sceneEntity = scenes.Get(key);
+	        
+	        if (!sceneEntity)
+	        {
+	            PrintFormat("CreateCinematicTrack: Scene '%1' is invalid.", key, LogLevel.ERROR);
+	            continue;
+	        }
+	
+	        BaseContainer container = DAB_CinematicsHelper.GetCinematicScene(sceneEntity, api);
+	        if (!container)
+	        {
+	            PrintFormat("CreateCinematicTrack: Could not get container for scene '%1'.", key, LogLevel.ERROR);
+	            continue;
+	        }
+	
+	        // Prevent duplicate tracks for the same entity in the same scene
+	        if (DAB_CinematicsHelper.CountOwnedPoseTracks(container, entityName) > 0)
+	        {
+	            Workbench.Dialog("Track Exists", "A pose track for '" + entityName + "' already exists in '" + key + "'.");
+	            continue;
+	        }
+	
+	        IEntitySource sceneSource = api.EntityToSource(sceneEntity);
+	        if (!DAB_CinematicsHelper.TryAddPoseTrack(sceneSource, trackName, api))
+	        {
+	            Workbench.Dialog("Error", "Failed to create track in scene: " + key);
+	            PrintFormat("CreateCinematicTrack: TryAddPoseTrack failed for %1", key, LogLevel.ERROR);
+	        }
+	        else
+	        {
+	            PrintFormat("CreateCinematicTrack: Added track '%1' to scene '%2'", trackName, key);
+	        }
+	    }
 	}
 
 	//-----------------------------------------------------------------------
