@@ -21,6 +21,19 @@ class DAB_PoseModificationComponent : ScriptComponent
 		return m_sWorkingPoseModification;
 	}
 	
+	//-----------------------------------------------------------------------
+	//! Returns a copy of the pose modification list (does not include the working config).
+	array<ResourceName> GetPoseModifications()
+	{
+		array<ResourceName> result = {};
+		if (m_aPoseModifications)
+		{
+			foreach (ResourceName rn : m_aPoseModifications)
+				result.Insert(rn);
+		}
+		return result;
+	}
+	
 	DAB_PoseModification GetWorkingModificationData()
 	{
 		if(m_sWorkingPoseModification.IsEmpty()) return null;
@@ -50,8 +63,6 @@ class DAB_PoseModificationComponent : ScriptComponent
 	        return;
 	    }
 	
-	    // Read the components array to find this component's index
-	    // (Reading via BaseContainer methods is valid per the Enfusion API)
 	    BaseContainerList components = entitySource.GetObjectArray("components");
 	    if (!components)
 	    {
@@ -85,7 +96,6 @@ class DAB_PoseModificationComponent : ScriptComponent
 	    );
 	    api.EndEntityAction();
 	
-	    // Keep the runtime field in sync for the current session
 	    m_sWorkingPoseModification = configPath;
 	
 	    PrintFormat("SetWorkingModificationConfig: set m_sWorkingPoseModification to %1 at component index %2", configPath, componentIndex);
@@ -99,7 +109,6 @@ class DAB_PoseModificationComponent : ScriptComponent
 			return;
 		}
 		
-		// TODO: We are using api in the game section, is this valid?
 		api.BeginEntityAction();
 		
 		Resource resource = BaseContainerTools.LoadContainer(m_sWorkingPoseModification);
@@ -110,6 +119,4 @@ class DAB_PoseModificationComponent : ScriptComponent
 	    
 		api.EndEntityAction();
 	}
-	
-	
 }

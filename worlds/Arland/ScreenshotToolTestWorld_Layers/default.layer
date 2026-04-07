@@ -39,6 +39,21 @@ CinematicEntity Test {
      }
     }
    }
+   CustomCinematicTrack "{690F1D154F6EC461}" {
+    TrackName "NoAnim"
+    ClassName "DAB_PoseManipulationTrack"
+    ChildTracks {
+     BooleanCinematicTrack "{690F1D154F6EC070}" {
+      TrackName "m_bApplyModifications"
+      Keyframes {
+       BooleanCinematicKeyframe "{690F1D154A17FF23}" {
+        FrameNumber 0
+        Value 1
+       }
+      }
+     }
+    }
+   }
   }
  }
 }
