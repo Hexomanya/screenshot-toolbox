@@ -97,7 +97,6 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 		DAB_ToolButtonInteractions.CreateComponent(this, m_API);
 	}
 	
-	
 	// ── Lifecycle ──────────────────────────────────────────────────────────
 	//-----------------------------------------------------------------------
 	override void OnActivate()

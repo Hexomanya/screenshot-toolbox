@@ -54,6 +54,15 @@ CinematicEntity Test {
      }
     }
    }
+   CustomCinematicTrack "{690F412EBFFFE28A}" {
+    TrackName "Tester1_PoseTrack"
+    ClassName "DAB_PoseManipulationTrack"
+    ChildTracks {
+     BooleanCinematicTrack "{690F412EBFFE3D3E}" {
+      TrackName "m_bApplyModifications"
+     }
+    }
+   }
   }
  }
 }

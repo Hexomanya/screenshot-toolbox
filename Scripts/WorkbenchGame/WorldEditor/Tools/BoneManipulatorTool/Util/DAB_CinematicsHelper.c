@@ -235,24 +235,29 @@ class DAB_CinematicsHelper
 	
 	    array<ref ContainerIdPathEntry> path = { new ContainerIdPathEntry("Scene") };
 	
+		api.BeginEditSequence(sceneSource);
 	    api.BeginEntityAction();
-	
+		
 	    if (!api.CreateObjectArrayVariableMember(entityContainer, path, "Tracks", "CustomCinematicTrack", -1))
 	    {
 	        api.EndEntityAction();
+			api.EndEditSequence(sceneSource);
 	        return false;
 	    }
-	    
+		
+		Print("The last error is known, but sadly not fixable. It should not cause any problems.", LogLevel.WARNING);
+
 	    BaseContainer sceneContainer = entityContainer.GetObject("Scene");
 	    BaseContainerList tracks = sceneContainer.GetObjectArray("Tracks");
 	    int newIdx = tracks.Count() - 1;
-	
+
 	    path.Insert(new ContainerIdPathEntry("Tracks", newIdx));
-	
-	    api.SetVariableValue(entityContainer, path, "ClassName", "DAB_PoseManipulationTrack");
-	    api.SetVariableValue(entityContainer, path, "TrackName", trackName);
+
+		api.SetVariableValue(entityContainer, path, "ClassName", "DAB_PoseManipulationTrack");
+		api.SetVariableValue(entityContainer, path, "TrackName", trackName);
 	
 	    api.EndEntityAction();
+		api.EndEditSequence(sceneSource);
 	    return true;
 	}
 }
