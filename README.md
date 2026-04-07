@@ -2,6 +2,7 @@
 
 # Known Bugs
 - If you create a new working config it does not register when trying to copy it over to the timeline
+- Filter bone name does not work
 
 # TODO
 - Restructure gizmo code

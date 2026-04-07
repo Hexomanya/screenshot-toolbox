@@ -36,7 +36,7 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 	protected bool m_bShouldAutoSave;
 	
 	// ── Current Pose Config ──
-	[Attribute(
+	/*[Attribute(
 	    uiwidget: UIWidgets.ResourceNamePicker,
 	    desc: "Select an existing pose modification to load and edit",
 	    params: "conf DAB_PoseModification",
@@ -50,7 +50,7 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 	    params: "conf DAB_PoseModification",
 	    category: "Current Pose Config"
 	)]
-	protected ref array<ResourceName> m_aStackedConfigs;
+	protected ref array<ResourceName> m_aStackedConfigs;*/
 	
 	// ── New Config Creation ──
 	[Attribute(
@@ -66,8 +66,9 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 	void ~DAB_BoneManipulatorTool();
 	
 	// ── Runtime state ──────────────────────────────────────────────────────
-	protected IEntity       m_TargetEntity;
+	protected IEntity m_TargetEntity;
 	protected IEntitySource m_TargetEntitySource;
+	protected DAB_PoseModificationComponent m_TargetComponent;
 	protected ref DAB_EditorController m_EditorController;
 	
 	// ── Tool Interaction ───────────────────────────────────────────────────────
@@ -78,17 +79,29 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 		DAB_ToolButtonInteractions.SaveEdits(this, m_EditorController); 
 	}
 	
-	[ButtonAttribute("Create New Config")]
+	[ButtonAttribute("Create Config")]
 	void CreateNewConfig()
 	{
-	    DAB_ToolButtonInteractions.CreateNewConfig(this, m_sWorkingConfig, m_sWorkingConfigFolder);
+	    DAB_ToolButtonInteractions.CreateNewConfig(this, m_API, m_sWorkingConfigFolder);
 	}
 	
+	[ButtonAttribute("Create Track")]
+	void CreateCinematicTrack()
+	{
+	
+	}
+	
+	[ButtonAttribute("Create Component")]
+	void CreateComponent()
+	{
+		DAB_ToolButtonInteractions.CreateComponent(this, m_API);
+	}
+	/*
 	[ButtonAttribute("Copy To Scene")]
 	void CopyToCinematicScene()
 	{
 		DAB_ToolButtonInteractions.CopyToCinematicScene(m_sWorkingConfig, m_aStackedConfigs, m_TargetEntity, m_API);
-	}
+	}*/
 	
 	// ── Lifecycle ──────────────────────────────────────────────────────────
 	//-----------------------------------------------------------------------
@@ -106,6 +119,10 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 			DAB_ToolButtonInteractions.SaveEdits(this, m_EditorController, true); 
 		
 		m_EditorController.OnDeActivate();
+		
+		m_TargetEntity = null;
+		m_TargetComponent = null;
+		m_TargetEntitySource = null;
 	}
 
 	//-----------------------------------------------------------------------
@@ -127,6 +144,8 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 	//-----------------------------------------------------------------------
 	protected override void OnEnterEvent()
 	{
+		RefreshTargetEntity(); // If settings are changed in the component we loose the m_TargetEntity referenve
+		
 		if(!m_EditorController) return;
 		m_EditorController.OnEnterEvent();
 	}
@@ -156,27 +175,49 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 		m_EditorController.OnKeyPressEvent(key, isAutoRepeat);
 	}
 	
+	// ── Public ────────────────────────────────────────────────────────────
+	void RefreshTargetComponent()
+	{
+		if(!m_TargetEntity) return;
+		m_TargetComponent = DAB_PoseModificationComponent.Cast(m_TargetEntity.FindComponent(DAB_PoseModificationComponent));
+	}
+	
+	void ClearTargetComponent()
+	{
+	    m_TargetComponent = null;
+	}
+	
+	void RefreshTargetEntity()
+	{
+		m_TargetEntitySource = m_API.GetSelectedEntity(0);
+		IEntity newEntity = m_API.SourceToEntity(m_TargetEntitySource);
+		PrintFormat("Refreshing Target. NewEntity is %1", newEntity);
+		if(newEntity == m_TargetEntity) return;
+
+		m_TargetEntity = newEntity;
+		RefreshTargetComponent();
+		
+		m_EditorController.OnTargetEntityChanged(m_TargetEntity);
+	}
+	
+	void ReselectTargetEntity()
+	{
+		if(!m_TargetEntitySource)
+		{
+			Print("Target source is null. Can not reselect!", LogLevel.WARNING);
+			return;
+		}
+		
+		m_API.SetEntitySelection(m_TargetEntitySource);
+		RefreshTargetEntity();
+	}
+	
 	// ── Public Getters ────────────────────────────────────────────────────
 	//-----------------------------------------------------------------------
 	IEntity GetCurrentTargetEntity(){ return m_TargetEntity; }
-	IEntitySource GetCurrentTargetEntitySource(){ return m_TargetEntitySource; }
+	IEntitySource GetCurrentTargetEntitySource(){ return m_TargetEntitySource; } //TODO: Could be removed in theory
+	DAB_PoseModificationComponent GetTargetComponent(){ return m_TargetComponent; }
 	DAB_BoneDisplaySettings GetNewDisplaySettings() { return new DAB_BoneDisplaySettings(m_bHideIKTargetBones, m_bHidePropBones, m_bHideVolumeBones, m_bHideCameraBone, m_bHideFaceBones, m_bHideBoneConnections, m_sFilterBoneName); }
-	ResourceName GetWorkingConfig() { return m_sWorkingConfig; }
+	//ResourceName GetWorkingConfig() { return m_sWorkingConfig; }
 	bool GetShouldAutoSave(){ return m_bShouldAutoSave; }
-	
-	// ── Public Setters ────────────────────────────────────────────────────
-	//-----------------------------------------------------------------------
-	void SetWorkingConfig(ResourceName newConfig){ m_sWorkingConfig = newConfig; }
-	
-	// ── Private ───────────────────────────────────────────────────────────
-	//-----------------------------------------------------------------------
-	protected void RefreshTargetEntity()
-	{
-		m_TargetEntitySource = m_API.GetSelectedEntity(0);
-		if (m_TargetEntitySource)
-			m_TargetEntity = m_API.SourceToEntity(m_TargetEntitySource);
-
-	
-		m_EditorController.OnTargetEntityChanged(m_TargetEntity);
-	}
 }

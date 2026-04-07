@@ -22,6 +22,9 @@ class DAB_EditorController
 	
 	protected ResourceName m_sLastLoadedConfig = "";
 	
+	protected bool m_bEditAllowed;
+	protected ref DebugTextScreenSpace m_InvalidSetupText;
+	
 	// ── Constructors ──────────────────────────────────────────────────────────
 	void DAB_EditorController(DAB_BoneManipulatorTool parentTool, WorldEditorAPI api)
 	{
@@ -44,6 +47,7 @@ class DAB_EditorController
 	//-----------------------------------------------------------------------
 	void OnActivate()
 	{
+		CheckValidSetup();
 		RedrawOverlay();
 	}
 	
@@ -56,11 +60,14 @@ class DAB_EditorController
 			ResetBone(boneName);
 		}
 		
-		
 		m_ModifiedBones.Clear();
 		m_Renderer.Clear();
+		Print("Dirty bones cleared in OnDeActivate");
+		m_DirtyBones.Clear();
 		m_sSelectedBoneName = "";
 		m_GizmoController.Clear(m_API);
+		m_bEditAllowed = false;
+		m_InvalidSetupText = null;
 		
 		DAB_CinematicsHelper.RefreshAllScenes(m_API);
 	}
@@ -81,9 +88,11 @@ class DAB_EditorController
 	//-----------------------------------------------------------------------
 	void OnEnterEvent()
 	{
+		CheckValidSetup();
 		RefreshDisplaySettings();
 		LoadAndApplyWorkingConfig();
 		
+		if(! m_bEditAllowed) return;
 		if (!m_sSelectedBoneName.IsEmpty())
 		{
 			SelectBone(m_sSelectedBoneName); // Reselect so gizmo updates correctly
@@ -97,6 +106,7 @@ class DAB_EditorController
 	//-----------------------------------------------------------------------
 	void OnMouseMoveEvent(float x, float y)
 	{
+		if(! m_bEditAllowed) return;
 		RefreshCameraTargetDistance();
 		m_GizmoController.OnMouseMove(x, y, m_API);
 		CheckBoneHover(x, y);
@@ -105,6 +115,7 @@ class DAB_EditorController
 	//-----------------------------------------------------------------------
 	void OnMousePressEvent(float x, float y, WETMouseButtonFlag buttons)
 	{
+		if(! m_bEditAllowed) return;
 		m_GizmoController.OnMousePress(x, y, buttons, m_API);
 
 		if (!(buttons & WETMouseButtonFlag.LEFT)) return;
@@ -118,6 +129,7 @@ class DAB_EditorController
 	//-----------------------------------------------------------------------
 	void OnMouseReleaseEvent(float x, float y, WETMouseButtonFlag buttons)
 	{
+		if(! m_bEditAllowed) return;
 		m_GizmoController.OnMouseRelease(x, y, buttons, m_API);
 		
 		if(m_ParentTool.GetShouldAutoSave()) SaveDirtyBones();
@@ -131,6 +143,7 @@ class DAB_EditorController
 	void OnKeyPressEvent(KeyCode key, bool isAutoRepeat)
 	{
 		if (isAutoRepeat) return;
+		if(! m_bEditAllowed) return;
 
 		switch (key)
 		{
@@ -205,6 +218,7 @@ class DAB_EditorController
 		
 		m_sCurrentSkeleton = skeletonKey;
 		m_SlotManager = SlotManagerComponent.Cast(changedEntity.FindComponent(SlotManagerComponent));
+		CheckValidSetup();
 		
 		RefreshCameraTargetDistance();
 		
@@ -221,6 +235,7 @@ class DAB_EditorController
 	{
 		string boneName = changedTransform.GetBoneName();
 		m_ModifiedBones.Set(boneName, changedTransform);
+		Print("DirtyBone added in OnBoneTransformChanged");
 		m_DirtyBones.Insert(boneName);
 		
 		RefreshBone(boneName);
@@ -327,6 +342,7 @@ class DAB_EditorController
 	protected DAB_BoneTransform CreateNewTransform(string boneName)
 	{
 		IEntity targetEntity = m_ParentTool.GetCurrentTargetEntity();
+		if(!targetEntity) return null;
 		
 		Animation anim = GetSlotDependentAnim(boneName);
 		TNodeId boneId = DAB_BoneHelper.GetBoneId(targetEntity, boneName);
@@ -376,7 +392,8 @@ class DAB_EditorController
 		transform.m_vPositionOffset = vector.Zero;
 		transform.m_vRotationOffset = vector.Zero;
 		transform.m_fScale = 1.0;
-	
+
+		Print("Dirty Bone added in on Reset");	
 		m_DirtyBones.Insert(boneName);
 		RefreshBone(boneName);
 		m_GizmoController.ResetAccumulatedTransform(m_API);
@@ -408,6 +425,8 @@ class DAB_EditorController
 	//-----------------------------------------------------------------------
 	protected void RedrawOverlay()
 	{
+		if(! m_bEditAllowed) return;
+		
 		IEntity targetEntity = m_ParentTool.GetCurrentTargetEntity();
 		if (!targetEntity) return;
 
@@ -469,7 +488,50 @@ class DAB_EditorController
 	{
 	    if(m_DirtyBones.Count() == 0) return false;
 	    
-	    ResourceName configPath = m_ParentTool.GetWorkingConfig();
+		DAB_PoseModificationComponent poseComponent = m_ParentTool.GetTargetComponent();
+		if(!poseComponent)
+		{
+			Workbench.Dialog("No component", "System could not get a pose modification component from the target. Save was aported!");
+			return false;
+		}
+		/*
+		DAB_PoseModification poseModification = poseComponent.GetWorkingModificationData();
+		if(!poseModification)
+		{
+			Workbench.Dialog("No working modification", "System could not get a working pose modification from the component. Save was aported!");
+			return false;
+		}
+		
+		
+		map<string, ref DAB_BoneModification> modificationMap = poseModification.GetBoneModificationsAsMap();
+		
+		foreach(string boneName : m_DirtyBones)
+	    {
+	        DAB_BoneTransform transform = m_ModifiedBones.Get(boneName);
+	        if(!transform)
+			{
+				PrintFormat("Dirty bone '%1' was set, but we could not find a transform for it!", LogLevel.WARNING);
+				continue;
+			}
+	        
+	        DAB_BoneModification modification = modificationMap.Get(boneName);
+	        if(!modification)
+	        {
+	            modification = new DAB_BoneModification();
+	            modification.m_sBoneName = boneName;
+	            poseModification.m_aBoneModifications.Insert(modification);
+	        }
+			
+	        modification.m_vRotationOffset = transform.m_vRotationOffset;
+	        modification.m_vPositionOffset = transform.m_vPositionOffset;
+	        modification.m_fScale = transform.m_fScale;
+	    }
+		
+		m_DirtyBones.Clear();
+	    return true;*/
+		
+		
+	    ResourceName configPath = poseComponent.GetWorkingModificationConfig();
 	    if (configPath.IsEmpty()) 
 		{
 			Workbench.Dialog("No config", "There is no working config set to safe to! Save was aported!");
@@ -523,31 +585,58 @@ class DAB_EditorController
 	    BaseContainerTools.ReadFromInstance(poseInstance, config);
 	    bool success = BaseContainerTools.SaveContainer(config, configPath);
 	    
-	    if (success)
+	    /*if (success)
 	    {
 	        array<ref ContainerIdPathEntry> path = {}; 
-	        m_API.SetVariableValue(config, null, "m_sName", poseInstance.m_sName); //TODO: Remove name but make sure it still save
-	        m_API.EndEntityAction();
-	    }
+	        //m_API.SetVariableValue(config, null, "m_sName", poseInstance.m_sName); //TODO: Remove name but make sure it still save
+	        
+	    }*/
+		m_API.EndEntityAction();
 	
+		Print("Refreshing Target after saving");
+		Print("Dirty Bones cleared after saved");
 	    m_DirtyBones.Clear();
+		m_ParentTool.ReselectTargetEntity(); // We modify the config held by the component so we need to reselect
 	    return success;
 	}
+	
+	
 	
 	//-----------------------------------------------------------------------
 	void LoadAndApplyWorkingConfig(bool forceApply = false)
 	{
-		ResourceName currentConfig = m_ParentTool.GetWorkingConfig();
+		//TODO: Check if we need the m_sLastLoadedConfig in new version
+		/*ResourceName currentConfig = m_ParentTool.GetWorkingConfig();
 	
 		// If nothing changed and we aren't forcing an update (like an entity swap), do nothing
 		if (!forceApply && currentConfig == m_sLastLoadedConfig)
 			return;
 	
-		m_sLastLoadedConfig = currentConfig;
-	
+		m_sLastLoadedConfig = currentConfig;*/
+		
 		IEntity targetEntity = m_ParentTool.GetCurrentTargetEntity();
-		if (!targetEntity) return;
+		if (!targetEntity)
+		{
+			Print("Target is null. Could not load and apply working config", LogLevel.WARNING);
+			return;
+		}
+		
+		DAB_PoseModificationComponent poseComponent = m_ParentTool.GetTargetComponent();
+		if(!poseComponent)
+		{
+			Print("System could not get a pose modification component from the target. Loading was aported!");
+			return;
+		}
+		/*
+		DAB_PoseModification poseModification = poseComponent.GetWorkingModificationData();
+		if(!poseModification)
+		{
+			Print("System could not get a working pose modification from the component. Loading was aported!");
+			return;
+		}
 	
+		// TODO: Combine with other reset mechanic
+		// Reset everything
 		foreach (string boneName, DAB_BoneTransform transform : m_ModifiedBones)
 		{
 			transform.m_vPositionOffset = vector.Zero;
@@ -560,12 +649,48 @@ class DAB_EditorController
 		m_DirtyBones.Clear();
 		DeselectBone();
 	
-		if (currentConfig.IsEmpty())
+		if (!poseModification)
 		{
 			RedrawOverlay();
 			return;
 		}
+		
+		for (int i = 0; i < poseModification.m_aBoneModifications.Count(); i++)
+		{
+			DAB_BoneModification entry = poseModification.m_aBoneModifications.Get(i);
+			string boneName;
+			vector rotationOffset, positionOffset;
+			float scale = 1.0;
+
+			boneName = entry.m_sBoneName;
+			rotationOffset = entry.m_vRotationOffset;
+			positionOffset = entry.m_vPositionOffset;
+			scale = entry.m_fScale;
+
+			DAB_BoneTransform newTransform = CreateNewTransform(boneName);
+			if (newTransform)
+			{
+				newTransform.m_vRotationOffset = rotationOffset;
+				newTransform.m_vPositionOffset = positionOffset;
+				newTransform.m_fScale = scale;
+
+				m_ModifiedBones.Set(boneName, newTransform);
+				RefreshBone(boneName);
+			} else {
+				Print("Failed to create new transform!", LogLevel.ERROR);
+			}
+		}
+		
+		RedrawOverlay();*/
+		
+		ResourceName currentConfig = poseComponent.GetWorkingModificationConfig();
 	
+		// If nothing changed and we aren't forcing an update (like an entity swap), do nothing
+		if (!forceApply && currentConfig == m_sLastLoadedConfig)
+			return;
+	
+		m_sLastLoadedConfig = currentConfig;
+		
 		Resource configResource = BaseContainerTools.LoadContainer(currentConfig);
 		if (!configResource)
 		{
@@ -606,5 +731,34 @@ class DAB_EditorController
 		}
 	
 		RedrawOverlay();
+	}
+	
+	protected void CheckValidSetup()
+	{
+		m_InvalidSetupText = null;
+		m_bEditAllowed = false;
+		
+		IEntity currentTarget = m_ParentTool.GetCurrentTargetEntity();
+		if(! currentTarget)
+		{
+			m_InvalidSetupText = DebugTextScreenSpace.Create(m_API.GetWorld(), "No Target Selected!", DebugTextFlags.FACE_CAMERA, 10, 10, 40, 0xFFFF0000);
+			return;
+		}
+		
+		DAB_PoseModificationComponent poseComponent = m_ParentTool.GetTargetComponent();
+		if(! poseComponent)
+		{
+			m_InvalidSetupText = DebugTextScreenSpace.Create(m_API.GetWorld(), "Target has no DAB_PoseModificationComponent", DebugTextFlags.FACE_CAMERA, 10, 10, 25, 0xFFFF0000);
+			return;
+		}
+		
+		ResourceName poseModification = poseComponent.GetWorkingModificationConfig();
+		if(poseModification.IsEmpty())
+		{
+			m_InvalidSetupText = DebugTextScreenSpace.Create(m_API.GetWorld(), "DAB_PoseModificationComponent has no working config", DebugTextFlags.FACE_CAMERA, 10, 10, 20, 0xFFFF0000);
+			return;
+		}
+		
+		m_bEditAllowed = true;
 	}
 }

@@ -35,4 +35,24 @@ class DAB_BoneTransform
 	vector GetAdjustedPosition() { return m_vOriginalPosition + m_vPositionOffset; }
 	//! Original local rotation plus the accumulated rotation offset.
 	vector GetAdjustedRotation() { return m_vOriginalRotation + m_vRotationOffset; }
+	
+	// ── Conversion ─────────────────────────────────────────────────────────
+	DAB_BoneModification ToModification(string slotName = "")
+    {
+        DAB_BoneModification mod = new DAB_BoneModification();
+        mod.m_sBoneName       = m_sBoneName;
+        mod.m_sSlotName       = slotName;
+        mod.m_vPositionOffset = m_vPositionOffset;
+        mod.m_vRotationOffset = m_vRotationOffset;
+        mod.m_fScale          = m_fScale;
+        return mod;
+    }
+	
+	void ApplyModification(DAB_BoneModification mod)
+    {
+        if (!mod) return;
+        m_vPositionOffset = mod.m_vPositionOffset;
+        m_vRotationOffset = mod.m_vRotationOffset;
+        m_fScale          = mod.m_fScale;
+    }
 }
