@@ -11,14 +11,15 @@ class DAB_PoseManipulationTrack : CinematicTrackBase
 	protected SlotManagerComponent m_SlotManager;
 	protected World m_World;
 
-	protected ref map<ResourceName, ref DAB_PoseModification> m_CachedModifications = new map<ResourceName, ref DAB_PoseModification>();
-	protected ref map<string, vector> m_BaseRotationCache = new map<string, vector>();
+	protected ref map<ResourceName, ref DAB_PoseModification> m_mCachedModifications = new map<ResourceName, ref DAB_PoseModification>();
+	protected ref map<string, vector> m_mBaseRotationCache = new map<string, vector>();
 
-	//------------------------------------------------------------------------------------------------
+	// ── Lifecycle & Overrides ─────────────────────────────────────────────
+	//-----------------------------------------------------------------------
 	override void OnInit(World world)
 	{
-		m_CachedModifications.Clear();
-		m_BaseRotationCache.Clear();
+		m_mCachedModifications.Clear();
+		m_mBaseRotationCache.Clear();
 
 		m_World = world;
 		if (!m_World) return;
@@ -26,62 +27,64 @@ class DAB_PoseManipulationTrack : CinematicTrackBase
 		RefreshTargetEntity(m_World);
 	}
 
-	//------------------------------------------------------------------------------------------------
+	//-----------------------------------------------------------------------
 	override void OnApply(float time)
 	{
-		if (!m_bApplyModifications)
-			return;
+		if (!m_bApplyModifications) return;
 
-		m_CachedModifications.Clear();
-		if (!m_World)
-			return;
+		m_mCachedModifications.Clear();
+		if (!m_World) return;
 
 		string currentTarget = GetEntityName();
 		if (!m_TargetEntity || m_TargetEntity.GetName() != currentTarget)
 			RefreshTargetEntity(m_World);
 
-		if (!m_TargetEntity)
-			return;
+		if (!m_TargetEntity) return;
 
-		DAB_PoseModificationComponent poseComp = DAB_PoseModificationComponent.Cast(
-			m_TargetEntity.FindComponent(DAB_PoseModificationComponent)
-		);
-
+		DAB_PoseModificationComponent poseComp = DAB_PoseModificationComponent.Cast(m_TargetEntity.FindComponent(DAB_PoseModificationComponent));
 		if (!poseComp)
 		{
 			Print("DAB_PoseManipulationTrack: target entity has no DAB_PoseModificationComponent!", LogLevel.WARNING);
 			return;
 		}
 
-		// Apply every config in the committed list
 		array<ResourceName> poseList = poseComp.GetPoseModifications();
 		foreach (ResourceName modName : poseList)
 		{
 			ApplyModificationFromResource(modName);
 		}
 
-		// Apply the working config on top — but only if it is not already in the list
 		ResourceName workingConfig = poseComp.GetWorkingModificationConfig();
 		if (!workingConfig.IsEmpty() && !poseList.Contains(workingConfig))
 			ApplyModificationFromResource(workingConfig);
 	}
 
-	//------------------------------------------------------------------------------------------------
+	// ── Public ────────────────────────────────────────────────────────────
+	//-----------------------------------------------------------------------
+	//! Derives the target entity name from the track name (prefix before the first '_').
+	string GetEntityName()
+	{
+		TStringArray strs = new TStringArray;
+		GetTrackName().Split("_", strs, true);
+		if (strs.Count() == 0) return "";
+		return strs.Get(0);
+	}
+
+	// ── Protected ─────────────────────────────────────────────────────────
+	//-----------------------------------------------------------------------
 	protected void ApplyModificationFromResource(ResourceName modificationName)
 	{
 		DAB_PoseModification poseModification = GetModificationFromFile(modificationName);
-		if (!poseModification || poseModification.m_aBoneModifications.IsEmpty())
-			return;
+		if (!poseModification || poseModification.m_aBoneModifications.IsEmpty()) return;
 
 		ApplyPoseModification(poseModification);
 	}
 
-	//------------------------------------------------------------------------------------------------
+	//-----------------------------------------------------------------------
 	protected DAB_PoseModification GetModificationFromFile(ResourceName modificationName)
 	{
 		DAB_PoseModification cached;
-		if (m_CachedModifications.Find(modificationName, cached))
-			return cached;
+		if (m_mCachedModifications.Find(modificationName, cached)) return cached;
 
 		Resource configResource = BaseContainerTools.LoadContainer(modificationName);
 		if (!configResource || !configResource.IsValid()) return null;
@@ -92,13 +95,12 @@ class DAB_PoseManipulationTrack : CinematicTrackBase
 		DAB_PoseModification poseData = new DAB_PoseModification();
 		BaseContainerTools.WriteToInstance(poseData, container);
 
-		if (poseData)
-			m_CachedModifications.Insert(modificationName, poseData);
+		if (poseData) m_mCachedModifications.Insert(modificationName, poseData);
 
 		return poseData;
 	}
 
-	//------------------------------------------------------------------------------------------------
+	//-----------------------------------------------------------------------
 	protected void ApplyPoseModification(DAB_PoseModification poseModification)
 	{
 		foreach (DAB_BoneModification boneModification : poseModification.m_aBoneModifications)
@@ -107,19 +109,17 @@ class DAB_PoseManipulationTrack : CinematicTrackBase
 		}
 	}
 
-	//------------------------------------------------------------------------------------------------
+	//-----------------------------------------------------------------------
 	protected void ApplyBoneModification(DAB_BoneModification boneModification)
 	{
 		TNodeId boneId = DAB_BoneHelper.GetBoneId(m_TargetEntity, boneModification.m_sBoneName);
 
 		vector originalRotation;
-
-		if (!m_BaseRotationCache.Find(boneModification.m_sBoneName, originalRotation))
+		if (!m_mBaseRotationCache.Find(boneModification.m_sBoneName, originalRotation))
 		{
-			if (!DAB_BoneHelper.TryGetBoneLocalRotation(m_TargetEntity, boneId, originalRotation))
-				return;
+			if (!DAB_BoneHelper.TryGetBoneLocalRotation(m_TargetEntity, boneId, originalRotation)) return;
 
-			m_BaseRotationCache.Insert(boneModification.m_sBoneName, originalRotation);
+			m_mBaseRotationCache.Insert(boneModification.m_sBoneName, originalRotation);
 		}
 
 		vector rotRad = boneModification.m_vRotationOffset * Math.DEG2RAD;
@@ -135,14 +135,12 @@ class DAB_PoseManipulationTrack : CinematicTrackBase
 		entityRot3[1] = entityWorld[1];
 		entityRot3[2] = entityWorld[2];
 
-		// Create the base orientation matrix using the cached CLEAN rotation
 		vector boneOrigLocal3[3];
 		Math3D.AnglesToMatrix(Vector(originalRotation[1], originalRotation[0], originalRotation[2]), boneOrigLocal3);
 
 		vector boneOrigWorldRot[3];
 		Math3D.MatrixMultiply3(entityRot3, boneOrigLocal3, boneOrigWorldRot);
 
-		// Project the world-space position offset into bone-local space
 		vector worldOff = boneModification.m_vPositionOffset;
 		vector localOff;
 		localOff[0] = vector.Dot(worldOff, boneOrigWorldRot[0]);
@@ -156,7 +154,7 @@ class DAB_PoseManipulationTrack : CinematicTrackBase
 		m_TargetEntity.Update();
 	}
 
-	//------------------------------------------------------------------------------------------------
+	//-----------------------------------------------------------------------
 	protected void RefreshTargetEntity(World world)
 	{
 		if (!world) return;
@@ -172,17 +170,7 @@ class DAB_PoseManipulationTrack : CinematicTrackBase
 			m_SlotManager = SlotManagerComponent.Cast(m_TargetEntity.FindComponent(SlotManagerComponent));
 	}
 
-	//------------------------------------------------------------------------------------------------
-	//! Derives the target entity name from the track name (prefix before the first '_').
-	string GetEntityName()
-	{
-		TStringArray strs = new TStringArray;
-		GetTrackName().Split("_", strs, true);
-		if (strs.Count() == 0) return "";
-		return strs.Get(0);
-	}
-
-	//------------------------------------------------------------------------------------------------
+	//-----------------------------------------------------------------------
 	protected Animation GetSlotDependentAnim(string boneName)
 	{
 		if (!m_SlotManager) return m_TargetEntity.GetAnimation();
@@ -196,8 +184,7 @@ class DAB_PoseManipulationTrack : CinematicTrackBase
 			if (!slotEntity) continue;
 
 			Animation anim = slotEntity.GetAnimation();
-			if (anim && anim.GetBoneIndex(boneName) != -1)
-				return anim;
+			if (anim && anim.GetBoneIndex(boneName) != -1) return anim;
 		}
 
 		return m_TargetEntity.GetAnimation();
