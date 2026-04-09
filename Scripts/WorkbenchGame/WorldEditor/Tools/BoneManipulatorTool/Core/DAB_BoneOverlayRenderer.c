@@ -161,7 +161,7 @@ class DAB_BoneOverlayRenderer
 			if (displaySettings.GetHideVolumeBones() && boneName.EndsWith("Volume")) continue;
 			if (displaySettings.GetHideCameraBone() && boneName == "Camera") continue;
 			if (displaySettings.GetHideFaceBones() && skeletonInfo.IsDescendantOf(boneName, "Head")) continue;
-			if (!displaySettings.GetFilterBoneName().IsEmpty() && !displaySettings.GetFilterBoneName().Trim().Contains(boneName)) continue;
+			if (!displaySettings.GetFilterBoneName().IsEmpty() && !boneName.Contains(displaySettings.GetFilterBoneName().Trim())) continue;
 			
 			TNodeId boneId = anim.GetBoneIndex(boneName);
 			if (boneId == -1) continue;
