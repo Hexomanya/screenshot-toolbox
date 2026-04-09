@@ -62,7 +62,6 @@ class DAB_EditorController
 		
 		m_ModifiedBones.Clear();
 		m_Renderer.Clear();
-		Print("Dirty bones cleared in OnDeActivate");
 		m_DirtyBones.Clear();
 		m_sSelectedBoneName = "";
 		m_GizmoController.Clear(m_API);
@@ -212,9 +211,6 @@ class DAB_EditorController
 			map<string, float>  boneParentDistances = DAB_BoneHelper.ComputeBoneParentDistances(changedEntity, boneParents);
 			m_CachedSkeletons.Set(skeletonKey, new DAB_SkeletonInfo(skeletonKey, boneNames, boneParents, boneParentDistances));
 		} 
-		else {
-			Print("Loaded saved skeleton");
-		}
 		
 		m_sCurrentSkeleton = skeletonKey;
 		m_SlotManager = SlotManagerComponent.Cast(changedEntity.FindComponent(SlotManagerComponent));
@@ -235,7 +231,6 @@ class DAB_EditorController
 	{
 		string boneName = changedTransform.GetBoneName();
 		m_ModifiedBones.Set(boneName, changedTransform);
-		Print("DirtyBone added in OnBoneTransformChanged");
 		m_DirtyBones.Insert(boneName);
 		
 		RefreshBone(boneName);
@@ -299,8 +294,6 @@ class DAB_EditorController
 	}
 
 	//-----------------------------------------------------------------------
-	// Returns the Animation component that owns boneName, preferring slot entities
-	// so that bones on attached equipment are manipulated correctly.
 	protected Animation GetSlotDependentAnim(string boneName)
 	{
 		IEntity targetEntity = m_ParentTool.GetCurrentTargetEntity();
@@ -337,7 +330,6 @@ class DAB_EditorController
 	    RedrawOverlay();
 	}
 
-	//-----------------------------------------------------------------------
 	//-----------------------------------------------------------------------
 	protected DAB_BoneTransform CreateNewTransform(string boneName)
 	{
@@ -393,7 +385,6 @@ class DAB_EditorController
 		transform.m_vRotationOffset = vector.Zero;
 		transform.m_fScale = 1.0;
 
-		Print("Dirty Bone added in on Reset");	
 		m_DirtyBones.Insert(boneName);
 		RefreshBone(boneName);
 		m_GizmoController.ResetAccumulatedTransform(m_API);
@@ -494,42 +485,6 @@ class DAB_EditorController
 			Workbench.Dialog("No component", "System could not get a pose modification component from the target. Save was aported!");
 			return false;
 		}
-		/*
-		DAB_PoseModification poseModification = poseComponent.GetWorkingModificationData();
-		if(!poseModification)
-		{
-			Workbench.Dialog("No working modification", "System could not get a working pose modification from the component. Save was aported!");
-			return false;
-		}
-		
-		
-		map<string, ref DAB_BoneModification> modificationMap = poseModification.GetBoneModificationsAsMap();
-		
-		foreach(string boneName : m_DirtyBones)
-	    {
-	        DAB_BoneTransform transform = m_ModifiedBones.Get(boneName);
-	        if(!transform)
-			{
-				PrintFormat("Dirty bone '%1' was set, but we could not find a transform for it!", LogLevel.WARNING);
-				continue;
-			}
-	        
-	        DAB_BoneModification modification = modificationMap.Get(boneName);
-	        if(!modification)
-	        {
-	            modification = new DAB_BoneModification();
-	            modification.m_sBoneName = boneName;
-	            poseModification.m_aBoneModifications.Insert(modification);
-	        }
-			
-	        modification.m_vRotationOffset = transform.m_vRotationOffset;
-	        modification.m_vPositionOffset = transform.m_vPositionOffset;
-	        modification.m_fScale = transform.m_fScale;
-	    }
-		
-		m_DirtyBones.Clear();
-	    return true;*/
-		
 		
 	    ResourceName configPath = poseComponent.GetWorkingModificationConfig();
 	    if (configPath.IsEmpty()) 
@@ -583,37 +538,19 @@ class DAB_EditorController
 	    }
 	
 	    BaseContainerTools.ReadFromInstance(poseInstance, config);
-	    bool success = BaseContainerTools.SaveContainer(config, configPath);
-	    
-	    /*if (success)
-	    {
-	        array<ref ContainerIdPathEntry> path = {}; 
-	        //m_API.SetVariableValue(config, null, "m_sName", poseInstance.m_sName); //TODO: Remove name but make sure it still save
-	        
-	    }*/
+	    BaseContainerTools.SaveContainer(config, configPath);
 		m_API.EndEntityAction();
 	
-		Print("Refreshing Target after saving");
-		Print("Dirty Bones cleared after saved");
 	    m_DirtyBones.Clear();
 		m_ParentTool.ReselectTargetEntity(); // We modify the config held by the component so we need to reselect
-	    return success;
+	    return true;
 	}
 	
 	
 	
 	//-----------------------------------------------------------------------
 	void LoadAndApplyWorkingConfig(bool forceApply = false)
-	{
-		//TODO: Check if we need the m_sLastLoadedConfig in new version
-		/*ResourceName currentConfig = m_ParentTool.GetWorkingConfig();
-	
-		// If nothing changed and we aren't forcing an update (like an entity swap), do nothing
-		if (!forceApply && currentConfig == m_sLastLoadedConfig)
-			return;
-	
-		m_sLastLoadedConfig = currentConfig;*/
-		
+	{		
 		IEntity targetEntity = m_ParentTool.GetCurrentTargetEntity();
 		if (!targetEntity)
 		{
@@ -627,65 +564,9 @@ class DAB_EditorController
 			Print("System could not get a pose modification component from the target. Loading was aported!");
 			return;
 		}
-		/*
-		DAB_PoseModification poseModification = poseComponent.GetWorkingModificationData();
-		if(!poseModification)
-		{
-			Print("System could not get a working pose modification from the component. Loading was aported!");
-			return;
-		}
 	
-		// TODO: Combine with other reset mechanic
-		// Reset everything
-		foreach (string boneName, DAB_BoneTransform transform : m_ModifiedBones)
-		{
-			transform.m_vPositionOffset = vector.Zero;
-			transform.m_vRotationOffset = vector.Zero;
-			transform.m_fScale          = 1.0;
-			RefreshBone(boneName);
-		}
-		
-		m_ModifiedBones.Clear();
-		m_DirtyBones.Clear();
-		DeselectBone();
-	
-		if (!poseModification)
-		{
-			RedrawOverlay();
-			return;
-		}
-		
-		for (int i = 0; i < poseModification.m_aBoneModifications.Count(); i++)
-		{
-			DAB_BoneModification entry = poseModification.m_aBoneModifications.Get(i);
-			string boneName;
-			vector rotationOffset, positionOffset;
-			float scale = 1.0;
-
-			boneName = entry.m_sBoneName;
-			rotationOffset = entry.m_vRotationOffset;
-			positionOffset = entry.m_vPositionOffset;
-			scale = entry.m_fScale;
-
-			DAB_BoneTransform newTransform = CreateNewTransform(boneName);
-			if (newTransform)
-			{
-				newTransform.m_vRotationOffset = rotationOffset;
-				newTransform.m_vPositionOffset = positionOffset;
-				newTransform.m_fScale = scale;
-
-				m_ModifiedBones.Set(boneName, newTransform);
-				RefreshBone(boneName);
-			} else {
-				Print("Failed to create new transform!", LogLevel.ERROR);
-			}
-		}
-		
-		RedrawOverlay();*/
-		
 		ResourceName currentConfig = poseComponent.GetWorkingModificationConfig();
 	
-		// If nothing changed and we aren't forcing an update (like an entity swap), do nothing
 		if (!forceApply && currentConfig == m_sLastLoadedConfig)
 			return;
 	

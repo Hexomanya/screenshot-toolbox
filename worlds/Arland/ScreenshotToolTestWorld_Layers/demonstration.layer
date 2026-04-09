@@ -1,0 +1,59 @@
+CinematicEntity US_Checkpoint_Showcase {
+ coords 0 0 0
+ Scene CinematicScene "{69133292E9185E3C}" {
+  Tracks {
+   CustomCinematicTrack "{69133292C56E12AC}" {
+    TrackName "US01_PoseTrack"
+    ClassName "DAB_PoseManipulationTrack"
+    ChildTracks {
+     BooleanCinematicTrack "{69133292C56E7A05}" {
+      TrackName "m_bApplyModifications"
+     }
+    }
+   }
+  }
+ }
+}
+$grp SCR_ChimeraCharacter : "{2619482C6C4202E0}Prefabs/Characters/Campaign/Final/BLUFOR/US_army/Campaign_US_AI.et" {
+ Demonstration01 {
+  components {
+   DAB_PoseModificationComponent "{690F412BBF80CECF}" {
+    m_sWorkingPoseModification "{4BE9F02A632A8016}Configs/PoseModifications/SittingOnVehicle.conf"
+   }
+   CharacterWeaponSlotComponent "{520EA1D2F659CFAB}" {
+    Enabled 0
+   }
+   AnimationPlayerComponent "{68D772DA924179D5}" {
+    Animation "{1DAA59A918EDF0B0}anims/anm/NPC/male/sitting/sitting_on_box/p_sitting_on_box_rfl_smoking_lefthand_weapon_lap_violence_out.anm"
+    Loop 1
+   }
+  }
+  coords 2793.398 63.865 1499.73
+  angles -5.341 -101.63 0
+ }
+ Demonstration02 {
+  components {
+   DAB_PoseModificationComponent "{69133292FF8A08C4}" {
+    m_sWorkingPoseModification "{AD1B5C0A6BF0C382}Configs/PoseModifications/US01.conf"
+   }
+   CharacterWeaponSlotComponent "{520EA1D2F659CFAB}" {
+    Enabled 0
+   }
+   AnimationPlayerComponent "{68D772DA924179D5}" {
+    Animation "{2ED0DDCD9AD3B57D}anims/anm/editor_poses/poses/m_patrol_01.anm"
+    Loop 1
+    AutoPlay 1
+   }
+  }
+  coords 2797.778 62.661 1498.953
+  angles -2.136 -67.447 -1.855
+ }
+}
+GenericEntity Weapon01 : "{3E413771E1834D2F}Prefabs/Weapons/Rifles/M16/Rifle_M16A2.et" {
+ coords 2797.483 63.64 1499.043
+ angles -23.095 -133.864 -0.107
+}
+Vehicle M1025_armed_M2HB1 : "{3EA6F47D95867114}Prefabs/Vehicles/Wheeled/M998/M1025_armed_M2HB.et" {
+ coords 2793.76 62.478 1500.27
+ angles -3.496 -103.755 -2.395
+}

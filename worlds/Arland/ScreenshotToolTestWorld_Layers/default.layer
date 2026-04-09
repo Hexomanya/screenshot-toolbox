@@ -1,65 +1,119 @@
-CinematicEntity Test {
- coords 0 0 0
- Scene CinematicScene "{68D772DA33024CF6}" {
-  EndFrame 100
-  Tracks {
-   AnimationCinematicTrack "{68FEBA15A1728099}" {
-    TrackName "Slider"
-    Play BooleanCinematicTrack "{68FEBA15A17280DE}" {
-     TrackName "Play"
-     Keyframes {
-      BooleanCinematicKeyframe "{6902EBE260971D12}" {
-       FrameNumber 0
-       Value 1
-      }
-     }
-    }
-   }
-   AnimationCinematicTrack "{6904B435C3DFFE42}" {
-    TrackName "Slider2"
-    Play BooleanCinematicTrack "{6904B435C3DFFE5D}" {
-     TrackName "Play"
-     Keyframes {
-      BooleanCinematicKeyframe "{6904B435C3DFFE58}" {
-       FrameNumber 0
-       Value 1
-      }
-     }
-    }
-   }
-   AnimationCinematicTrack "{6904B42530E74345}" {
-    TrackName "Tester1"
-    Play BooleanCinematicTrack "{6904B42530E740B6}" {
-     TrackName "Play"
-     Keyframes {
-      BooleanCinematicKeyframe "{6904B4253BAAF9E9}" {
-       FrameNumber 0
-       Value 1
-      }
-     }
-    }
-   }
-   CustomCinematicTrack "{690F1D154F6EC461}" {
-    TrackName "NoAnim"
-    ClassName "DAB_PoseManipulationTrack"
-    ChildTracks {
-     BooleanCinematicTrack "{690F1D154F6EC070}" {
-      TrackName "m_bApplyModifications"
+$grp CinematicEntity {
+ Test {
+  coords 0 0 0
+  Scene CinematicScene "{68D772DA33024CF6}" {
+   EndFrame 100
+   Tracks {
+    AnimationCinematicTrack "{68FEBA15A1728099}" {
+     TrackName "Slider"
+     Play BooleanCinematicTrack "{68FEBA15A17280DE}" {
+      TrackName "Play"
       Keyframes {
-       BooleanCinematicKeyframe "{690F1D154A17FF23}" {
+       BooleanCinematicKeyframe "{6902EBE260971D12}" {
         FrameNumber 0
         Value 1
        }
       }
      }
     }
+    AnimationCinematicTrack "{6904B435C3DFFE42}" {
+     TrackName "Slider2"
+     Play BooleanCinematicTrack "{6904B435C3DFFE5D}" {
+      TrackName "Play"
+      Keyframes {
+       BooleanCinematicKeyframe "{6904B435C3DFFE58}" {
+        FrameNumber 0
+        Value 1
+       }
+      }
+     }
+    }
+    AnimationCinematicTrack "{6904B42530E74345}" {
+     TrackName "Tester1"
+     Play BooleanCinematicTrack "{6904B42530E740B6}" {
+      TrackName "Play"
+      Keyframes {
+       BooleanCinematicKeyframe "{6904B4253BAAF9E9}" {
+        FrameNumber 0
+        Value 1
+       }
+      }
+     }
+    }
+    CustomCinematicTrack "{690F1D154F6EC461}" {
+     TrackName "NoAnim"
+     ClassName "DAB_PoseManipulationTrack"
+     ChildTracks {
+      BooleanCinematicTrack "{690F1D154F6EC070}" {
+       TrackName "m_bApplyModifications"
+       Keyframes {
+        BooleanCinematicKeyframe "{690F1D154A17FF23}" {
+         FrameNumber 0
+         Value 1
+        }
+       }
+      }
+     }
+    }
+    CustomCinematicTrack "{690F412EBFFFE28A}" {
+     TrackName "Tester1_PoseTrack"
+     ClassName "DAB_PoseManipulationTrack"
+     ChildTracks {
+      BooleanCinematicTrack "{690F412EBFFE3D3E}" {
+       TrackName "m_bApplyModifications"
+       Keyframes {
+        BooleanCinematicKeyframe "{690F41299B0A285E}" {
+         FrameNumber 0
+         Value 1
+        }
+       }
+      }
+     }
+    }
    }
-   CustomCinematicTrack "{690F412EBFFFE28A}" {
-    TrackName "Tester1_PoseTrack"
-    ClassName "DAB_PoseManipulationTrack"
-    ChildTracks {
-     BooleanCinematicTrack "{690F412EBFFE3D3E}" {
-      TrackName "m_bApplyModifications"
+  }
+ }
+ Demonstration {
+  coords 0 0 0
+  Scene CinematicScene "{690F41291865E80F}" {
+   Tracks {
+    AnimationCinematicTrack "{690F4128F50EEA3F}" {
+     TrackName "Demonstration02"
+     Play BooleanCinematicTrack "{690F4128F50EEA61}" {
+      TrackName "Play"
+      Keyframes {
+       BooleanCinematicKeyframe "{690F4128F30FDAE4}" {
+        FrameNumber 0
+        Value 1
+       }
+      }
+     }
+    }
+    AnimationCinematicTrack "{690F4128615010BF}" {
+     TrackName "Demonstration01"
+     Play BooleanCinematicTrack "{690F4128615010EC}" {
+      TrackName "Play"
+      Keyframes {
+       BooleanCinematicKeyframe "{690F41285D80164C}" {
+        FrameNumber 0
+        Value 0
+       }
+      }
+     }
+    }
+    CustomCinematicTrack "{690F412B84F369F0}" {
+     TrackName "Demonstration01_PoseTrack"
+     ClassName "DAB_PoseManipulationTrack"
+     ChildTracks {
+      BooleanCinematicTrack "{690F412B84F3B04A}" {
+       TrackName "m_bApplyModifications"
+       Keyframes {
+        BooleanCinematicKeyframe "{690F412B82692DC8}" {
+         FrameNumber 0
+         Value 1
+        }
+       }
+      }
      }
     }
    }
@@ -330,6 +384,9 @@ $grp Vehicle : "{C012BB3488BEA0C2}Prefabs/Vehicles/Wheeled/BTR70/BTR70.et" {
    }
    ChimeraAIPathfindingComponent "{5676B7807269CA5B}" {
     Enabled 0
+   }
+   DAB_PoseModificationComponent "{69133292313C8C9B}" {
+    m_sWorkingPoseModification "{C9DC1401FC90D481}Configs/PoseModifications/BTR01.conf"
    }
    SCR_AIVehicleUsageComponent "{60E4E37C467714E8}" {
     Enabled 0

@@ -28,29 +28,12 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 	[Attribute(defvalue: "0", uiwidget: UIWidgets.CheckBox, desc: "Hide lines connecting bones to their parents", category: "Display")]
 	protected bool m_bHideBoneConnections;
 	
-	[Attribute(defvalue: "", desc: "Show only bones that include this string. Does nothing when empty", category: "Display")]
+	[Attribute(defvalue: "", desc: "Show only bones that include this string. Does nothing when empty", category: "Display - Filter")]
 	protected string m_sFilterBoneName;
 	
 	// ── Saving ──
 	[Attribute(defvalue: "0", uiwidget: UIWidgets.CheckBox, desc: "Turns on auto-saves. This will lead to some lage after each edit", category: "Saving")]
 	protected bool m_bShouldAutoSave;
-	
-	// ── Current Pose Config ──
-	/*[Attribute(
-	    uiwidget: UIWidgets.ResourceNamePicker,
-	    desc: "Select an existing pose modification to load and edit",
-	    params: "conf DAB_PoseModification",
-	    category: "Current Pose Config"
-	)]
-	protected ResourceName m_sWorkingConfig;
-	
-	[Attribute(
-	    uiwidget: UIWidgets.ResourceNamePicker,
-	    desc: "Select existing pose modifications which will be previewed and copied to the cinematic timeline. Current config overwrites these, which is not guranteed in the timeline.",
-	    params: "conf DAB_PoseModification",
-	    category: "Current Pose Config"
-	)]
-	protected ref array<ResourceName> m_aStackedConfigs;*/
 	
 	// ── New Config Creation ──
 	[Attribute(
@@ -185,7 +168,6 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 	{
 		m_TargetEntitySource = m_API.GetSelectedEntity(0);
 		IEntity newEntity = m_API.SourceToEntity(m_TargetEntitySource);
-		PrintFormat("Refreshing Target. NewEntity is %1", newEntity);
 		if(newEntity == m_TargetEntity) return;
 
 		m_TargetEntity = newEntity;

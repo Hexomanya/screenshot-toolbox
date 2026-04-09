@@ -231,8 +231,6 @@ class DAB_ToolButtonInteractions
 		array<ResourceName> existingConfigs = {};
 		componentContainer.Get("m_aPoseModifications", existingConfigs);
 
-		PrintFormat("Retrieved list with %1 entries", existingConfigs.Count());
-
 		// Build a comma-separated string for SetVariableValue, then append the new config.
 		string newList;
 		foreach (ResourceName rn : existingConfigs)
@@ -243,8 +241,6 @@ class DAB_ToolButtonInteractions
 		}
 		if (!newList.IsEmpty()) newList += ",";
 		newList += currentConfig;
-
-		PrintFormat("newList is: %1", newList);
 		
 		parentTool.ClearTargetComponent();
 		api.BeginEditSequence(entitySource);
