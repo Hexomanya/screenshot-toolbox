@@ -395,43 +395,6 @@ $grp CinematicEntity {
   }
  }
 }
-$grp SplineShapeEntity {
- {
-  coords 1490.195 38 2908
-  Points {
-   ShapePoint "{68F4F415D3F1CDE2}" {
-    Position 0 0 0
-   }
-   ShapePoint "{68F4F415D3F1D1A0}" {
-    Position 5 0 0
-   }
-   ShapePoint "{68F4F415D2D826F2}" {
-    Position -0.81 0 2.754
-   }
-   ShapePoint "{68F4F415D21C8F03}" {
-    Position -3.25 0 1.541
-   }
-  }
-  IsClosed 1
- }
- {
-  coords 1492.59 38 2908.028
-  Points {
-   ShapePoint "{68F503470AFF2B8F}" {
-    Position 0 0 0
-   }
-   ShapePoint "{68F5034717C9BFC1}" {
-    Position 2.686 0 -1.837
-   }
-   ShapePoint "{68F5034708C0ECDF}" {
-    Position 0.09 0 2.241
-   }
-   ShapePoint "{68F503470AFCC672}" {
-    Position 5 0 0
-   }
-  }
- }
-}
 $grp SCR_ChimeraCharacter : "{2619482C6C4202E0}Prefabs/Characters/Campaign/Final/BLUFOR/US_army/Campaign_US_AI.et" {
  Test01 {
   components {
@@ -550,9 +513,6 @@ $grp SCR_ChimeraCharacter : "{2619482C6C4202E0}Prefabs/Characters/Campaign/Final
   coords 2724.113 77.451 1633.372
  }
 }
-Turret : "{337D05CC762A1A21}Prefabs/Vehicles/Wheeled/BTR70/VehParts/Turret/BTR70_Turret_Anim.et" {
- coords 1479.41 38 2906.808
-}
 GenericEntity : "{3E413771E1834D2F}Prefabs/Weapons/Rifles/M16/Rifle_M16A2.et" {
  coords 2726.582 77.837 1635.015
  angles 2.368 157.065 0.291
@@ -566,171 +526,89 @@ Vehicle UH1H1 : "{70BAEEFC2D3FEE64}Prefabs/Vehicles/Helicopters/UH1H/UH1H.et" {
  coords 1467.018 38 2905.153
  angles 0 75.31 0
 }
-$grp Vehicle : "{C012BB3488BEA0C2}Prefabs/Vehicles/Wheeled/BTR70/BTR70.et" {
- BTR01 {
-  components {
-   SCR_VehicleSoundComponent "{55C2E66AD4EF2CA6}" {
-    Enabled 0
-   }
-   AIKnowledgeComponent "{6120C53097494C76}" {
-    Enabled 0
-   }
-   ChimeraAIPathfindingComponent "{5676B7807269CA5B}" {
-    Enabled 0
-   }
-   SCR_AIVehicleUsageComponent "{60E4E37C467714E8}" {
-    Enabled 0
-   }
-   SCR_BaseCompartmentManagerComponent "{20FB66C5DCB8DF72}" {
-    Enabled 0
-   }
-   SCR_BaseLockComponent "{54D6FBC0EA806FE5}" {
-    Enabled 0
-   }
-   SCR_EditableVehicleComponent "{50DEB7C26B5EB312}" {
-    Enabled 0
-   }
-   BaseVehicleNodeComponent "{20FB66C5B2237133}" {
-    Enabled 0
-    components {
-     ControllersManagerComponent "{20FB66C5C1BE9DA0}" {
-      Enabled 0
-     }
-     SCR_BaseHUDComponent "{37C2676694790BC7}" {
-      Enabled 0
-     }
-     SCR_CarControllerComponent "{20FB66C5BC92275B}" {
-      Enabled 0
-     }
+Vehicle BTR2 : "{C012BB3488BEA0C2}Prefabs/Vehicles/Wheeled/BTR70/BTR70.et" {
+ components {
+  SCR_VehicleSoundComponent "{55C2E66AD4EF2CA6}" {
+   Enabled 0
+  }
+  AIKnowledgeComponent "{6120C53097494C76}" {
+   Enabled 0
+  }
+  ChimeraAIPathfindingComponent "{5676B7807269CA5B}" {
+   Enabled 0
+  }
+  DAB_PoseModificationComponent "{69133292313C8C9B}" {
+   m_sWorkingPoseModification "{C9DC1401FC90D481}Configs/PoseModifications/BTR01.conf"
+  }
+  SCR_AIVehicleUsageComponent "{60E4E37C467714E8}" {
+   Enabled 0
+  }
+  SCR_BaseCompartmentManagerComponent "{20FB66C5DCB8DF72}" {
+   Enabled 0
+  }
+  SCR_BaseLockComponent "{54D6FBC0EA806FE5}" {
+   Enabled 0
+  }
+  SCR_EditableVehicleComponent "{50DEB7C26B5EB312}" {
+   Enabled 0
+  }
+  BaseVehicleNodeComponent "{20FB66C5B2237133}" {
+   Enabled 0
+   components {
+    ControllersManagerComponent "{20FB66C5C1BE9DA0}" {
+     Enabled 0
     }
-   }
-   ChimeraAIVehicleControlComponent "{61C2E46781A66E82}" {
-    Enabled 0
-    components {
-     AICarMovementComponent "{61C2E46796C28D80}" {
-      Enabled 0
-     }
+    SCR_BaseHUDComponent "{37C2676694790BC7}" {
+     Enabled 0
     }
-   }
-   SCR_VehiclePerceivableComponent "{566CD04B8A6107DD}" {
-    Enabled 0
-   }
-   CarProcAnimComponent "{A201E6A6F82F2CDA}" {
-    Enabled 0
-   }
-   SlotManagerComponent "{55BCE45E438E4CFF}" {
-    Slots {
-     RegisteringComponentSlotInfo CommanderTurret {
-      RegisterActions 0
-     }
-     RegisteringComponentSlotInfo Turret {
-      MergePhysics 0
-      Prefab "{337D05CC762A1A21}Prefabs/Vehicles/Wheeled/BTR70/VehParts/Turret/BTR70_Turret_Anim.et"
-      RegisterActions 0
-     }
+    SCR_CarControllerComponent "{20FB66C5BC92275B}" {
+     Enabled 0
     }
-   }
-   SCR_VehicleInventoryStorageManagerComponent "{591056FA3B752FE6}" {
-    Enabled 0
-   }
-   VehicleAnimationComponent "{50B803EAA459B0AF}" {
-    AutoCommandBind 0
-    AutoVariablesBind 0
-   }
-   VehicleGamepadEffectsManagerComponent "{61E2E297F9B95CA6}" {
-    Enabled 0
-   }
-   NwkCarMovementComponent "{5D6CA5AFEC980F35}" {
-    Enabled 0
    }
   }
-  coords 1482.079 38 2905.989
-  angles -3.581 23.091 -4.864
- }
- BTR2 {
-  components {
-   SCR_VehicleSoundComponent "{55C2E66AD4EF2CA6}" {
-    Enabled 0
-   }
-   AIKnowledgeComponent "{6120C53097494C76}" {
-    Enabled 0
-   }
-   ChimeraAIPathfindingComponent "{5676B7807269CA5B}" {
-    Enabled 0
-   }
-   DAB_PoseModificationComponent "{69133292313C8C9B}" {
-    m_sWorkingPoseModification "{C9DC1401FC90D481}Configs/PoseModifications/BTR01.conf"
-   }
-   SCR_AIVehicleUsageComponent "{60E4E37C467714E8}" {
-    Enabled 0
-   }
-   SCR_BaseCompartmentManagerComponent "{20FB66C5DCB8DF72}" {
-    Enabled 0
-   }
-   SCR_BaseLockComponent "{54D6FBC0EA806FE5}" {
-    Enabled 0
-   }
-   SCR_EditableVehicleComponent "{50DEB7C26B5EB312}" {
-    Enabled 0
-   }
-   BaseVehicleNodeComponent "{20FB66C5B2237133}" {
-    Enabled 0
-    components {
-     ControllersManagerComponent "{20FB66C5C1BE9DA0}" {
-      Enabled 0
-     }
-     SCR_BaseHUDComponent "{37C2676694790BC7}" {
-      Enabled 0
-     }
-     SCR_CarControllerComponent "{20FB66C5BC92275B}" {
-      Enabled 0
-     }
+  ChimeraAIVehicleControlComponent "{61C2E46781A66E82}" {
+   Enabled 0
+   components {
+    AICarMovementComponent "{61C2E46796C28D80}" {
+     Enabled 0
     }
-   }
-   ChimeraAIVehicleControlComponent "{61C2E46781A66E82}" {
-    Enabled 0
-    components {
-     AICarMovementComponent "{61C2E46796C28D80}" {
-      Enabled 0
-     }
-    }
-   }
-   SCR_VehiclePerceivableComponent "{566CD04B8A6107DD}" {
-    Enabled 0
-   }
-   CarProcAnimComponent "{A201E6A6F82F2CDA}" {
-    Enabled 0
-   }
-   SlotManagerComponent "{55BCE45E438E4CFF}" {
-    Slots {
-     RegisteringComponentSlotInfo CommanderTurret {
-      RegisterActions 0
-     }
-     RegisteringComponentSlotInfo Turret {
-      AutoTransform 0
-      MergePhysics 0
-      RegisterActions 0
-      RegisterDamage 0
-      RegisterControllers 0
-      RegisterWeapons 0
-      RegisterCompartments 0
-     }
-    }
-   }
-   SCR_VehicleInventoryStorageManagerComponent "{591056FA3B752FE6}" {
-    Enabled 0
-   }
-   VehicleAnimationComponent "{50B803EAA459B0AF}" {
-    AutoCommandBind 0
-    AutoVariablesBind 0
-   }
-   VehicleGamepadEffectsManagerComponent "{61E2E297F9B95CA6}" {
-    Enabled 0
-   }
-   NwkCarMovementComponent "{5D6CA5AFEC980F35}" {
-    Enabled 0
    }
   }
-  coords 1476.201 38 2905.223
+  SCR_VehiclePerceivableComponent "{566CD04B8A6107DD}" {
+   Enabled 0
+  }
+  CarProcAnimComponent "{A201E6A6F82F2CDA}" {
+   Enabled 0
+  }
+  SlotManagerComponent "{55BCE45E438E4CFF}" {
+   Slots {
+    RegisteringComponentSlotInfo CommanderTurret {
+     RegisterActions 0
+    }
+    RegisteringComponentSlotInfo Turret {
+     AutoTransform 0
+     MergePhysics 0
+     RegisterActions 0
+     RegisterDamage 0
+     RegisterControllers 0
+     RegisterWeapons 0
+     RegisterCompartments 0
+    }
+   }
+  }
+  SCR_VehicleInventoryStorageManagerComponent "{591056FA3B752FE6}" {
+   Enabled 0
+  }
+  VehicleAnimationComponent "{50B803EAA459B0AF}" {
+   AutoCommandBind 0
+   AutoVariablesBind 0
+  }
+  VehicleGamepadEffectsManagerComponent "{61E2E297F9B95CA6}" {
+   Enabled 0
+  }
+  NwkCarMovementComponent "{5D6CA5AFEC980F35}" {
+   Enabled 0
+  }
  }
+ coords 1476.201 38 2905.223
 }

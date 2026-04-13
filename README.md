@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/titleImage_01_lowRes.jpg" alt="Tool Thumbnail" width="600"/>
+  <img src="Docs/titleImage_01_lowRes.jpg" alt="Tool Thumbnail" width="600"/>
 </p>
 
 # Screenshot Toolbox – Bone Manipulator
@@ -11,7 +11,7 @@ This tool is designed to significantly speed up pose manipulation for screenshot
 
 ## Overview
 <p align="left">
-  <img src="docs/preview_01_lowRes.jpg" alt="Tool Overview" width="600"/>
+  <img src="Docs/preview_01_lowRes.jpg" alt="Tool Overview" width="600"/>
 </p>
 
 The Bone Manipulator allows you to directly pose skeletons inside the Workbench viewport by interacting with bones via custom visual handles.

@@ -1,8 +1,0 @@
-Turret : "{66596659FB0F645B}Prefabs/Vehicles/Wheeled/BTR70/VehParts/Turret/BTR70_Turret.et" {
- ID "51ACD0965653D003"
- components {
-  ProcAnimComponent "{51ACD09DB14C45C0}" {
-   Enabled 0
-  }
- }
-}
