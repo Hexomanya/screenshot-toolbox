@@ -156,12 +156,22 @@ class DAB_BoneOverlayRenderer
 	{
 		foreach (string boneName : skeletonInfo.GetBoneNames())
 		{
-			if (displaySettings.GetHideIKTargetBones() && boneName.Contains("_IK_")) continue;
-			if (displaySettings.GetHideVolumeBones() && boneName.EndsWith("Prop")) continue;
-			if (displaySettings.GetHideVolumeBones() && boneName.EndsWith("Volume")) continue;
-			if (displaySettings.GetHideCameraBone() && boneName == "Camera") continue;
-			if (displaySettings.GetHideFaceBones() && skeletonInfo.IsDescendantOf(boneName, "Head")) continue;
-			if (!displaySettings.GetFilterBoneName().IsEmpty() && !boneName.Contains(displaySettings.GetFilterBoneName().Trim())) continue;
+			string lowercaseBoneName = boneName;
+			lowercaseBoneName.ToLower();
+			
+			if (displaySettings.GetHideIKTargetBones() && lowercaseBoneName.Contains("_ik")) continue;
+			if (displaySettings.GetHideVolumeBones() && lowercaseBoneName.EndsWith("prop")) continue;
+			if (displaySettings.GetHideVolumeBones() && lowercaseBoneName.EndsWith("volume")) continue;
+			if (displaySettings.GetHideCameraBone() && lowercaseBoneName == "camera") continue;
+			if (displaySettings.GetHideFaceBones() && skeletonInfo.IsDescendantOf(lowercaseBoneName, "head")) continue;
+			
+			
+			if(!displaySettings.GetFilterBoneName().IsEmpty())
+			{
+				string lowercaseFilterName = displaySettings.GetFilterBoneName().Trim();
+				lowercaseFilterName.ToLower();
+				if (!lowercaseBoneName.Contains(lowercaseFilterName)) continue;
+			}
 			
 			TNodeId boneId = anim.GetBoneIndex(boneName);
 			if (boneId == -1) continue;
