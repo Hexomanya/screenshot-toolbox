@@ -116,6 +116,281 @@ $grp CinematicEntity {
       }
      }
     }
+    CustomCinematicTrack "{691AD030449B9DEC}" {
+     TrackName "S105Rally1_PoseTrack"
+     ClassName "DAB_PoseManipulationTrack"
+     ChildTracks {
+      BooleanCinematicTrack "{691AD030449BD3D2}" {
+       TrackName "m_bApplyModifications"
+       Keyframes {
+        BooleanCinematicKeyframe "{691AD03316DBCC84}" {
+         FrameNumber 0
+         Value 1
+        }
+       }
+      }
+     }
+    }
+    AnimationCinematicTrack "{691AD033021BDD05}" {
+     TrackName "WheelPusher"
+     Play BooleanCinematicTrack "{691AD033021BDD6D}" {
+      TrackName "Play"
+      Keyframes {
+       BooleanCinematicKeyframe "{691AD024483F05DC}" {
+        FrameNumber 0
+        Value 1
+       }
+      }
+     }
+    }
+    CustomCinematicTrack "{691B1A2D6EF87B35}" {
+     TrackName "WheelPusher_PoseTrack"
+     ClassName "DAB_PoseManipulationTrack"
+     ChildTracks {
+      BooleanCinematicTrack "{691B1A2D6EF8ED7C}" {
+       TrackName "m_bApplyModifications"
+       Keyframes {
+        BooleanCinematicKeyframe "{691B1A2D6CDF2E2E}" {
+         FrameNumber 0
+         Value 1
+        }
+       }
+      }
+     }
+    }
+    CameraCinematicTrack "{691B1A2D4D8A4437}" {
+     TrackName "Camera"
+     Position Vector3CinematicTrack "{691B1A2D4D8A4470}" {
+      TrackName "Position"
+      X FloatCinematicTrack "{691B1A2D4D8A4444}" {
+       TrackName "X"
+       Keyframes {
+        FloatCinematicKeyframe "{691B1A31290E5886}" {
+         FrameNumber 0
+         Value 3188.066
+         InterpMode 0
+        }
+       }
+      }
+      Y FloatCinematicTrack "{691B1A2D4D8A4456}" {
+       TrackName "Y"
+       Keyframes {
+        FloatCinematicKeyframe "{691B1A31290E46FC}" {
+         FrameNumber 0
+         Value 10.584
+         InterpMode 0
+        }
+       }
+      }
+      Z FloatCinematicTrack "{691B1A2D4D8A445F}" {
+       TrackName "Z"
+       Keyframes {
+        FloatCinematicKeyframe "{691B1A31290E471C}" {
+         FrameNumber 0
+         Value 2821.099
+         InterpMode 0
+        }
+       }
+      }
+     }
+     Angles Vector3CinematicTrack "{691B1A2D4D8A45A7}" {
+      TrackName "Angles"
+      X FloatCinematicTrack "{691B1A2D4D8A45AC}" {
+       TrackName "X"
+       Keyframes {
+        FloatCinematicKeyframe "{691B1A31290E445A}" {
+         FrameNumber 0
+         Value -2.049
+         InterpMode 0
+        }
+       }
+      }
+      Y FloatCinematicTrack "{691B1A2D4D8A45A9}" {
+       TrackName "Y"
+       Keyframes {
+        FloatCinematicKeyframe "{691B1A31290E42EF}" {
+         FrameNumber 0
+         Value 1109.558
+         InterpMode 0
+        }
+       }
+      }
+      Z FloatCinematicTrack "{691B1A2D4D8A45B5}" {
+       TrackName "Z"
+       Keyframes {
+        FloatCinematicKeyframe "{691B1A31290E433E}" {
+         FrameNumber 0
+         Value 0
+         InterpMode 0
+        }
+       }
+      }
+     }
+     FOV FloatCinematicTrack "{691B1A2D4D8A45BF}" {
+      TrackName "FOV"
+      Keyframes {
+       FloatCinematicKeyframe "{691B1A31CD4612F6}" {
+        FrameNumber 0
+        Value 17.84
+        InterpMode 0
+       }
+      }
+     }
+     DOF DOFCinematicTrack "{691B1A2D4D8A4587}" {
+      TrackName "DOF"
+      Enabled BooleanCinematicTrack "{691B1A2D4D8A458D}" {
+       TrackName "Enabled"
+      }
+      FocusDistance FloatCinematicTrack "{691B1A2D4D8A4593}" {
+       TrackName "FocusDistance"
+      }
+      LengthNear FloatCinematicTrack "{691B1A2D4D8A459B}" {
+       TrackName "LengthNear"
+      }
+      LengthFar FloatCinematicTrack "{691B1A2D4D8A45E3}" {
+       TrackName "LengthFar"
+      }
+     }
+     DOFAdvanced DOFAdvancedCinematicTrack "{691B1A2D4D8A45E9}" {
+      TrackName "DOFAdvanced"
+      Enabled BooleanCinematicTrack "{691B1A2D4D8A45FC}" {
+       TrackName "Enabled"
+       Keyframes {
+        BooleanCinematicKeyframe "{691B1A31D178D72B}" {
+         FrameNumber 0
+         Value 1
+        }
+       }
+      }
+      FocusDistance FloatCinematicTrack "{691B1A2D4D8A45C4}" {
+       TrackName "FocusDistance"
+       Keyframes {
+        FloatCinematicKeyframe "{691B1A31D9D33645}" {
+         FrameNumber 0
+         Value 7.16
+        }
+       }
+      }
+      FStop FloatCinematicTrack "{691B1A2D4D8A45C0}" {
+       TrackName "FStop"
+       Keyframes {
+        FloatCinematicKeyframe "{691B1A312D2AC61D}" {
+         FrameNumber 0
+         Value 2.65
+         InterpMode 0
+        }
+       }
+      }
+      SensorSize FloatCinematicTrack "{691B1A2D4D8A45CD}" {
+       TrackName "SensorSize"
+       Keyframes {
+        FloatCinematicKeyframe "{691B1A3122E26DC0}" {
+         FrameNumber 0
+         Value 40
+         InterpMode 0
+        }
+       }
+      }
+      FocalLengthAuto BooleanCinematicTrack "{691B1A2D4D8A45D6}" {
+       TrackName "FocalLengthAuto"
+      }
+      FocalLength FloatCinematicTrack "{691B1A2D4D8A45D1}" {
+       TrackName "FocalLength"
+      }
+     }
+     HDR HDRCinematicTrack "{691B1A2D4D8A45D8}" {
+      TrackName "HDR"
+      ManualExposition BooleanCinematicTrack "{691B1A2D4D8A4523}" {
+       TrackName "ManualExposition"
+      }
+      ExpositionLV FloatCinematicTrack "{691B1A2D4D8A452D}" {
+       TrackName "ExpositionLV"
+      }
+     }
+    }
+    CustomCinematicTrack "{691B1A307893A26E}" {
+     TrackName "WeatherTrack"
+     ClassName "WeatherCinematicTrack"
+     ChildTracks {
+      FloatCinematicTrack "{691B1A307893AEB5}" {
+       TrackName "m_fTimeOfDay"
+       Keyframes {
+        FloatCinematicKeyframe "{691B1A304FA87172}" {
+         FrameNumber 0
+         Value 9.31
+        }
+       }
+      }
+      IntegerCinematicTrack "{691B1A307893AFB1}" {
+       TrackName "m_iWeatherType"
+      }
+      BooleanCinematicTrack "{691B1A307893AF73}" {
+       TrackName "setSpecifics"
+       Keyframes {
+        BooleanCinematicKeyframe "{691B1A304EDA4328}" {
+         FrameNumber 0
+         Value 1
+        }
+       }
+      }
+      FloatCinematicTrack "{691B1A307893ACD8}" {
+       TrackName "m_fWindSpeed"
+      }
+      FloatCinematicTrack "{691B1A307893ADBB}" {
+       TrackName "m_fWindDirection"
+      }
+      FloatCinematicTrack "{691B1A307893AD18}" {
+       TrackName "m_fWetness"
+       Keyframes {
+        FloatCinematicKeyframe "{691B1A310F605C6E}" {
+         FrameNumber 0
+         Value 1
+         InterpMode 0
+        }
+       }
+      }
+      FloatCinematicTrack "{691B1A307893AAF3}" {
+       TrackName "m_fPuddles"
+       Keyframes {
+        FloatCinematicKeyframe "{691B1A310FD10C67}" {
+         FrameNumber 0
+         Value 1
+         InterpMode 0
+        }
+       }
+      }
+      FloatCinematicTrack "{691B1A307893AA4A}" {
+       TrackName "m_fFog"
+       Keyframes {
+        FloatCinematicKeyframe "{691B1A304AD4FA5F}" {
+         FrameNumber 0
+         Value 0.53
+        }
+       }
+      }
+      FloatCinematicTrack "{691B1A307893AB25}" {
+       TrackName "m_fFogHeight"
+       Keyframes {
+        FloatCinematicKeyframe "{691B1A3049057090}" {
+         FrameNumber 0
+         Value 0.2
+        }
+       }
+      }
+      BooleanCinematicTrack "{691B1A307893A8BC}" {
+       TrackName "setDate"
+      }
+      IntegerCinematicTrack "{691B1A307893A812}" {
+       TrackName "m_iYear"
+      }
+      IntegerCinematicTrack "{691B1A307893A92A}" {
+       TrackName "m_iMonth"
+      }
+      IntegerCinematicTrack "{691B1A307893967E}" {
+       TrackName "m_iDay"
+      }
+     }
+    }
    }
   }
  }
@@ -235,7 +510,6 @@ $grp SCR_ChimeraCharacter : "{2619482C6C4202E0}Prefabs/Characters/Campaign/Final
  Tester1 {
   components {
    DAB_PoseModificationComponent "{690F1D1E9F36E12E}" {
-    m_sWorkingPoseModification "{653A5A98963DD123}Configs/PoseModifications/asdasdasd.conf"
    }
    CharacterWeaponSlotComponent "{520EA1D2F659CFAB}" {
     Enabled 0
@@ -251,7 +525,6 @@ $grp SCR_ChimeraCharacter : "{2619482C6C4202E0}Prefabs/Characters/Campaign/Final
  NoAnim {
   components {
    DAB_PoseModificationComponent "{690D3C88DC4783C1}" {
-    m_sWorkingPoseModification "{58EAE491A9F27129}Configs/PoseModifications/asdasderewrwer.conf"
    }
    CharacterWeaponSlotComponent "{520EA1D2F659CFAB}" {
     Enabled 0
