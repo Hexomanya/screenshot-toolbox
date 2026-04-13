@@ -163,8 +163,7 @@ class DAB_BoneOverlayRenderer
 			if (displaySettings.GetHideVolumeBones() && lowercaseBoneName.EndsWith("prop")) continue;
 			if (displaySettings.GetHideVolumeBones() && lowercaseBoneName.EndsWith("volume")) continue;
 			if (displaySettings.GetHideCameraBone() && lowercaseBoneName == "camera") continue;
-			if (displaySettings.GetHideFaceBones() && skeletonInfo.IsDescendantOf(lowercaseBoneName, "head")) continue;
-			
+			if (displaySettings.GetHideFaceBones() && skeletonInfo.IsDescendantOf(boneName, "Head")) continue;
 			
 			if(!displaySettings.GetFilterBoneName().IsEmpty())
 			{

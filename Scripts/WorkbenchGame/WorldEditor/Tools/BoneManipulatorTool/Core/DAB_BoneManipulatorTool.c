@@ -86,7 +86,7 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 	{
 		if(!m_EditorController) m_EditorController = DAB_EditorController(this, m_API);
 		RefreshTargetEntity();
-		m_EditorController.OnActivate();
+		m_EditorController.OnActivate(m_API);
 	}
 
 	//-----------------------------------------------------------------------
