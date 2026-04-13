@@ -14,25 +14,11 @@ class DAB_PoseManipulationTrack : CinematicTrackBase
 	protected ref map<ResourceName, ref DAB_PoseModification> m_mCachedModifications = new map<ResourceName, ref DAB_PoseModification>();
 	protected ref map<string, vector> m_mBaseRotationCache = new map<string, vector>();
 
-	// ── Lifecycle & Overrides ─────────────────────────────────────────────
+	// ── Overrides ─────────────────────────────────────────────────────────
 	//-----------------------------------------------------------------------
-	override void OnInit(World world)
-	{
-		Print("OnInit called");
-		Print("Clearing caches");
-		m_mCachedModifications.Clear();
-		m_mBaseRotationCache.Clear();
-
-		m_World = world;
-		
-		RefreshTargetEntity(m_World);
-		ResetBonesToAnimation(); // If we add/remove tracks this object will reinit, but the bones won't. So on the next apply we would cache the modified rotation
-	}
-
-	//-----------------------------------------------------------------------
+	//! Applies active pose modifications from the target entity's DAB_PoseModificationComponent.
 	override void OnApply(float time)
 	{
-		Print("OnApply called");
 		if (!m_bApplyModifications) return;
 
 		m_mCachedModifications.Clear();
@@ -60,8 +46,19 @@ class DAB_PoseManipulationTrack : CinematicTrackBase
 		ResourceName workingConfig = poseComp.GetWorkingModificationConfig();
 		if (!workingConfig.IsEmpty() && !poseList.Contains(workingConfig))
 			ApplyModificationFromResource(workingConfig);
-		
-		Print("OnApply executed fully");
+	}
+
+	//-----------------------------------------------------------------------
+	//! Initializes the track, clears caches, and resolves the target entity in the world.
+	override void OnInit(World world)
+	{
+		m_mCachedModifications.Clear();
+		m_mBaseRotationCache.Clear();
+
+		m_World = world;
+
+		RefreshTargetEntity(m_World);
+		ResetBonesToAnimation(); // If we add/remove tracks this object will reinit, but the bones won't. So on the next apply we would cache the modified rotation
 	}
 
 	// ── Public ────────────────────────────────────────────────────────────
@@ -77,44 +74,6 @@ class DAB_PoseManipulationTrack : CinematicTrackBase
 
 	// ── Protected ─────────────────────────────────────────────────────────
 	//-----------------------------------------------------------------------
-	protected void ApplyModificationFromResource(ResourceName modificationName)
-	{
-		DAB_PoseModification poseModification = GetModificationFromFile(modificationName);
-		if (!poseModification || poseModification.m_aBoneModifications.IsEmpty()) return;
-
-		ApplyPoseModification(poseModification);
-	}
-
-	//-----------------------------------------------------------------------
-	protected DAB_PoseModification GetModificationFromFile(ResourceName modificationName)
-	{
-		DAB_PoseModification cached;
-		if (m_mCachedModifications.Find(modificationName, cached)) return cached;
-
-		Resource configResource = BaseContainerTools.LoadContainer(modificationName);
-		if (!configResource || !configResource.IsValid()) return null;
-
-		BaseContainer container = configResource.GetResource().ToBaseContainer();
-		if (!container) return null;
-
-		DAB_PoseModification poseData = new DAB_PoseModification();
-		BaseContainerTools.WriteToInstance(poseData, container);
-
-		//if (poseData) m_mCachedModifications.Insert(modificationName, poseData);
-
-		return poseData;
-	}
-
-	//-----------------------------------------------------------------------
-	protected void ApplyPoseModification(DAB_PoseModification poseModification)
-	{
-		foreach (DAB_BoneModification boneModification : poseModification.m_aBoneModifications)
-		{
-			ApplyBoneModification(boneModification);
-		}
-	}
-
-	//-----------------------------------------------------------------------
 	protected void ApplyBoneModification(DAB_BoneModification boneModification)
 	{
 		TNodeId boneId = DAB_BoneHelper.GetBoneId(m_TargetEntity, boneModification.m_sBoneName);
@@ -123,13 +82,7 @@ class DAB_PoseManipulationTrack : CinematicTrackBase
 		if (!m_mBaseRotationCache.Find(boneModification.m_sBoneName, originalRotation))
 		{
 			if (!DAB_BoneHelper.TryGetBoneLocalRotation(m_TargetEntity, boneId, originalRotation)) return;
-
-			if (boneModification.m_sBoneName == "v_wheel_L02")
-				PrintFormat("Track: Inserted rotation into cache for wheel: %1", originalRotation);
 			m_mBaseRotationCache.Insert(boneModification.m_sBoneName, originalRotation);
-		} else {
-			if (boneModification.m_sBoneName == "v_wheel_L02")
-				PrintFormat("Track: Loaded cached rotation for wheel: %1", originalRotation);
 		}
 
 		vector rotRad = boneModification.m_vRotationOffset * Math.DEG2RAD;
@@ -157,32 +110,46 @@ class DAB_PoseManipulationTrack : CinematicTrackBase
 		localOff[1] = vector.Dot(worldOff, boneOrigWorldRot[1]);
 		localOff[2] = vector.Dot(worldOff, boneOrigWorldRot[2]);
 
-		if (boneModification.m_sBoneName == "v_wheel_L02")
-			PrintFormat("Track: Setting wheel to pos: %1, rot: %2", localOff, rotRadCorrected);
-
 		anim.SetBone(m_TargetEntity, boneId, rotRadCorrected, localOff, boneModification.m_fScale);
 		m_TargetEntity.Update();
 	}
 
 	//-----------------------------------------------------------------------
-	protected void RefreshTargetEntity(World world)
+	protected void ApplyModificationFromResource(ResourceName modificationName)
 	{
-		if (!world) return;
-		Print("Refreshing target entity");
+		DAB_PoseModification poseModification = GetModificationFromFile(modificationName);
+		if (!poseModification || poseModification.m_aBoneModifications.IsEmpty()) return;
 
-		string entityName = GetEntityName();
-		if (entityName.IsEmpty()) return;
+		ApplyPoseModification(poseModification);
+	}
 
-		IEntity found = world.FindEntityByName(entityName);
-		
-		if (found != m_TargetEntity)
-	    {
-	        m_mBaseRotationCache.Clear();
-	    }
+	//-----------------------------------------------------------------------
+	protected void ApplyPoseModification(DAB_PoseModification poseModification)
+	{
+		foreach (DAB_BoneModification boneModification : poseModification.m_aBoneModifications)
+		{
+			ApplyBoneModification(boneModification);
+		}
+	}
 
-		m_TargetEntity = found;
-		if (m_TargetEntity)
-			m_SlotManager = SlotManagerComponent.Cast(m_TargetEntity.FindComponent(SlotManagerComponent));
+	//-----------------------------------------------------------------------
+	protected DAB_PoseModification GetModificationFromFile(ResourceName modificationName)
+	{
+		DAB_PoseModification cached;
+		if (m_mCachedModifications.Find(modificationName, cached)) return cached;
+
+		Resource configResource = BaseContainerTools.LoadContainer(modificationName);
+		if (!configResource || !configResource.IsValid()) return null;
+
+		BaseContainer container = configResource.GetResource().ToBaseContainer();
+		if (!container) return null;
+
+		DAB_PoseModification poseData = new DAB_PoseModification();
+		BaseContainerTools.WriteToInstance(poseData, container);
+
+		//if (poseData) m_mCachedModifications.Insert(modificationName, poseData);
+
+		return poseData;
 	}
 
 	//-----------------------------------------------------------------------
@@ -204,25 +171,42 @@ class DAB_PoseManipulationTrack : CinematicTrackBase
 
 		return m_TargetEntity.GetAnimation();
 	}
-	
+
+	//-----------------------------------------------------------------------
+	protected void RefreshTargetEntity(World world)
+	{
+		if (!world) return;
+		
+		string entityName = GetEntityName();
+		if (entityName.IsEmpty()) return;
+
+		IEntity found = world.FindEntityByName(entityName);
+
+		if (found != m_TargetEntity)
+			m_mBaseRotationCache.Clear();
+
+		m_TargetEntity = found;
+		if (m_TargetEntity)
+			m_SlotManager = SlotManagerComponent.Cast(m_TargetEntity.FindComponent(SlotManagerComponent));
+	}
+
+	//-----------------------------------------------------------------------
 	protected void ResetBonesToAnimation()
 	{
-	    if (!m_TargetEntity) return;
-	
-	    Animation anim = m_TargetEntity.GetAnimation();
-	    if (!anim) return;
-	
-	    Print("DAB_PoseManipulationTrack: Resetting all bones to animation");
-	
-	    array<string> boneNames = {};
-	    anim.GetBoneNames(boneNames);
-	
-	    foreach (string boneName : boneNames)
-	    {
-	        TNodeId boneId = anim.GetBoneIndex(boneName);
-	        anim.SetBone(m_TargetEntity, boneId, vector.Zero, vector.Zero, 1.0);
-	    }
-	
-	    m_TargetEntity.Update();
+		if (!m_TargetEntity) return;
+
+		Animation anim = m_TargetEntity.GetAnimation();
+		if (!anim) return;
+
+		array<string> boneNames = {};
+		anim.GetBoneNames(boneNames);
+
+		foreach (string boneName : boneNames)
+		{
+			TNodeId boneId = anim.GetBoneIndex(boneName);
+			anim.SetBone(m_TargetEntity, boneId, vector.Zero, vector.Zero, 1.0);
+		}
+
+		m_TargetEntity.Update();
 	}
 }
