@@ -45,8 +45,11 @@ class DAB_EditorController
 	
 	// ── Lifecycle ──────────────────────────────────────────────────────────
 	//-----------------------------------------------------------------------
-	void OnActivate()
+	void OnActivate(WorldEditorAPI api)
 	{
+		// TODO: Find better way to handle api
+		m_API = api; // Needed so we do not crash after reloading scripts. 
+		
 		CheckValidSetup();
 		RedrawOverlay();
 	}
@@ -119,6 +122,12 @@ class DAB_EditorController
 
 		if (!(buttons & WETMouseButtonFlag.LEFT)) return;
 		if (!m_sSelectedBoneName.IsEmpty()) return; // gizmo handles input when a bone is active
+		
+		if(!m_ParentTool.GetCurrentTargetEntity())
+		{
+			Print("Target entity is null! Please close and reopen the tool. If it keeps happening report this!", LogLevel.ERROR);
+			return;
+		}
 
 		string hitBoneName = m_Renderer.PickBoneAtScreenPos(x, y, m_ParentTool.GetCurrentTargetEntity(), m_API);
 		if (!hitBoneName.IsEmpty())
