@@ -1,0 +1,166 @@
+CinematicEntity Tutorial {
+ coords 0 0 0
+ Scene CinematicScene "{691CA925F679C348}" {
+  EndFrame 1
+  Tracks {
+   AnimationCinematicTrack "{691CA92737838260}" {
+    TrackName "US01"
+    Play BooleanCinematicTrack "{691CA9273783825D}" {
+     TrackName "Play"
+     Keyframes {
+      BooleanCinematicKeyframe "{691CA9277B6F4561}" {
+       FrameNumber 0
+       Value 0
+      }
+     }
+    }
+   }
+   AnimationCinematicTrack "{691CA927687A145A}" {
+    TrackName "USSR01"
+    Play BooleanCinematicTrack "{691CA927687A1592}" {
+     TrackName "Play"
+     Keyframes {
+      BooleanCinematicKeyframe "{691CA9274521991D}" {
+       FrameNumber 0
+       Value 1
+      }
+     }
+    }
+   }
+   CustomCinematicTrack "{691CA926F3393A9B}" {
+    TrackName "US01_PoseTrack"
+    ClassName "DAB_PoseManipulationTrack"
+    ChildTracks {
+     BooleanCinematicTrack "{691CA926F3390256}" {
+      TrackName "m_bApplyModifications"
+      Keyframes {
+       BooleanCinematicKeyframe "{691CA927D3447957}" {
+        FrameNumber 0
+        Value 1
+       }
+      }
+     }
+    }
+   }
+   CustomCinematicTrack "{691CA92621A6D3E2}" {
+    TrackName "LAV1_PoseTrack"
+    ClassName "DAB_PoseManipulationTrack"
+    ChildTracks {
+     BooleanCinematicTrack "{691CA92621B925CD}" {
+      TrackName "m_bApplyModifications"
+      Keyframes {
+       BooleanCinematicKeyframe "{691CA927D3726D7C}" {
+        FrameNumber 0
+        Value 1
+       }
+      }
+     }
+    }
+   }
+   CustomCinematicTrack "{691CB5B9F6E8DC12}" {
+    TrackName "USSR01_PoseTrack"
+    ClassName "DAB_PoseManipulationTrack"
+    ChildTracks {
+     BooleanCinematicTrack "{691CB5B9F6EB1878}" {
+      TrackName "m_bApplyModifications"
+      Keyframes {
+       BooleanCinematicKeyframe "{691CB5B9F4917F1E}" {
+        FrameNumber 1
+        Value 1
+       }
+      }
+     }
+    }
+   }
+  }
+ }
+}
+Vehicle LAV1 : "{0FBF8F010F81A4E5}Prefabs/Vehicles/Wheeled/LAV25/LAV25.et" {
+ components {
+  DAB_PoseModificationComponent "{691CA926DA06B116}" {
+   m_sWorkingPoseModification "{80A6F835411D32B8}Configs/PoseModifications/LAV01.conf"
+  }
+ }
+ coords 1368.553 39 2225.411
+ angles 0 -170.987 0
+}
+GenericEntity : "{3FD26066E47DD5AE}PrefabLibrary/DefaultLibrary/Props/Commercial/CrateWooden_01_plain.et" {
+ coords 1362.259 38.976 2234.74
+ angles 0 -35.065 0
+}
+GenericEntity : "{6EB3EE4FE50E0319}Prefabs/Props/Recreation/Beach/BlanketBeach_01/BlanketBeach_01_red.et" {
+ Flags 0x80000 0
+ coords 1363.235 0.001 2233.195
+ angles 0 -127.399 0
+}
+SCR_ChimeraCharacter USSR01 : "{90D2F1A1CFCA7B5F}Prefabs/Characters/Factions/OPFOR/USSR_Army/Guard/Character_USSR_SL_Guard.et" {
+ components {
+  DAB_PoseModificationComponent "{691CB5B980091D4F}" {
+   m_sWorkingPoseModification "{0D0CC4FE4DBD9860}Configs/PoseModifications/USSR011.conf"
+  }
+  AnimationPlayerComponent "{691CA9271E90F1FC}" {
+   Animation "{1DAA59A918EDF0B0}anims/anm/NPC/male/sitting/sitting_on_box/p_sitting_on_box_rfl_smoking_lefthand_weapon_lap_violence_out.anm"
+   AutoPlay 1
+  }
+ }
+ coords 1362.11 39.334 2234.744
+ angles 0 -125 0
+}
+GenericEntity : "{B1482FB64E3D2D45}Prefabs/Weapons/Rifles/M16/Rifle_M16A2_4x20.et" {
+ components {
+  DAB_PoseModificationComponent "{691CB5B364CE95AC}" {
+   m_sWorkingPoseModification "{05D887C03FA78DDC}Configs/PoseModifications/Weapon.conf"
+  }
+ }
+ coords 1365.698 39.774 2228.929
+ angles 0 -35 0
+}
+Vehicle UH1H_armed_gunship_empty_sharkNose1 : "{BDE43262FC05B4D7}Prefabs/Vehicles/Helicopters/UH1H/UH1H_armed_gunship_empty_sharkNose.et" {
+ components {
+  DAB_PoseModificationComponent "{691CA9279827EA8A}" {
+   m_sWorkingPoseModification "{0DA841DE82EACF91}Configs/PoseModifications/UH_01.conf"
+  }
+ }
+ coords 1373.422 39 2218.865
+ angles 0 175.855 0
+}
+Vehicle BTR1 : "{C012BB3488BEA0C2}Prefabs/Vehicles/Wheeled/BTR70/BTR70.et" {
+ components {
+  DAB_PoseModificationComponent "{691CA920DA58C762}" {
+   m_sWorkingPoseModification "{C9DC1401FC90D481}Configs/PoseModifications/BTR01.conf"
+  }
+ }
+ coords 1373.39 39 2231.878
+ angles 0 -173.021 0
+}
+Turret : "{D1FFE458E8AC4BDB}Prefabs/Weapons/Mortars/2B14/Mortar_2B14.et" {
+ components {
+  DAB_PoseModificationComponent "{691CA9200269BB66}" {
+   m_sWorkingPoseModification "{0C5B4D50F231A928}Configs/PoseModifications/Mortar.conf"
+  }
+ }
+ coords 1364.645 39 2230.493
+ angles 0 -33.212 0
+}
+GameEntity : "{D9842C11742C00CF}Prefabs/Props/Civilian/Fireplace_01.et" {
+ components {
+  SCR_FireplaceComponent "{5876E7F288BF5C8E}" {
+   Enabled 0
+  }
+ }
+ coords 1361.994 38.997 2232.352
+ angles 0 -5.181 0
+}
+SCR_ChimeraCharacter US01 : "{DE15FB5FAFC3E63F}Prefabs/Characters/Factions/BLUFOR/US_Army/Character_US_Officer.et" {
+ components {
+  DAB_PoseModificationComponent "{691CA926E55E4812}" {
+   m_sWorkingPoseModification "{AD1B5C0A6BF0C382}Configs/PoseModifications/US01.conf"
+  }
+  AnimationPlayerComponent "{691CA927DC113314}" {
+   Animation "{3996BF5D860A1536}anims/anm/NPC/male/sitting/p_sitting_ground_unm_idle.anm"
+   AutoPlay 1
+  }
+ }
+ coords 1363.08 39 2233.021
+ angles 0 -128.303 0
+}
