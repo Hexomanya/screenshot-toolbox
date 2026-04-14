@@ -628,6 +628,12 @@ class DAB_EditorController
 		m_InvalidSetupText = null;
 		m_bEditAllowed = false;
 		
+		if(!m_ParentTool || !m_API)
+		{
+			Print("DAB_EditorController.CheckValidSetup: Detected stale references. Please reopen the bone manipulator tool. If this keeps happening please report it!", LogLevel.ERROR);
+			return;
+		}
+
 		IEntity currentTarget = m_ParentTool.GetCurrentTargetEntity();
 		if(! currentTarget)
 		{
