@@ -206,9 +206,11 @@ class DAB_BoneOverlayRenderer
 			string boneName = m_CachedWorldPositions.GetIteratorKey(it);
 			vector bonePos  = m_CachedWorldPositions.GetIteratorElement(it);
 
-			float spatial;
+			float spatial, finalRadius;
 			m_CachedSpatialMaxRadii.Find(boneName, spatial);
-			m_CachedFinalMaxRadii.Set(boneName, Math.Min(spatial, ComputeAngularConstraint(bonePos, camPos)));
+			
+			finalRadius = Math.Min(spatial, ComputeAngularConstraint(bonePos, camPos));
+			m_CachedFinalMaxRadii.Set(boneName, Math.Max(finalRadius, DAB_VisConfig.SPHERE_MIN_RADIUS));
 		}
 	}
 
