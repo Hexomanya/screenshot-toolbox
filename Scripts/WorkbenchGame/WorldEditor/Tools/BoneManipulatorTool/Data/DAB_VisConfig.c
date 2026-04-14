@@ -10,6 +10,7 @@ class DAB_VisConfig
 	/// Sphere radius as a fraction of viewport height (screen-space constant size).
 	static const float SPHERE_SCREEN_FRACTION  = 0.012;
 	static const float SPHERE_MAX_RADIUS       = 0.10;
+	static const float SPHERE_MIN_RADIUS	   = 0.002;
 	static const float SPHERE_HOVER_MULTIPLIER = 1.1;
 	/// Fraction of the gap between two bone spheres that is left empty.
 	static const float SPHERE_GAP_FRACTION     = 0.25;
