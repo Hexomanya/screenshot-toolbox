@@ -58,6 +58,7 @@ This project deliberately pushes the limits of what Workbench tools were origina
 * <kbd>I</kbd> – Position gizmo
 * <kbd>O</kbd> – Scale gizmo
 * <kbd>J</kbd> – Reset selected bone
+* <kbd>ESC</kbd> – Exit bone edit mode
 
 > Hotkeys are intentionally unusual because Workbench tools can only bind keys that are not already used by the editor.
 
