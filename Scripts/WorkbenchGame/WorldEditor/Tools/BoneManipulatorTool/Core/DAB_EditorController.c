@@ -267,12 +267,17 @@ class DAB_EditorController
 			Print("DAB_BoneManipulatorTool.RefreshBone: no stored transform for '" + boneName + "'.", LogLevel.ERROR);
 			return;
 		}
+		
+		Animation anim = GetSlotDependentAnim(boneName);
+		if (!anim)
+		{
+			PrintFormat("DAB_BoneManipulatorTool.RefreshBone: no anim found for bone '%1' on entity %2", boneName, targetEntity.GetName(), LogLevel.ERROR);
+			return;
+		}
 
 		TNodeId boneId = DAB_BoneHelper.GetBoneId(targetEntity, boneName);
 		vector rotRad = transform.m_vRotationOffset * Math.DEG2RAD;
 		vector rotRadCorrected = Vector(rotRad[1], rotRad[0], rotRad[2]);
-
-		Animation anim = GetSlotDependentAnim(boneName);
 
 		vector entityWorld[4];
 		targetEntity.GetTransform(entityWorld);
@@ -295,8 +300,6 @@ class DAB_EditorController
 		localOff[1] = vector.Dot(worldOff, boneOrigWorldRot[1]);
 		localOff[2] = vector.Dot(worldOff, boneOrigWorldRot[2]);
 
-		if(boneName == "Hips") PrintFormat("Controller: Setting hips to pos: %1, rot: %2", localOff, rotRadCorrected);
-		
 		anim.SetBone(targetEntity, boneId, rotRadCorrected, localOff, transform.m_fScale);
 		targetEntity.Update();
 		m_Renderer.DrawSelectedBone(targetEntity, boneName, m_API);
@@ -320,7 +323,13 @@ class DAB_EditorController
 			if (!anim) continue;
 
 			if (anim.GetBoneIndex(boneName) != -1)
+			{
 				return anim;
+			} else 
+			{
+				PrintFormat("Found -1 boneIndex with boneName '%1' on slot %2.", boneName, slotInfo.GetSourceName());
+			}
+				
 		}
 
 		return targetEntity.GetAnimation();
@@ -555,8 +564,6 @@ class DAB_EditorController
 	    return true;
 	}
 	
-	
-	
 	//-----------------------------------------------------------------------
 	void LoadAndApplyWorkingConfig(bool forceApply = false)
 	{		
@@ -570,7 +577,7 @@ class DAB_EditorController
 		DAB_PoseModificationComponent poseComponent = m_ParentTool.GetTargetComponent();
 		if(!poseComponent)
 		{
-			Print("System could not get a pose modification component from the target. Loading was aported!");
+			Print("System could not get a pose modification component from the target. Loading was aported!", LogLevel.WARNING);
 			return;
 		}
 	
@@ -637,7 +644,22 @@ class DAB_EditorController
 		IEntity currentTarget = m_ParentTool.GetCurrentTargetEntity();
 		if(! currentTarget)
 		{
-			m_InvalidSetupText = DebugTextScreenSpace.Create(m_API.GetWorld(), "No Target Selected!", DebugTextFlags.FACE_CAMERA, 10, 10, 40, 0xFFFF0000);
+			m_InvalidSetupText = DebugTextScreenSpace.Create(m_API.GetWorld(), "No Target Selected!", DebugTextFlags.FACE_CAMERA, 10, 10, 25, 0xFFFF0000);
+			return;
+		}
+		
+		Animation anim = currentTarget.GetAnimation();
+		if(!anim)
+		{
+			m_InvalidSetupText = DebugTextScreenSpace.Create(m_API.GetWorld(), "Target has no animation on it!", DebugTextFlags.FACE_CAMERA, 10, 10, 25, 0xFFFF0000);
+			return;
+		}
+		
+		array<string> boneNames = {};
+		anim.GetBoneNames(boneNames);
+		if(boneNames.Count() <= 0)
+		{
+			m_InvalidSetupText = DebugTextScreenSpace.Create(m_API.GetWorld(), "Target has no bones to pose!", DebugTextFlags.FACE_CAMERA, 10, 10, 25, 0xFFFF0000);
 			return;
 		}
 		

@@ -84,6 +84,9 @@ Vehicle LAV1 : "{0FBF8F010F81A4E5}Prefabs/Vehicles/Wheeled/LAV25/LAV25.et" {
  coords 1368.553 39 2225.411
  angles 0 -170.987 0
 }
+Projectile : "{38BAE094333E31BF}Prefabs/Weapons/Ammo/Ammo_Shell_81mm_HE_M821.et" {
+ coords 1366.495 39.951 2228.459
+}
 GenericEntity : "{3FD26066E47DD5AE}PrefabLibrary/DefaultLibrary/Props/Commercial/CrateWooden_01_plain.et" {
  coords 1362.259 38.976 2234.74
  angles 0 -35.065 0
@@ -105,6 +108,22 @@ SCR_ChimeraCharacter USSR01 : "{90D2F1A1CFCA7B5F}Prefabs/Characters/Factions/OPF
  }
  coords 1362.11 39.334 2234.744
  angles 0 -125 0
+}
+Vehicle UAZ469_base1 : "{99F1610551D54D17}Prefabs/Vehicles/Wheeled/UAZ469/UAZ469_base.et" {
+ components {
+  DAB_PoseModificationComponent "{691F04D2594AA87D}" {
+   m_sWorkingPoseModification "{9110EEF553DFE9F8}Configs/PoseModifications/UazTest01.conf"
+  }
+ }
+ coords 1363.354 39 2217.56
+}
+GenericEntity : "{AA865FD8AB5DA589}Prefabs/Weapons/Ammo/Ammo_25x137/Casing_25x137.et" {
+ components {
+  DAB_PoseModificationComponent "{691EFDD97854C902}" {
+   m_sWorkingPoseModification "{D004BEE497FC65E0}Configs/PoseModifications/test.conf"
+  }
+ }
+ coords 1366.084 40.12 2229.351
 }
 GenericEntity : "{B1482FB64E3D2D45}Prefabs/Weapons/Rifles/M16/Rifle_M16A2_4x20.et" {
  components {
@@ -151,6 +170,9 @@ GameEntity : "{D9842C11742C00CF}Prefabs/Props/Civilian/Fireplace_01.et" {
  coords 1361.994 38.997 2232.352
  angles 0 -5.181 0
 }
+Vehicle S105_base1 : "{DA79E34823120087}Prefabs/Vehicles/Wheeled/S105/S105_base.et" {
+ coords 1363.557 38.779 2222.963
+}
 SCR_ChimeraCharacter US01 : "{DE15FB5FAFC3E63F}Prefabs/Characters/Factions/BLUFOR/US_Army/Character_US_Officer.et" {
  components {
   DAB_PoseModificationComponent "{691CA926E55E4812}" {
@@ -163,4 +185,7 @@ SCR_ChimeraCharacter US01 : "{DE15FB5FAFC3E63F}Prefabs/Characters/Factions/BLUFO
  }
  coords 1363.08 39 2233.021
  angles 0 -128.303 0
+}
+Vehicle UAZ469_FIA_uncovered1 : "{E28501E93F8EFDC0}Prefabs/Vehicles/Wheeled/UAZ469/UAZ469_FIA_uncovered.et" {
+ coords 1363.121 39 2212.432
 }
