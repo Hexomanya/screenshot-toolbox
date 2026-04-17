@@ -194,6 +194,5 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 	IEntitySource GetCurrentTargetEntitySource(){ return m_TargetEntitySource; } //TODO: Could be removed in theory
 	DAB_PoseModificationComponent GetTargetComponent(){ return m_TargetComponent; }
 	DAB_BoneDisplaySettings GetNewDisplaySettings() { return new DAB_BoneDisplaySettings(m_bHideIKTargetBones, m_bHidePropBones, m_bHideVolumeBones, m_bHideCameraBone, m_bHideFaceBones, m_bHideBoneConnections, m_sFilterBoneName); }
-	//ResourceName GetWorkingConfig() { return m_sWorkingConfig; }
 	bool GetShouldAutoSave(){ return m_bShouldAutoSave; }
 }

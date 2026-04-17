@@ -4,9 +4,9 @@ class DAB_BoneHelper
 	private void ~DAB_BoneHelper();
 
 	//-----------------------------------------------------------------------
-	//! Gets the world-space position of \p boneName on \p entity.
+	//! Gets the world-space position of \p simpleBoneName on \p entity.
 	//! Returns false if the entity or its Animation component is missing.
-	static bool TryGetBonePosition(IEntity entity, string boneName, out vector bonePosition)
+	static bool TryGetBonePosition(IEntity entity, string simpleBoneName, out vector bonePosition)
 	{
 		bonePosition = vector.Zero;
 		if (!entity) return false;
@@ -20,15 +20,15 @@ class DAB_BoneHelper
 
 		vector entityWorld[4];
 		entity.GetTransform(entityWorld);
-		bonePosition = GetBonePosition(anim, entityWorld, boneName);
+		bonePosition = GetBonePosition(anim, entityWorld, simpleBoneName);
 		return true;
 	}
 
 	//-----------------------------------------------------------------------
-	//! Returns the world-space position of \p boneName using a pre-fetched entity transform.
-	static vector GetBonePosition(Animation anim, vector entityWorld[4], string boneName)
+	//! Returns the world-space position of \p simpleBoneName using a pre-fetched entity transform.
+	static vector GetBonePosition(Animation anim, vector entityWorld[4], string simpleBoneName)
 	{
-		TNodeId boneId = anim.GetBoneIndex(boneName);
+		TNodeId boneId = anim.GetBoneIndex(simpleBoneName);
 
 		vector boneLocal[4];
 		anim.GetBoneMatrix(boneId, boneLocal);
@@ -91,91 +91,32 @@ class DAB_BoneHelper
 		boneRotation = Vector(ypr[1], ypr[0], ypr[2]);
 		return true;
 	}
-
+	
 	//-----------------------------------------------------------------------
-	//! Returns the bone index for \p boneName on \p entity, or int.INVALID_INDEX on failure.
-	static TNodeId GetBoneId(IEntity entity, string boneName)
-	{
-		if (!entity)
-		{
-			Print("GetBoneId: no entity provided.", LogLevel.ERROR);
-			return int.INVALID_INDEX;
-		}
-
-		Animation anim = entity.GetAnimation();
-		if (!anim)
-		{
-			Print("GetBoneId: Animation is null.", LogLevel.ERROR);
-			return int.INVALID_INDEX;
-		}
-
-		return anim.GetBoneIndex(boneName);
+	static TNodeId GetBoneIndex(IEntity entity, string simpleBoneName, out Animation outAnim = null)
+	{	
+	    if (!entity)
+	    {
+	        Print("GetBoneIndex: no entity provided.", LogLevel.ERROR);
+	        return int.INVALID_INDEX;
+	    }
+	
+	    Animation anim = entity.GetAnimation();
+	    if (!anim)
+	    {
+	        Print("GetBoneIndex: Animation is null.", LogLevel.ERROR);
+	        return int.INVALID_INDEX;
+	    }
+	
+	    outAnim = anim;
+	    return anim.GetBoneIndex(simpleBoneName);
 	}
 
 	//-----------------------------------------------------------------------
-	//! Builds a bone→parent name map for every bone in \p boneNames.
-	//! Root bones map to an empty string.
-	static map<string, string> ComputeBoneParents(Animation anim, array<string> boneNames)
+	//Parent bones are always on the same entity as the entity, so we can just use normal simpleBoneNames
+	static string FindParentBoneName(Animation anim, string childSimpleBoneName, array<string> simpleBoneNames)
 	{
-		map<string, string> boneParents = new map<string, string>();
-		foreach (string boneName : boneNames)
-			boneParents.Set(boneName, FindParentBoneName(anim, boneName, boneNames));
-		return boneParents;
-	}
-
-	//-----------------------------------------------------------------------
-	//! Builds a bone→parent-distance map (world-space metres). Bones without a parent store -1.
-	static map<string, float> ComputeBoneParentDistances(IEntity entity, map<string, string> boneParents)
-	{
-		if (!entity)
-		{
-			Print("ComputeBoneParentDistances: entity cannot be null!", LogLevel.ERROR);
-			return null;
-		}
-
-		map<string, float>  boneParentDistances = new map<string, float>();
-		map<string, vector> positionCache        = new map<string, vector>();
-
-		Animation anim = entity.GetAnimation();
-		vector entityWorld[4];
-		entity.GetTransform(entityWorld);
-
-		for (MapIterator it = boneParents.Begin(); it != boneParents.End(); it = boneParents.Next(it))
-		{
-			string childName  = boneParents.GetIteratorKey(it);
-			string parentName = boneParents.GetIteratorElement(it);
-
-			if (parentName.IsEmpty())
-			{
-				boneParentDistances.Set(childName, -1);
-				continue;
-			}
-
-			vector childPos, parentPos;
-			if (!positionCache.Find(childName, childPos))
-			{
-				childPos = GetBonePosition(anim, entityWorld, childName);
-				positionCache.Set(childName, childPos);
-			}
-			if (!positionCache.Find(parentName, parentPos))
-			{
-				parentPos = GetBonePosition(anim, entityWorld, parentName);
-				positionCache.Set(parentName, parentPos);
-			}
-
-			boneParentDistances.Set(childName, vector.Distance(childPos, parentPos));
-		}
-
-		return boneParentDistances;
-	}
-
-	//-----------------------------------------------------------------------
-	// Finds the parent bone by back-projecting the bone's local offset to the
-	// parent world position, then finding which other bone sits closest to it.
-	// Returns an empty string for root bones (zero local offset).
-	static string FindParentBoneName(Animation anim, string boneName, array<string> boneNames)
-	{
-		TNodeId boneId = anim.GetBoneIndex(boneName);
+		TNodeId boneId = anim.GetBoneIndex(childSimpleBoneName);
 	
 		vector boneLocal[4];
 		anim.GetBoneLocalMatrix(boneId, boneLocal);
@@ -187,7 +128,7 @@ class DAB_BoneHelper
 		float bestDist = 0.001;
 		string bestName = "";
 	
-		foreach (string name : boneNames)
+		foreach (string name : simpleBoneNames)
 		{
 			TNodeId candidateId = anim.GetBoneIndex(name);
 			if (candidateId == boneId) continue;
@@ -205,6 +146,10 @@ class DAB_BoneHelper
 				bestName = name;
 			}
 		}
+		
+		if(childSimpleBoneName == bestName)
+			PrintFormat("Found parent with the same boneName for %1!", childSimpleBoneName, LogLevel.WARNING);
+		
 	
 		return bestName;
 	}

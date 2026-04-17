@@ -58,12 +58,20 @@ class DAB_GizmoController
 	//-----------------------------------------------------------------------
 	//! Attaches to a bone and starts in Rotation mode.
 	//! Call Clear() first if already attached.
-	void Attach(IEntity entity, DAB_BoneTransform boneToAttach, WorldEditorAPI api, float cameraDistance)
+	void Attach(IEntity entity, DAB_BoneTransform boneToAttach)
 	{
+		if(!entity || !boneToAttach)
+		{
+			PrintFormat("DAB_GizmoController.Attach: Arguments for attaching are illegal! entity: %1; boneToAttach: %2", entity, boneToAttach, LogLevel.ERROR);
+			Clear();
+			return;
+		}
+		
 		if (m_currentTransform)
 		{
 			Print("DAB_GizmoController.Attach: previous bone was not cleared first.", LogLevel.WARNING);
-			Clear(api);
+			Clear();
+			return;
 		}
 
 		m_AttachedEntity  = entity;
@@ -101,7 +109,7 @@ class DAB_GizmoController
 
 	//-----------------------------------------------------------------------
 	//! Detaches from the current bone and destroys all gizmos.
-	void Clear(WorldEditorAPI api)
+	void Clear()
 	{
 		m_AttachedEntity = null;
 		m_currentTransform = null;
@@ -150,7 +158,7 @@ class DAB_GizmoController
 
 	//-----------------------------------------------------------------------
 	//! Updates gizmo size when the camera distance changes.
-	void OnCameraDistanceChange(float newCameraDistance, WorldEditorAPI api)
+	void OnCameraDistanceChange(WorldEditorAPI api)
 	{
 		if (!m_currentTransform) return;
 	
@@ -214,13 +222,14 @@ class DAB_GizmoController
 	//! Uses the actual current bone world position if available.
 	protected vector GetCurrentGizmoPosition()
 	{
-		if (m_AttachedEntity && m_currentTransform)
-		{
-			vector liveBonePos;
-			if (DAB_BoneHelper.TryGetBonePosition(m_AttachedEntity, m_currentTransform.GetBoneName(), liveBonePos))
-				return liveBonePos;
-		}
-
+		if (!m_AttachedEntity || !m_currentTransform) return m_currentTransform.GetAdjustedPosition();
+		
+		vector liveBonePos;
+		string simpleBoneName = DAB_SkeletonInfo.ExtractBoneNameFromCompundName(m_currentTransform.GetCompoundBoneName()); //TODO: Better to just build name or extract?
+		
+		if (DAB_BoneHelper.TryGetBonePosition(m_AttachedEntity, simpleBoneName, liveBonePos))
+			return liveBonePos;
+		
 		return m_currentTransform.GetAdjustedPosition();
 	}
 
