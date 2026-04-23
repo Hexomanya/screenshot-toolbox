@@ -78,7 +78,7 @@ class DAB_GizmoController
 		m_currentTransform = boneToAttach;
 
 		vector entityWorld[4];
-		entity.GetTransform(entityWorld);
+		entity.GetWorldTransform(entityWorld);
 		m_mEntityRotation[0] = entityWorld[0];
 		m_mEntityRotation[1] = entityWorld[1];
 		m_mEntityRotation[2] = entityWorld[2];
@@ -239,12 +239,18 @@ class DAB_GizmoController
 	// always point along the correct local axes.
 	protected void ComputeCombinedMatrix(out vector combined[3])
 	{
-		vector boneOrigMat[3];
-		vector orig = m_currentTransform.GetOriginalRotation();
-		Math3D.AnglesToMatrix(Vector(orig[1], orig[0], orig[2]), boneOrigMat);
-
-		Math3D.MatrixMultiply3(m_mEntityRotation, boneOrigMat, combined);
-		Math3D.MatrixMultiply3(combined, m_mAccumRotation, combined);
+	    string boneName = DAB_SkeletonInfo.ExtractBoneNameFromCompundName(m_currentTransform.GetCompoundBoneName());
+	
+	    vector worldMat[4];
+	    if (!DAB_BoneHelper.TryGetBoneWorldMatrix(m_AttachedEntity, boneName, worldMat))
+	    {
+	        PrintFormat("DAB_GizmoController.ComputeCombinedMatrix: Failed to read live bone matrix for '%1'. Gizmo orientation may be wrong.", boneName, LogLevel.ERROR);
+	        return;
+	    }
+	
+	    combined[0] = worldMat[0];
+	    combined[1] = worldMat[1];
+	    combined[2] = worldMat[2];
 	}
 
 	//-----------------------------------------------------------------------
@@ -262,6 +268,7 @@ class DAB_GizmoController
 	protected void CreateRotationGizmo(WorldEditorAPI api)
 	{
 		vector position = GetCurrentGizmoPosition();
+		PrintFormat("Creating gizmo with rotation: %1", GetCurrentWorldAngles());
 		m_RotationGizmo = new DAB_RotationGizmo(
 			position,
 			GetCurrentWorldAngles(),

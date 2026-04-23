@@ -107,8 +107,7 @@ $grp Vehicle : "{0FBF8F010F81A4E5}Prefabs/Vehicles/Wheeled/LAV25/LAV25.et" {
     }
    }
   }
-  coords 1379.368 39 2197.313
-  angles 0 -170.987 0
+  coords 1381.944 39 2195.681
  }
 }
 Projectile : "{38BAE094333E31BF}Prefabs/Weapons/Ammo/Ammo_Shell_81mm_HE_M821.et" {
@@ -167,7 +166,7 @@ GenericEntity : "{B1482FB64E3D2D45}Prefabs/Weapons/Rifles/M16/Rifle_M16A2_4x20.e
  coords 1365.698 39.774 2228.929
  angles 0 -35 0
 }
-Vehicle : "{BDE43262FC05B4D7}Prefabs/Vehicles/Helicopters/UH1H/UH1H_armed_gunship_empty_sharkNose.et" {
+Vehicle "692EB4E8C7F63535" : "{BDE43262FC05B4D7}Prefabs/Vehicles/Helicopters/UH1H/UH1H_armed_gunship_empty_sharkNose.et" {
  components {
   DAB_PoseModificationComponent "{691CA9279827EA8A}" {
    m_sWorkingPoseModification "{0DA841DE82EACF91}Configs/PoseModifications/UH_01.conf"
@@ -220,5 +219,10 @@ SCR_ChimeraCharacter US01 : "{DE15FB5FAFC3E63F}Prefabs/Characters/Factions/BLUFO
  angles 0 -128.303 0
 }
 Vehicle UAZ469 : "{E28501E93F8EFDC0}Prefabs/Vehicles/Wheeled/UAZ469/UAZ469_FIA_uncovered.et" {
+ components {
+  DAB_PoseModificationComponent "{69230A1009EE9148}" {
+   m_sWorkingPoseModification "{8FC9CD662B1FB0B5}Configs/PoseModifications/UAZUAZ.conf"
+  }
+ }
  coords 1363.121 39 2212.432
 }

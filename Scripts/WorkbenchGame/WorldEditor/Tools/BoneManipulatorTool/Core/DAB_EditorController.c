@@ -276,7 +276,7 @@ class DAB_EditorController
 		vector rotRadCorrected = Vector(rotRad[1], rotRad[0], rotRad[2]);
 
 		vector entityWorld[4];
-		slotEntity.GetTransform(entityWorld);
+		slotEntity.GetWorldTransform(entityWorld);
 
 		vector entityRot3[3];
 		entityRot3[0] = entityWorld[0];

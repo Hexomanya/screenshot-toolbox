@@ -23,6 +23,37 @@ class DAB_BoneHelper
 		bonePosition = GetBonePosition(anim, entityWorld, simpleBoneName);
 		return true;
 	}
+	
+	//-----------------------------------------------------------------------
+	//! Gets the full world-space 4×4 matrix of \p simpleBoneName on \p entity.
+	//! Returns false (and logs an error) if the entity or animation is missing.
+	static bool TryGetBoneWorldMatrix(IEntity entity, string simpleBoneName, out vector outWorldMat[4])
+	{
+	    Math3D.MatrixIdentity4(outWorldMat);
+	    if (!entity)
+	    {
+	        Print("TryGetBoneWorldMatrix: entity is null.", LogLevel.ERROR);
+	        return false;
+	    }
+	
+	    Animation anim = entity.GetAnimation();
+	    if (!anim)
+	    {
+	        Print("TryGetBoneWorldMatrix: Animation is null.", LogLevel.ERROR);
+	        return false;
+	    }
+	
+	    TNodeId boneId = anim.GetBoneIndex(simpleBoneName);
+	
+	    vector boneLocal[4];
+	    anim.GetBoneMatrix(boneId, boneLocal);
+	
+	    vector entityWorld[4];
+	    entity.GetWorldTransform(entityWorld);
+	
+	    Math3D.MatrixMultiply4(entityWorld, boneLocal, outWorldMat);
+	    return true;
+	}
 
 	//-----------------------------------------------------------------------
 	//! Returns the world-space position of \p simpleBoneName using a pre-fetched entity transform.
