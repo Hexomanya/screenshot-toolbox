@@ -9,6 +9,10 @@
 class DAB_BoneManipulatorTool : WorldEditorTool
 {
 	// ── Tool attributes ────────────────────────────────────────────────────
+	// ── Keybinds ──
+	[Attribute("Custom keybinds configuration for the Bone Manipulator Tool. Keys already used somewhere else in the workbench won't work as override! Leave empty to use built-in defaults (ESC, J, U, I, O).")]
+	protected ref DAB_BoneManipulatorKeybinds m_KeyBindsOverwrites;
+	
 	// ── Display ──
 	[Attribute(defvalue: "1", uiwidget: UIWidgets.CheckBox, desc: "Hide IK target bones from the overlay", category: "Display")]
 	protected bool m_bHideIKTargetBones;
@@ -195,4 +199,5 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 	DAB_PoseModificationComponent GetTargetComponent(){ return m_TargetComponent; }
 	DAB_BoneDisplaySettings GetNewDisplaySettings() { return new DAB_BoneDisplaySettings(m_bHideIKTargetBones, m_bHidePropBones, m_bHideVolumeBones, m_bHideCameraBone, m_bHideFaceBones, m_bHideBoneConnections, m_sFilterBoneName); }
 	bool GetShouldAutoSave(){ return m_bShouldAutoSave; }
+	DAB_BoneManipulatorKeybinds GetKeybindsOverwrites() { return m_KeyBindsOverwrites; }
 }
