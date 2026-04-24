@@ -613,18 +613,26 @@ class DAB_EditorController
 			Print("DAB_EditorController.CheckValidSetup: Detected stale references. Please reopen the bone manipulator tool. If this keeps happening please report it!", LogLevel.ERROR);
 			return;
 		}
+		
+		// m_API can be non-null but invalid after "Reload All Scripts"
+		World world = m_API.GetWorld();
+		if (!world)
+		{
+			Print("DAB_EditorController.CheckValidSetup: m_API.GetWorld() returned null (script reload?).", LogLevel.WARNING);
+			return;
+		}
 
 		IEntity currentTarget = m_ParentTool.GetCurrentTargetEntity();
 		if(! currentTarget)
 		{
-			m_InvalidSetupText = DebugTextScreenSpace.Create(m_API.GetWorld(), "No Target Selected!", DebugTextFlags.FACE_CAMERA, 10, 10, 25, 0xFFFF0000);
+			m_InvalidSetupText = DebugTextScreenSpace.Create(world, "No Target Selected!", DebugTextFlags.FACE_CAMERA, 10, 10, 25, 0xFFFF0000);
 			return;
 		}
 		
 		Animation anim = currentTarget.GetAnimation();
 		if(!anim)
 		{
-			m_InvalidSetupText = DebugTextScreenSpace.Create(m_API.GetWorld(), "Target has no animation on it!", DebugTextFlags.FACE_CAMERA, 10, 10, 25, 0xFFFF0000);
+			m_InvalidSetupText = DebugTextScreenSpace.Create(world, "Target has no animation on it!", DebugTextFlags.FACE_CAMERA, 10, 10, 25, 0xFFFF0000);
 			return;
 		}
 		
@@ -632,21 +640,21 @@ class DAB_EditorController
 		anim.GetBoneNames(boneNames);
 		if(boneNames.Count() <= 0)
 		{
-			m_InvalidSetupText = DebugTextScreenSpace.Create(m_API.GetWorld(), "Target has no bones to pose!", DebugTextFlags.FACE_CAMERA, 10, 10, 25, 0xFFFF0000);
+			m_InvalidSetupText = DebugTextScreenSpace.Create(world, "Target has no bones to pose!", DebugTextFlags.FACE_CAMERA, 10, 10, 25, 0xFFFF0000);
 			return;
 		}
 		
 		DAB_PoseModificationComponent poseComponent = m_ParentTool.GetTargetComponent();
 		if(! poseComponent)
 		{
-			m_InvalidSetupText = DebugTextScreenSpace.Create(m_API.GetWorld(), "Target has no DAB_PoseModificationComponent", DebugTextFlags.FACE_CAMERA, 10, 10, 25, 0xFFFF0000);
+			m_InvalidSetupText = DebugTextScreenSpace.Create(world, "Target has no DAB_PoseModificationComponent", DebugTextFlags.FACE_CAMERA, 10, 10, 25, 0xFFFF0000);
 			return;
 		}
 		
 		ResourceName poseModification = poseComponent.GetWorkingModificationConfig();
 		if(poseModification.IsEmpty())
 		{
-			m_InvalidSetupText = DebugTextScreenSpace.Create(m_API.GetWorld(), "DAB_PoseModificationComponent has no working config", DebugTextFlags.FACE_CAMERA, 10, 10, 20, 0xFFFF0000);
+			m_InvalidSetupText = DebugTextScreenSpace.Create(world, "DAB_PoseModificationComponent has no working config", DebugTextFlags.FACE_CAMERA, 10, 10, 20, 0xFFFF0000);
 			return;
 		}
 		
