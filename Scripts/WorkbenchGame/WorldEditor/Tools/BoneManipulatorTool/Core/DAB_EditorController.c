@@ -46,7 +46,7 @@ class DAB_EditorController
 	{
 		// TODO: Find better way to handle api
 		m_API = api; // Needed so we do not crash after reloading scripts. 
-		
+	
 		CheckValidSetup();
 		RedrawOverlay();
 	}
@@ -151,36 +151,53 @@ class DAB_EditorController
 		m_GizmoController.OnCameraDistanceChange(m_API);
 	}
 	
-	//-----------------------------------------------------------------------
+		//-----------------------------------------------------------------------
 	//! Key bindings: U = Rotation, I = Position, O = Scale, J = Reset bone, Escape = Deselect.
 	void OnKeyPressEvent(KeyCode key, bool isAutoRepeat)
 	{
 		if (isAutoRepeat) return;
 		if(! m_bEditAllowed) return;
 
+		KeyCode deselectKey = KeyCode.KC_ESCAPE;
+		KeyCode rotationKey = KeyCode.KC_U;
+		KeyCode moveKey     = KeyCode.KC_I;
+		KeyCode scaleKey    = KeyCode.KC_O;
+		KeyCode resetKey    = KeyCode.KC_J;
+
+		DAB_BoneManipulatorKeybinds keybinds = m_ParentTool.GetKeybindsOverwrites();
+		
+		if (keybinds)
+		{
+			deselectKey = keybinds.GetBoneDeselect();
+			rotationKey = keybinds.GetRotationTool();
+			moveKey     = keybinds.GetMoveTool();
+			scaleKey    = keybinds.GetScaleTool();
+			resetKey    = keybinds.GetReset();
+		}
+
 		switch (key)
 		{
-			case KeyCode.KC_ESCAPE:
+			case deselectKey:
 				DeselectBone();
 				RedrawOverlay();
 				break;
 
-			case KeyCode.KC_U:
+			case rotationKey:
 				if (!m_sSelectedBoneName.IsEmpty())
 					m_GizmoController.SwitchMode(DAB_GizmoMode.Rotation, m_API);
 				break;
 
-			case KeyCode.KC_I:
+			case moveKey:
 				if (!m_sSelectedBoneName.IsEmpty())
 					m_GizmoController.SwitchMode(DAB_GizmoMode.Position, m_API);
 				break;
 
-			case KeyCode.KC_O:
+			case scaleKey:
 				if (!m_sSelectedBoneName.IsEmpty())
 					m_GizmoController.SwitchMode(DAB_GizmoMode.Scale, m_API);
 				break;
 
-			case KeyCode.KC_J:
+			case resetKey:
 				if (!m_sSelectedBoneName.IsEmpty())
 					ResetBone(m_sSelectedBoneName);
 				break;
