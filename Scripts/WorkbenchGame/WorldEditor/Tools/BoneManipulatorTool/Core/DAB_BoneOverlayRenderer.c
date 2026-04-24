@@ -15,7 +15,7 @@ class DAB_BoneOverlayRenderer
 	// ── Live shapes ────────────────────────────────────────────────────────
 	protected ref array<ref Shape> m_aActiveShapes = new array<ref Shape>();
 	protected ref array<ref Shape> m_aConnectionShapes = new array<ref Shape>();
-	protected DebugTextScreenSpace m_SelectedBoneText;
+	protected ref DebugTextScreenSpace m_SelectedBoneText;
 
 	protected WorldEditorAPI m_API;
 
