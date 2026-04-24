@@ -244,10 +244,24 @@ class DAB_EditorController
 		
 		m_sCurrentSkeleton = skeletonKey;
 		CheckValidSetup();
-		
-		//RefreshCameraTargetDistance();
-		
 		LoadAndApplyWorkingConfig(true);
+	}
+	
+	void ForceSkeletonRefresh(IEntity entity)
+	{
+		string skeletonKey = DAB_SkeletonInfo.ComputeSkeletonKey(entity);
+		
+		if(skeletonKey.IsEmpty())
+		{
+			Print("Computed skeleton key is empty!", LogLevel.ERROR);
+			return;
+		}
+		
+		if(!m_CachedSkeletons.Contains(skeletonKey))
+			PrintFormat("Called ForceSkeletonRefresh on entity that had not yet been registed. SkeletonKey was: %1", skeletonKey, LogLevel.WARNING);
+		
+		m_CachedSkeletons.Set(skeletonKey, new DAB_SkeletonInfo(skeletonKey, entity));
+		PrintFormat("Force refreshed skeleton info with key: %1", skeletonKey, LogLevel.NORMAL);
 	}
 	
 	// ── Public Getters ────────────────────────────────────────────────────
@@ -637,7 +651,6 @@ class DAB_EditorController
 			return;
 		}
 		
-		// m_API can be non-null but invalid after "Reload All Scripts"
 		World world = m_API.GetWorld();
 		if (!world)
 		{

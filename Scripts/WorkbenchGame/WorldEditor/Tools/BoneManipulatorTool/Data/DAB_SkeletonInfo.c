@@ -3,7 +3,6 @@
 class DAB_SkeletonInfo
 {
     protected string m_sSkeletonKey;
-    //protected ref array<string> m_aCompoundBoneNames = {};
 	protected ref map<string, ref DAB_BoneRecord> m_mBoneRecords;
 	protected ref map<string, string> m_mBoneParents;
 	 
@@ -11,16 +10,11 @@ class DAB_SkeletonInfo
     //-----------------------------------------------------------------------
     void DAB_SkeletonInfo(string skeletonKey, IEntity entity)
     {
-		PrintFormat("Creating new skeleton with key: %1", skeletonKey);
-		int start = System.GetTickCount();
-		
+		PrintFormat("Creating new skeleton information with key: %1", skeletonKey);
+
 		m_sSkeletonKey = skeletonKey;
-		
-		m_mBoneRecords = DAB_SkeletonInfo.GetBoneRecords(entity);
+		m_mBoneRecords = DAB_SkeletonInfo.CreateBoneRecords(entity);
 		m_mBoneParents = DAB_SkeletonInfo.ExtractBoneRecords(m_mBoneRecords);
-		
-		int elapsedMs = System.GetTickCount() - start;
-		PrintFormat("Skeleton creation took %1ms", elapsedMs);
     }
  
     //-----------------------------------------------------------------------
@@ -160,26 +154,8 @@ class DAB_SkeletonInfo
 		return compoundName.Substring(boneStart, compoundName.Length() - boneStart);
 	}
 	
-    //-----------------------------------------------------------------------
-    static void ExtractBothFromCompoundName(string compoundName, out string boneName, out string slotName)
-    {
-        /*int delimiterIndex = compoundName.IndexOf(COMPOUND_DELIMITER);
-        if (delimiterIndex == -1)
-        {
-            boneName = compoundName;
-            slotName = "";
-            return;
-        }
- 
-        slotName = compoundName.Substring(0, delimiterIndex);
-        int boneStart = delimiterIndex + COMPOUND_DELIMITER.Length();
-        boneName = compoundName.Substring(boneStart, compoundName.Length() - boneStart);
- 
-        if (slotName == NO_SLOT_ID) slotName = "";*/
-    }
- 
 	//-----------------------------------------------------------------------
-    static map<string, ref DAB_BoneRecord> GetBoneRecords(IEntity entity)
+    static map<string, ref DAB_BoneRecord> CreateBoneRecords(IEntity entity)
     {
         map<string, ref DAB_BoneRecord> boneRecords = new map<string, ref DAB_BoneRecord>();
         CollectBoneRecords(entity, {DAB_Constants.SLOT_ROOT_ID}, boneRecords);
@@ -238,6 +214,8 @@ class DAB_SkeletonInfo
 			
 			string parentSimpleName = DAB_BoneHelper.FindParentBoneName(anim, boneName, localBoneNames);
 			string parentCompoundName = DAB_SkeletonInfo.GetCompoundName(parentSimpleName, slotNames);
+			
+			if(boneName == "v_exhaust1") PrintFormat("Is slot null for %1: %2", boneName, (entity == null));
 			
 			DAB_BoneRecord record = new DAB_BoneRecord(boneName, slotNames, entity, parentCompoundName);
 			

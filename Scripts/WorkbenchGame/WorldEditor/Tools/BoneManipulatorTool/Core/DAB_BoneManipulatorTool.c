@@ -171,19 +171,22 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 	    m_TargetComponent = null;
 	}
 	
-	void RefreshTargetEntity()
+	// TODO: Use dedicated functions to clean this mess up?
+	// We need forceSkeletonRefresh and notifyEditorController because of when we create a config, we loose references to the entities, because they reinit.
+	void RefreshTargetEntity(bool forceSkeletonRefresh = false, bool notifyEditorController = true)
 	{
 		m_TargetEntitySource = m_API.GetSelectedEntity(0);
 		IEntity newEntity = m_API.SourceToEntity(m_TargetEntitySource);
+		if(newEntity && forceSkeletonRefresh && notifyEditorController) m_EditorController.ForceSkeletonRefresh(m_TargetEntity);
+		
 		if(newEntity == m_TargetEntity) return;
-
+		
 		m_TargetEntity = newEntity;
 		RefreshTargetComponent();
-		
-		m_EditorController.OnTargetEntityChanged(m_TargetEntity);
+		if(notifyEditorController) m_EditorController.OnTargetEntityChanged(m_TargetEntity);
 	}
 	
-	void ReselectTargetEntity()
+	void ReselectTargetEntity(bool notifyEditorController = true)
 	{
 		if(!m_TargetEntitySource)
 		{
@@ -192,7 +195,7 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 		}
 		
 		m_API.SetEntitySelection(m_TargetEntitySource);
-		RefreshTargetEntity();
+		RefreshTargetEntity(true, notifyEditorController);
 	}
 	
 	// ── Public Getters ────────────────────────────────────────────────────
