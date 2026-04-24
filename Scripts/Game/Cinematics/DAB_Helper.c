@@ -40,4 +40,18 @@ class DAB_Helper
 	{
 		return string.Format("%1 %2 %3", v[0], v[1], v[2]);
 	}
+	
+	//-----------------------------------------------------------------------
+	static Managed FindComponentExact(IEntity entity, typename exactType)
+	{
+		array<Managed> components = {};
+		entity.FindComponents(exactType, components);
+		
+		foreach (Managed component : components)
+		{
+		    if (component.Type() == exactType) return component;
+		}
+	
+		return null;
+	} 
 }

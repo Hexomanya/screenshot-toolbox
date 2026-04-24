@@ -74,21 +74,67 @@ class DAB_PoseManipulationTrack : CinematicTrackBase
 
 	// ── Protected ─────────────────────────────────────────────────────────
 	//-----------------------------------------------------------------------
+	protected bool FindSlotEntity(DAB_BoneModification boneModification, out IEntity outEntity)
+	{
+		outEntity = m_TargetEntity;		
+		
+		int count = boneModification.m_aSlotNames.Count();
+		if(count <= 0) return true; // Older config versions had no array, so we just wave them through
+		
+		for (int i = 0; i < boneModification.m_aSlotNames.Count(); i++)
+		{
+		    string slotName = boneModification.m_aSlotNames[i];
+			if(slotName == DAB_Constants.SLOT_ROOT_ID) return true;
+			
+			SlotManagerComponent slotManager = SlotManagerComponent.Cast(DAB_Helper.FindComponentExact(outEntity, SlotManagerComponent));
+			if(!slotManager)
+			{
+				PrintFormat("Could not find a slot manager for the slot with the name: %1", slotName, LogLevel.ERROR);
+				return false;
+			}
+			
+			EntitySlotInfo slotInfo = slotManager.GetSlotByName(slotName);
+			if(!slotInfo)
+			{
+				PrintFormat("Could not resolve slotName! slotName: %1; index: %2", slotName, i, LogLevel.ERROR);
+				return false;
+			}
+			
+			outEntity = slotInfo.GetAttachedEntity();
+			if(!outEntity)
+			{
+				PrintFormat("Encountered null attached entity while resolving slotNames array! slotName: %1; index: %2", slotName, i, LogLevel.ERROR);
+				return false;
+			}
+			
+			if(i == count - 1) return true;
+		}
+		
+		return false;
+	}
+	
+	//-----------------------------------------------------------------------
 	protected void ApplyBoneModification(DAB_BoneModification boneModification)
 	{
-		TNodeId boneId = DAB_BoneHelper.GetBoneId(m_TargetEntity, boneModification.m_sBoneName);
+		IEntity slotEntity;
+		if(!FindSlotEntity(boneModification, slotEntity))
+		{
+			PrintFormat("Could find slotEntity for bone: %1", boneModification.m_sBoneName, LogLevel.ERROR);
+			return;
+		}
+		
+		Animation anim;
+		TNodeId boneId = DAB_BoneHelper.GetBoneIndex(slotEntity, boneModification.m_sBoneName, anim);
 
 		vector originalRotation;
 		if (!m_mBaseRotationCache.Find(boneModification.m_sBoneName, originalRotation))
 		{
-			if (!DAB_BoneHelper.TryGetBoneLocalRotation(m_TargetEntity, boneId, originalRotation)) return;
+			if (!DAB_BoneHelper.TryGetBoneLocalRotation(slotEntity, boneId, originalRotation)) return;
 			m_mBaseRotationCache.Insert(boneModification.m_sBoneName, originalRotation);
 		}
 
 		vector rotRad = boneModification.m_vRotationOffset * Math.DEG2RAD;
 		vector rotRadCorrected = Vector(rotRad[1], rotRad[0], rotRad[2]);
-
-		Animation anim = GetSlotDependentAnim(boneModification.m_sBoneName);
 
 		vector entityWorld[4];
 		m_TargetEntity.GetTransform(entityWorld);
@@ -110,8 +156,8 @@ class DAB_PoseManipulationTrack : CinematicTrackBase
 		localOff[1] = vector.Dot(worldOff, boneOrigWorldRot[1]);
 		localOff[2] = vector.Dot(worldOff, boneOrigWorldRot[2]);
 
-		anim.SetBone(m_TargetEntity, boneId, rotRadCorrected, localOff, boneModification.m_fScale);
-		m_TargetEntity.Update();
+		anim.SetBone(slotEntity, boneId, rotRadCorrected, localOff, boneModification.m_fScale);
+		slotEntity.Update();
 	}
 
 	//-----------------------------------------------------------------------
@@ -153,26 +199,6 @@ class DAB_PoseManipulationTrack : CinematicTrackBase
 	}
 
 	//-----------------------------------------------------------------------
-	protected Animation GetSlotDependentAnim(string boneName)
-	{
-		if (!m_SlotManager) return m_TargetEntity.GetAnimation();
-
-		array<EntitySlotInfo> slotInfos = {};
-		m_SlotManager.GetSlotInfos(slotInfos);
-
-		foreach (EntitySlotInfo slotInfo : slotInfos)
-		{
-			IEntity slotEntity = slotInfo.GetAttachedEntity();
-			if (!slotEntity) continue;
-
-			Animation anim = slotEntity.GetAnimation();
-			if (anim && anim.GetBoneIndex(boneName) != -1) return anim;
-		}
-
-		return m_TargetEntity.GetAnimation();
-	}
-
-	//-----------------------------------------------------------------------
 	protected void RefreshTargetEntity(World world)
 	{
 		if (!world) return;
@@ -185,9 +211,7 @@ class DAB_PoseManipulationTrack : CinematicTrackBase
 		if (found != m_TargetEntity)
 			m_mBaseRotationCache.Clear();
 
-		m_TargetEntity = found;
-		if (m_TargetEntity)
-			m_SlotManager = SlotManagerComponent.Cast(m_TargetEntity.FindComponent(SlotManagerComponent));
+		m_TargetEntity = found;	
 	}
 
 	//-----------------------------------------------------------------------

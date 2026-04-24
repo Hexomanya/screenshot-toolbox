@@ -1,40 +1,185 @@
-# DAB Scripting Standards
-
-## 1. Variable Naming
-Variables must use specific prefixes to make their underlying data types identifiable at a glance. This improves scannability and makes global searches more efficient.
-We deviate from BI on arrays and maps, to make variable easier to search for.
-
-* **`m_a[Name]`**: Arrays (e.g., `m_aPoseModifications`).
-* **`m_m[Name]`**: Maps (e.g., `m_mBaseRotationCache`).
-* **`m_s[Name]`**: Strings or ResourceNames (e.g., `m_sBoneName`, `m_sWorkingPoseModification`).
-* **`m_b[Name]`**: Booleans (e.g., `m_bApplyModifications`).
-* **`m_f[Name]`**: Floats (e.g., `m_fScale`).
-* **`m_v[Name]`**: Vectors (e.g., `m_vRotationOffset`).
-
-## 2. Formatting & Structure
-* **One-Liners**: Simple `return` statements, `setters`, or `getters` should be kept on a single line to reduce vertical bloat and keep the code clean. (This deviates from BIs code)
-* **Separation**: Use a horizontal rule of dashes to clearly separate functions.
-    * Example: Over each function: `//-----------------------------------------------------------------------`.
-    * Example: To seperate public from private functions or similar:  `// ── Private: CreateNewConfig stages ─────────────────────────────────── `.
-
-## 3. Documentation & Comments
-* **Public API**: Every `public` function **MUST** have a documentation comment starting with `//!` explaining its purpose.
-* **Internal Logic**: `protected` or `private` functions **MUST NOT** have documentation comments.
-* **Commenting Philosophy**: 
-    * No describing comments. Do not explain *what* the code is doing (e.g., "looping through array").
-    * Comments are only permitted to explain **WHY** the code is there, such as fixing specific engine bugs or handling non-obvious editor behaviors.
-* **Print**: Print() or PrintFormat() are only allowed when using a LogLevel. Debug prints need to be removed or tagged with the comment: `// TODO: Remove Debug Print`.
-    * When a function that is triggered by a button exits early a Workbench.Dialog() should be added before the print.
-
-## 4. Class Organization
-* **Attributes**: Place all `[Attribute]` fields at the top of the class for easy configuration within the Workbench. If they have a category defined sort them by it.
-* **Member Variables**: Group internal variables (non-attributes) immediately below the attributes.
-* **Methods**: Organize methods by their access level or lifecycle: `override` methods first, followed by `public`, then `protected`.
-    * In their own category methods are sorted alphabetically
+# DAB Scripting Standards (v2)
 
 ---
 
-### Example Implementation
+## 1. Variable Naming
+
+Prefix all **member variables** with a type identifier. This improves scanability and makes variables easier to locate via global search.
+
+> We intentionally deviate from BI conventions (only for arrays and maps) to improve searchability.
+
+| Prefix | Type                  | Example                 |
+| ------ | --------------------- | ----------------------- |
+| `m_a`  | Array                 | `m_aPoseModifications`  |
+| `m_m`  | Map                   | `m_mBaseRotationCache`  |
+| `m_s`  | String / ResourceName | `m_sBoneName`           |
+| `m_b`  | Boolean               | `m_bApplyModifications` |
+| `m_f`  | Float                 | `m_fScale`              |
+| `m_v`  | Vector                | `m_vRotationOffset`     |
+
+### Naming clarity
+
+* Prefer **fully written, descriptive names** over abbreviations.
+* Example: use `rotation` instead of `rot`, `position` instead of `pos`.
+* Abbreviations are acceptable only when:
+
+  * They are widely understood (`id`, `ui`, etc.), or
+  * The full name becomes excessively long and harms readability.
+
+### Scope
+
+* Prefix rules apply **only to member variables**.
+* Local variables and parameters should use clean, readable names without prefixes.
+
+---
+
+## 2. Formatting & Structure
+
+### One-liners
+
+Simple getters, setters, and trivial early returns may be written on a single line to reduce vertical bloat.
+
+> Deviates from BI style intentionally.
+
+Use judgment — if readability suffers, expand to multi-line.
+
+### Variable declarations
+
+* Do not vertically align declarations.
+* Use a single space between type, name, and assignment.
+
+### Separators
+
+Use visual separators to improve readability in the Enfusion Workbench editor.
+
+```cpp
+// Function separator — place above every function:
+//-----------------------------------------------------------------------
+
+// Section separator — place between logical groups:
+// ── Private: CreateNewConfig stages ──────────────────────────────────
+```
+
+These are intentionally **mandatory**, as they significantly improve navigation in the editor.
+
+---
+
+## 3. Minimising Nesting
+
+Deep nesting reduces readability and makes code harder to reason about.
+
+Prefer flatter control flow **when it improves clarity**.
+
+### Guidelines
+
+* **Guard clauses first** — validate and exit early.
+* **Use `continue` in loops** to skip invalid cases.
+* Avoid wrapping large blocks in `if` statements when only one path matters.
+
+### Preferred
+
+```cpp
+if (!modificationsArr)
+{
+    RedrawOverlay();
+    return;
+}
+
+for (int i = 0; i < modificationsArr.Count(); i++)
+{
+    BaseContainer entry = modificationsArr.Get(i);
+
+    DAB_BoneTransform newTransform = CreateNewTransform(compoundBoneName);
+    if (!newTransform) continue;
+
+    // Apply values
+}
+
+RedrawOverlay();
+```
+
+### Acceptable
+
+Small, shallow nesting is fine when it improves readability.
+
+The goal is not “no nesting”, but **avoiding unnecessary nesting**.
+
+---
+
+## 4. Documentation & Comments
+
+### Public functions
+
+Public APIs should generally include a doc comment using `//!`:
+
+```cpp
+//! Enables or disables the component logic at runtime.
+void SetEnabled(bool state) { m_bEnableLogic = state; }
+```
+
+### Protected / private functions
+
+* Prefer inline comments over doc comments.
+* Add documentation only when the behavior is non-obvious or complex.
+
+### Inline comments
+
+Comments should explain:
+
+* **Why** something is done
+* Engine quirks, limitations, or workarounds
+* Non-obvious intent
+
+Avoid restating what the code already clearly expresses.
+
+```cpp
+// BAD: Loop through the names array
+// GOOD: Workbench fails to clear this buffer on deselect, causing memory leaks
+```
+
+### Print statements
+
+* Always include a `LogLevel`
+* Always prefix with `ClassName.FunctionName:`
+
+```cpp
+PrintFormat("DAB_Example.OnButtonPressed: Early exit — reason.", LogLevel.WARNING);
+```
+
+* Debug prints must be removed or marked:
+
+```cpp
+// TODO: Remove Debug Print
+```
+
+* UI-triggered early exits should show a dialog before logging:
+
+```cpp
+Workbench.Dialog("Title", "Descriptive message");
+```
+
+---
+
+## 5. Class Organisation
+
+Order class members as follows:
+
+1. **`[Attribute]` fields** — grouped and sorted
+2. **Member variables** — internal state
+3. **Override methods**
+4. **Public methods**
+5. **Protected methods**
+
+### Notes
+
+* Group methods by logical purpose within each section
+* Keep related functionality together
+* Use section separators to clearly mark boundaries
+
+---
+
+## Example
+
 ```cpp
 class DAB_ExampleComponent : ScriptComponent
 {
@@ -45,7 +190,7 @@ class DAB_ExampleComponent : ScriptComponent
 
     // ── Public ────────────────────────────────────────────────────────────
     //-----------------------------------------------------------------------
-    //! Public function: Documentation required.
+    //! Enables or disables the component logic at runtime.
     void SetEnabled(bool state) { m_bEnableLogic = state; }
 
     // ── Private ───────────────────────────────────────────────────────────
@@ -54,6 +199,7 @@ class DAB_ExampleComponent : ScriptComponent
     {
         if (!m_bEnableLogic) return;
 
-        m_aNames.Clear(); //The Workbench fails to clear this buffer when the entity is deselected, leading to memory leaks.
+        m_aNames.Clear(); // Workbench fails to clear this buffer when the entity is deselected, causing memory leaks.
     }
 }
+```

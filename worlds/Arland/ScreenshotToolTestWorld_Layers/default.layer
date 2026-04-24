@@ -308,6 +308,127 @@ $grp CinematicEntity {
       }
      }
     }
+    CustomCinematicTrack "{691F04C8EE8F9CEC}" {
+     TrackName "LAV1_BoneAnimationTrack"
+     ClassName "SlotBoneAnimationCinematicTrack"
+     ChildTracks {
+      StringCinematicTrack "{691F04C8EE8F84CC}" {
+       TrackName "m_sSlotName"
+       Keyframes {
+        StringCinematicKeyframe "{691F04C8F6C85415}" {
+         FrameNumber 0
+         Value "Turret"
+        }
+       }
+      }
+      StringCinematicTrack "{691F04C8EE8F8395}" {
+       TrackName "m_sBoneName"
+       Keyframes {
+        StringCinematicKeyframe "{691F04C8FB7E8EBA}" {
+         FrameNumber 0
+         Value "v_gun_01"
+        }
+       }
+      }
+      Vector3CinematicTrack "{691F04C8EE8F80B3}" {
+       TrackName "m_YawPitchRoll"
+       X FloatCinematicTrack "{691F04C8EE8F8CDF}" {
+        TrackName "X"
+        Keyframes {
+         FloatCinematicKeyframe "{691F04C8F8EA4437}" {
+          FrameNumber 0
+          Value 0.2
+         }
+        }
+       }
+       Y FloatCinematicTrack "{691F04C8EE8F8C2C}" {
+        TrackName "Y"
+        Keyframes {
+         FloatCinematicKeyframe "{691F04C8F8604F7C}" {
+          FrameNumber 0
+          Value 1.11
+         }
+        }
+       }
+       Z FloatCinematicTrack "{691F04C8EE8F8C28}" {
+        TrackName "Z"
+        Keyframes {
+         FloatCinematicKeyframe "{691F04C8C690B3C4}" {
+          FrameNumber 0
+          Value 2.71
+         }
+        }
+       }
+      }
+      Vector3CinematicTrack "{691F04C8EE8F8BAA}" {
+       TrackName "m_Position"
+       X FloatCinematicTrack "{691F04C8EE8F8B02}" {
+        TrackName "X"
+       }
+       Y FloatCinematicTrack "{691F04C8EE8F8B09}" {
+        TrackName "Y"
+       }
+       Z FloatCinematicTrack "{691F04C8EE8F8B12}" {
+        TrackName "Z"
+       }
+      }
+     }
+    }
+    CustomCinematicTrack "{691F04C8D769852E}" {
+     TrackName "UAZ469_BoneAnimationTrack"
+     ClassName "SlotBoneAnimationCinematicTrack"
+     ChildTracks {
+      StringCinematicTrack "{691F04C8D76981EE}" {
+       TrackName "m_sSlotName"
+       Keyframes {
+        StringCinematicKeyframe "{691F04C879284637}" {
+         FrameNumber 0
+         Value ""
+        }
+       }
+      }
+      StringCinematicTrack "{691F04C8D7698E30}" {
+       TrackName "m_sBoneName"
+       Keyframes {
+        StringCinematicKeyframe "{691F04C842814B4E}" {
+         FrameNumber 0
+         Value "v_door_L01_handle"
+        }
+       }
+      }
+      Vector3CinematicTrack "{691F04C8D7698FF8}" {
+       TrackName "m_YawPitchRoll"
+       X FloatCinematicTrack "{691F04C8D7698FC8}" {
+        TrackName "X"
+       }
+       Y FloatCinematicTrack "{691F04C8D7698FD2}" {
+        TrackName "Y"
+        Keyframes {
+         FloatCinematicKeyframe "{691F04C84D771009}" {
+          FrameNumber 0
+          Value 0.25
+          InterpMode 0
+         }
+        }
+       }
+       Z FloatCinematicTrack "{691F04C8D7698FD1}" {
+        TrackName "Z"
+       }
+      }
+      Vector3CinematicTrack "{691F04C8D7698C8F}" {
+       TrackName "m_Position"
+       X FloatCinematicTrack "{691F04C8D7698C94}" {
+        TrackName "X"
+       }
+       Y FloatCinematicTrack "{691F04C8D7698C90}" {
+        TrackName "Y"
+       }
+       Z FloatCinematicTrack "{691F04C8D7698C9C}" {
+        TrackName "Z"
+       }
+      }
+     }
+    }
    }
   }
  }
