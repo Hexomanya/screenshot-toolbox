@@ -34,14 +34,32 @@ class DAB_BoneOverlayRenderer
 			return;
 		}
 		
+		Print("---------------------------------------------");
+		Print("Stated to draw all bones");
+		int start = System.GetTickCount();
+		
 		CacheBoneWorldPositions(skeletonInfo, displaySettings);
+		int elapsedCacheMs = System.GetTickCount() - start;
+		
 		ComputeSpatialConstraints(skeletonInfo);
+		int elapsedSpatialMs = System.GetTickCount() - start- elapsedCacheMs;
+		
 		CombineConstraints(camPos);
+		int elapsedConstraintsMs = System.GetTickCount() - start - elapsedCacheMs - elapsedSpatialMs;
+		
+		int elapsedPrecomputeMs = System.GetTickCount() - start;
 
 		if (!displaySettings.GetHideBoneConnections())
 			DrawBoneConnections(skeletonInfo);
 
 		DrawBoneShapes(hoveredBone);
+		
+		int elapsedTotalMs = System.GetTickCount() - start;
+		PrintFormat("DrawAllBones cache took %1ms", elapsedCacheMs);
+		PrintFormat("DrawAllBones spatial took %1ms", elapsedSpatialMs);
+		PrintFormat("DrawAllBones constraint took %1ms", elapsedConstraintsMs);
+		PrintFormat("DrawAllBones precompute took %1ms", elapsedPrecomputeMs);
+		PrintFormat("DrawAllBones total took %1ms", elapsedTotalMs);
 	}
 
 	//-----------------------------------------------------------------------
@@ -293,14 +311,14 @@ class DAB_BoneOverlayRenderer
 			string parentCompoundName = "";
 			if (!boneParents.Find(childCompoundName, parentCompoundName) || parentCompoundName.IsEmpty()) 
 			{
-				PrintFormat("Could no find a parent for: %1", childCompoundName);
+				//PrintFormat("Could no find a parent for: %1", childCompoundName);
 				continue;
 			}
 
 			vector parentPosition;
 			if (!m_CachedWorldPositions.Find(parentCompoundName, parentPosition))
 			{
-				PrintFormat("Could no find a parent position for: %1", parentCompoundName);
+				PrintFormat("Could no find a parent position for: %1", parentCompoundName, LogLevel.WARNING);
 				continue;
 			}
 

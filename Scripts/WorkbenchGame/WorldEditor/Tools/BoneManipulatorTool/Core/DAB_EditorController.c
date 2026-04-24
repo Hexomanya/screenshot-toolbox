@@ -329,8 +329,6 @@ class DAB_EditorController
 		DAB_BoneRecord record = skeletonInfo.GetBoneRecord(compoundBoneName);
 		if(!record) return null;
 		
-		Print("New transfrom?");
-		
 		IEntity slotEntity = record.GetSlotEntity();
 		if(!slotEntity) return null;
 		

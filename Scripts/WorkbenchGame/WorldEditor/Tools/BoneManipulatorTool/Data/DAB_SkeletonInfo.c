@@ -11,10 +11,16 @@ class DAB_SkeletonInfo
     //-----------------------------------------------------------------------
     void DAB_SkeletonInfo(string skeletonKey, IEntity entity)
     {
+		PrintFormat("Creating new skeleton with key: %1", skeletonKey);
+		int start = System.GetTickCount();
+		
 		m_sSkeletonKey = skeletonKey;
 		
 		m_mBoneRecords = DAB_SkeletonInfo.GetBoneRecords(entity);
 		m_mBoneParents = DAB_SkeletonInfo.ExtractBoneRecords(m_mBoneRecords);
+		
+		int elapsedMs = System.GetTickCount() - start;
+		PrintFormat("Skeleton creation took %1ms", elapsedMs);
     }
  
     //-----------------------------------------------------------------------

@@ -66,13 +66,6 @@ class DAB_GizmoController
 			Clear();
 			return;
 		}
-		
-		if (m_currentTransform)
-		{
-			Print("DAB_GizmoController.Attach: previous bone was not cleared first.", LogLevel.WARNING);
-			Clear();
-			return;
-		}
 
 		m_AttachedEntity  = entity;
 		m_currentTransform = boneToAttach;
@@ -268,7 +261,6 @@ class DAB_GizmoController
 	protected void CreateRotationGizmo(WorldEditorAPI api)
 	{
 		vector position = GetCurrentGizmoPosition();
-		PrintFormat("Creating gizmo with rotation: %1", GetCurrentWorldAngles());
 		m_RotationGizmo = new DAB_RotationGizmo(
 			position,
 			GetCurrentWorldAngles(),
