@@ -79,7 +79,6 @@ $grp Vehicle : "{0FBF8F010F81A4E5}Prefabs/Vehicles/Wheeled/LAV25/LAV25.et" {
  LAV1 {
   components {
    DAB_PoseModificationComponent "{691CA926DA06B116}" {
-    m_sWorkingPoseModification "{80A6F835411D32B8}Configs/PoseModifications/LAV01.conf"
    }
   }
   coords 1368.553 39 2225.411
@@ -88,7 +87,6 @@ $grp Vehicle : "{0FBF8F010F81A4E5}Prefabs/Vehicles/Wheeled/LAV25/LAV25.et" {
  LAV2 {
   components {
    DAB_PoseModificationComponent "{691CA926DA06B116}" {
-    m_sWorkingPoseModification "{717FE0BAB609DCFF}Configs/PoseModifications/LAV2.conf"
    }
   }
   coords 1374.397 39 2204.604
@@ -97,7 +95,6 @@ $grp Vehicle : "{0FBF8F010F81A4E5}Prefabs/Vehicles/Wheeled/LAV25/LAV25.et" {
  LAVTest0101 {
   components {
    DAB_PoseModificationComponent "{691CA926DA06B116}" {
-    m_sWorkingPoseModification "{132D29E29D15BB78}Configs/PoseModifications/TestoMatic.conf"
    }
    SlotManagerComponent "{55BCE45E438E4CFF}" {
     Slots {
@@ -125,7 +122,6 @@ GenericEntity : "{6EB3EE4FE50E0319}Prefabs/Props/Recreation/Beach/BlanketBeach_0
 SCR_ChimeraCharacter USSR01 : "{90D2F1A1CFCA7B5F}Prefabs/Characters/Factions/OPFOR/USSR_Army/Guard/Character_USSR_SL_Guard.et" {
  components {
   DAB_PoseModificationComponent "{691CB5B980091D4F}" {
-   m_sWorkingPoseModification "{0D0CC4FE4DBD9860}Configs/PoseModifications/USSR011.conf"
   }
   AnimationPlayerComponent "{691CA9271E90F1FC}" {
    Animation "{1DAA59A918EDF0B0}anims/anm/NPC/male/sitting/sitting_on_box/p_sitting_on_box_rfl_smoking_lefthand_weapon_lap_violence_out.anm"
@@ -138,7 +134,6 @@ SCR_ChimeraCharacter USSR01 : "{90D2F1A1CFCA7B5F}Prefabs/Characters/Factions/OPF
 Vehicle UAZ469_base1 : "{99F1610551D54D17}Prefabs/Vehicles/Wheeled/UAZ469/UAZ469_base.et" {
  components {
   DAB_PoseModificationComponent "{691F04D2594AA87D}" {
-   m_sWorkingPoseModification "{9110EEF553DFE9F8}Configs/PoseModifications/UazTest01.conf"
   }
  }
  coords 1363.354 39 2217.56
@@ -152,7 +147,6 @@ GenericEntity : "{A8142EB263DA25B6}Prefabs/Vehicles/Wheeled/UAZ469/VehParts/Door
 GenericEntity : "{AA865FD8AB5DA589}Prefabs/Weapons/Ammo/Ammo_25x137/Casing_25x137.et" {
  components {
   DAB_PoseModificationComponent "{691EFDD97854C902}" {
-   m_sWorkingPoseModification "{D004BEE497FC65E0}Configs/PoseModifications/test.conf"
   }
  }
  coords 1366.084 40.12 2229.351
@@ -160,7 +154,7 @@ GenericEntity : "{AA865FD8AB5DA589}Prefabs/Weapons/Ammo/Ammo_25x137/Casing_25x13
 GenericEntity : "{B1482FB64E3D2D45}Prefabs/Weapons/Rifles/M16/Rifle_M16A2_4x20.et" {
  components {
   DAB_PoseModificationComponent "{691CB5B364CE95AC}" {
-   m_sWorkingPoseModification "{05D887C03FA78DDC}Configs/PoseModifications/Weapon.conf"
+   m_sWorkingPoseModification "{05D887C03FA78DDC}Configs/PoseModifications/Save/Weapon.conf"
   }
  }
  coords 1365.698 39.774 2228.929
@@ -169,7 +163,6 @@ GenericEntity : "{B1482FB64E3D2D45}Prefabs/Weapons/Rifles/M16/Rifle_M16A2_4x20.e
 Vehicle "692EB4E8C7F63535" : "{BDE43262FC05B4D7}Prefabs/Vehicles/Helicopters/UH1H/UH1H_armed_gunship_empty_sharkNose.et" {
  components {
   DAB_PoseModificationComponent "{691CA9279827EA8A}" {
-   m_sWorkingPoseModification "{0DA841DE82EACF91}Configs/PoseModifications/UH_01.conf"
   }
  }
  coords 1373.422 39 2218.865
@@ -178,7 +171,6 @@ Vehicle "692EB4E8C7F63535" : "{BDE43262FC05B4D7}Prefabs/Vehicles/Helicopters/UH1
 Vehicle BTR1 : "{C012BB3488BEA0C2}Prefabs/Vehicles/Wheeled/BTR70/BTR70.et" {
  components {
   DAB_PoseModificationComponent "{691CA920DA58C762}" {
-   m_sWorkingPoseModification "{C9DC1401FC90D481}Configs/PoseModifications/BTR01.conf"
   }
  }
  coords 1373.39 39 2231.878
@@ -187,7 +179,7 @@ Vehicle BTR1 : "{C012BB3488BEA0C2}Prefabs/Vehicles/Wheeled/BTR70/BTR70.et" {
 Turret : "{D1FFE458E8AC4BDB}Prefabs/Weapons/Mortars/2B14/Mortar_2B14.et" {
  components {
   DAB_PoseModificationComponent "{691CA9200269BB66}" {
-   m_sWorkingPoseModification "{0C5B4D50F231A928}Configs/PoseModifications/Mortar.conf"
+   m_sWorkingPoseModification "{0C5B4D50F231A928}Configs/PoseModifications/Save/Mortar.conf"
   }
  }
  coords 1364.645 39 2230.493
@@ -208,7 +200,6 @@ Vehicle S105_base1 : "{DA79E34823120087}Prefabs/Vehicles/Wheeled/S105/S105_base.
 SCR_ChimeraCharacter US01 : "{DE15FB5FAFC3E63F}Prefabs/Characters/Factions/BLUFOR/US_Army/Character_US_Officer.et" {
  components {
   DAB_PoseModificationComponent "{691CA926E55E4812}" {
-   m_sWorkingPoseModification "{AD1B5C0A6BF0C382}Configs/PoseModifications/US01.conf"
   }
   AnimationPlayerComponent "{691CA927DC113314}" {
    Animation "{3996BF5D860A1536}anims/anm/NPC/male/sitting/p_sitting_ground_unm_idle.anm"
@@ -221,7 +212,6 @@ SCR_ChimeraCharacter US01 : "{DE15FB5FAFC3E63F}Prefabs/Characters/Factions/BLUFO
 Vehicle UAZ469 : "{E28501E93F8EFDC0}Prefabs/Vehicles/Wheeled/UAZ469/UAZ469_FIA_uncovered.et" {
  components {
   DAB_PoseModificationComponent "{69230A1009EE9148}" {
-   m_sWorkingPoseModification "{8FC9CD662B1FB0B5}Configs/PoseModifications/UAZUAZ.conf"
   }
  }
  coords 1363.121 39 2212.432
