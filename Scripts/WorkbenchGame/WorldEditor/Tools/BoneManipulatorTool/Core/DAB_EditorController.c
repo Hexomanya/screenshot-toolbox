@@ -155,6 +155,12 @@ class DAB_EditorController
 	//! Key bindings: U = Rotation, I = Position, O = Scale, J = Reset bone, Escape = Deselect.
 	void OnKeyPressEvent(KeyCode key, bool isAutoRepeat)
 	{
+		if (m_ParentTool && m_ParentTool.GetShouldPrintKeyDebug())
+	    {
+	        string keyName = typename.EnumToString(KeyCode, key);
+	        PrintFormat("Pressed KeyCode was %1 (%2).", keyName, key);
+	    }
+		
 		if (isAutoRepeat) return;
 		if(! m_bEditAllowed) return;
 
@@ -554,7 +560,7 @@ class DAB_EditorController
 		IEntity targetEntity = m_ParentTool.GetCurrentTargetEntity();
 		if (!targetEntity)
 		{
-			Print("Target is null. Could not load and apply working config", LogLevel.WARNING);
+			//Print("Target is null. Could not load and apply working config", LogLevel.WARNING);
 			return;
 		}
 		

@@ -10,8 +10,11 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 {
 	// ── Tool attributes ────────────────────────────────────────────────────
 	// ── Keybinds ──
-	[Attribute("Custom keybinds configuration for the Bone Manipulator Tool. Keys already used somewhere else in the workbench won't work as override! Leave empty to use built-in defaults (ESC, J, U, I, O).")]
+	[Attribute("Custom keybinds configuration for the Bone Manipulator Tool. Keys already used somewhere else in the workbench won't work as override! Leave empty to use built-in defaults (ESC, J, U, I, O).", category: "Keybinds")]
 	protected ref DAB_BoneManipulatorKeybinds m_KeyBindsOverwrites;
+	
+	[Attribute(defvalue: "0", uiwidget: UIWidgets.CheckBox, desc: "Prints all received KeyCodes in the console.", category: "Keybinds")]
+	protected bool m_bShouldPrintKeyDebug;
 	
 	// ── Display ──
 	[Attribute(defvalue: "1", uiwidget: UIWidgets.CheckBox, desc: "Hide IK target bones from the overlay", category: "Display")]
@@ -200,4 +203,5 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 	DAB_BoneDisplaySettings GetNewDisplaySettings() { return new DAB_BoneDisplaySettings(m_bHideIKTargetBones, m_bHidePropBones, m_bHideVolumeBones, m_bHideCameraBone, m_bHideFaceBones, m_bHideBoneConnections, m_sFilterBoneName); }
 	bool GetShouldAutoSave(){ return m_bShouldAutoSave; }
 	DAB_BoneManipulatorKeybinds GetKeybindsOverwrites() { return m_KeyBindsOverwrites; }
+	bool GetShouldPrintKeyDebug() { return m_bShouldPrintKeyDebug; }
 }
