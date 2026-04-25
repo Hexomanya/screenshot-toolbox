@@ -84,7 +84,7 @@ class DAB_PoseManipulationTrack : CinematicTrackBase
 		for (int i = 0; i < boneModification.m_aSlotNames.Count(); i++)
 		{
 		    string slotName = boneModification.m_aSlotNames[i];
-			if(slotName == DAB_Constants.SLOT_ROOT_ID) return true;
+			if(slotName == DAB_Constants.SLOT_ROOT_ID) continue;
 			
 			SlotManagerComponent slotManager = SlotManagerComponent.Cast(DAB_Helper.FindComponentExact(outEntity, SlotManagerComponent));
 			if(!slotManager)
@@ -99,18 +99,16 @@ class DAB_PoseManipulationTrack : CinematicTrackBase
 				PrintFormat("Could not resolve slotName! slotName: %1; index: %2", slotName, i, LogLevel.ERROR);
 				return false;
 			}
-			
+
 			outEntity = slotInfo.GetAttachedEntity();
 			if(!outEntity)
 			{
 				PrintFormat("Encountered null attached entity while resolving slotNames array! slotName: %1; index: %2", slotName, i, LogLevel.ERROR);
 				return false;
 			}
-			
-			if(i == count - 1) return true;
 		}
 		
-		return false;
+		return true;
 	}
 	
 	//-----------------------------------------------------------------------
@@ -125,6 +123,11 @@ class DAB_PoseManipulationTrack : CinematicTrackBase
 		
 		Animation anim;
 		TNodeId boneId = DAB_BoneHelper.GetBoneIndex(slotEntity, boneModification.m_sBoneName, anim);
+		if(boneId == -1)
+		{
+			PrintFormat("Could not find boneid for bone with name: %1", boneModification.m_sBoneName);
+			return;
+		}
 
 		vector originalRotation;
 		if (!m_mBaseRotationCache.Find(boneModification.m_sBoneName, originalRotation))
@@ -137,7 +140,7 @@ class DAB_PoseManipulationTrack : CinematicTrackBase
 		vector rotRadCorrected = Vector(rotRad[1], rotRad[0], rotRad[2]);
 
 		vector entityWorld[4];
-		m_TargetEntity.GetTransform(entityWorld);
+		slotEntity.GetWorldTransform(entityWorld);
 
 		vector entityRot3[3];
 		entityRot3[0] = entityWorld[0];
@@ -155,7 +158,7 @@ class DAB_PoseManipulationTrack : CinematicTrackBase
 		localOff[0] = vector.Dot(worldOff, boneOrigWorldRot[0]);
 		localOff[1] = vector.Dot(worldOff, boneOrigWorldRot[1]);
 		localOff[2] = vector.Dot(worldOff, boneOrigWorldRot[2]);
-
+		
 		anim.SetBone(slotEntity, boneId, rotRadCorrected, localOff, boneModification.m_fScale);
 		slotEntity.Update();
 	}
