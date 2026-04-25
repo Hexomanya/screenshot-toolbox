@@ -156,8 +156,8 @@ class DAB_BoneOverlayRenderer
 		
 		foreach (string compoundBoneName, DAB_BoneRecord record : skeletonInfo.GetBoneRecords())
 		{
-			string boneName = DAB_SkeletonInfo.ExtractBoneNameFromCompundName(compoundBoneName);
-			if (!ShouldDisplayBone(compoundBoneName, boneName, displaySettings, skeletonInfo))
+			string simpleBoneName = DAB_SkeletonInfo.ExtractBoneNameFromCompundName(compoundBoneName);
+			if (!ShouldDisplayBone(compoundBoneName, simpleBoneName, displaySettings, skeletonInfo))
 			    continue;
 			
 			IEntity slotEntity = record.GetSlotEntity();
@@ -174,7 +174,7 @@ class DAB_BoneOverlayRenderer
 				continue;
 			}
 			
-			TNodeId boneId = anim.GetBoneIndex(boneName);
+			TNodeId boneId = anim.GetBoneIndex(simpleBoneName);
 			if (boneId == -1) continue;
 
 			vector boneLocal[4];
@@ -414,23 +414,24 @@ class DAB_BoneOverlayRenderer
 	}
 
 	//-----------------------------------------------------------------------
-	protected bool ShouldDisplayBone(string compoundBoneName, string boneName, DAB_BoneDisplaySettings displaySettings, DAB_SkeletonInfo skeletonInfo)
+	protected bool ShouldDisplayBone(string compoundBoneName, string simpleBoneName, DAB_BoneDisplaySettings displaySettings, DAB_SkeletonInfo skeletonInfo)
 	{
-	    string lowercaseBoneName = boneName;
+	    string lowercaseBoneName = simpleBoneName;
 	    lowercaseBoneName.ToLower();
 	    
 	    if (displaySettings.GetHideIKTargetBones() && lowercaseBoneName.Contains("_ik")) return false;
 	    if (displaySettings.GetHideVolumeBones() && (lowercaseBoneName.EndsWith("prop") || lowercaseBoneName.EndsWith("volume"))) return false;
 	    if (displaySettings.GetHideCameraBone() && lowercaseBoneName == "camera") return false;
-	    if (displaySettings.GetHideFaceBones() && skeletonInfo.IsAncestorOf(boneName, "Head")) return false;
-	    
+	    if (displaySettings.GetHideFaceBones() && skeletonInfo.IsAncestorOf(simpleBoneName, "Head")) return false;
+	    if (displaySettings.GetHideDuplicateNamedSlotBones() && skeletonInfo.GetHasDuplicateName(compoundBoneName)) return false;
+
 	    if (!displaySettings.GetFilterBoneName().IsEmpty())
 	    {
 	        string lowercaseFilter = displaySettings.GetFilterBoneName().Trim();
 	        lowercaseFilter.ToLower();
 	        if (!lowercaseBoneName.Contains(lowercaseFilter)) return false;
 	    }
-	    
+
 	    return true;
 	}	
 }

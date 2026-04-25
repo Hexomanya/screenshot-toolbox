@@ -35,6 +35,9 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 	[Attribute(defvalue: "0", uiwidget: UIWidgets.CheckBox, desc: "Hide lines connecting bones to their parents", category: "Display")]
 	protected bool m_bHideBoneConnections;
 	
+	[Attribute(defvalue: "1", uiwidget: UIWidgets.CheckBox, desc: "Hide duplicate named slot bones from the overlay", category: "Display")]
+	protected bool m_bHideDuplicateNamedSlotBones;
+	
 	[Attribute(defvalue: "", desc: "Show only bones that include this string. Does nothing when empty", category: "Display - Filter")]
 	protected string m_sFilterBoneName;
 	
@@ -222,7 +225,7 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 	IEntity GetCurrentTargetEntity(){ return m_TargetEntity; }
 	IEntitySource GetCurrentTargetEntitySource(){ return m_TargetEntitySource; } //TODO: Could be removed in theory
 	DAB_PoseModificationComponent GetTargetComponent(){ return m_TargetComponent; }
-	DAB_BoneDisplaySettings GetNewDisplaySettings() { return new DAB_BoneDisplaySettings(m_bHideIKTargetBones, m_bHidePropBones, m_bHideVolumeBones, m_bHideCameraBone, m_bHideFaceBones, m_bHideBoneConnections, m_sFilterBoneName); }
+	DAB_BoneDisplaySettings GetNewDisplaySettings() { return new DAB_BoneDisplaySettings(m_bHideIKTargetBones, m_bHidePropBones, m_bHideVolumeBones, m_bHideCameraBone, m_bHideFaceBones, m_bHideBoneConnections, m_bHideDuplicateNamedSlotBones, m_sFilterBoneName); }
 	bool GetShouldAutoSave(){ return m_bShouldAutoSave; }
 	DAB_BoneManipulatorKeybinds GetKeybindsOverwrites() { return m_KeyBindsOverwrites; }
 	bool GetShouldPrintKeyDebug() { return m_bShouldPrintKeyDebug; }

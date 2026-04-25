@@ -68,6 +68,14 @@ class DAB_SkeletonInfo
 		return ExtractBoneNameFromCompundName(compoundBoneName);
 	}
 	
+	bool GetHasDuplicateName(string compoundBoneName)
+	{
+		DAB_BoneRecord record;
+		if(m_mBoneRecords.Find(compoundBoneName, record)) return record.GetHasDuplicateName();
+		PrintFormat("Could not find bone record for bone with name '%1' on skeleton '%2'", compoundBoneName, m_sSkeletonKey, LogLevel.WARNING);
+		return true;
+	}
+	
 	//-----------------------------------------------------------------------
 	array<string> GetSlotNames(string compoundBoneName)
 	{
@@ -214,10 +222,9 @@ class DAB_SkeletonInfo
 			
 			string parentSimpleName = DAB_BoneHelper.FindParentBoneName(anim, boneName, localBoneNames);
 			string parentCompoundName = DAB_SkeletonInfo.GetCompoundName(parentSimpleName, slotNames);
-			
-			if(boneName == "v_exhaust1") PrintFormat("Is slot null for %1: %2", boneName, (entity == null));
-			
-			DAB_BoneRecord record = new DAB_BoneRecord(boneName, slotNames, entity, parentCompoundName);
+			bool isDuplicateName = DAB_SkeletonInfo.DuplicateNameExistAlready(boneName, outBoneRecords);
+				
+			DAB_BoneRecord record = new DAB_BoneRecord(boneName, slotNames, entity, parentCompoundName, isDuplicateName);
 			
 			outBoneRecords.Insert(compoundName, record);
 		}
@@ -239,6 +246,17 @@ class DAB_SkeletonInfo
  
 			CollectBoneRecords(childEntity, newSlotNames, outBoneRecords);
 		}
+	}
+	
+	//TODO: There might be a more performant way of handling this
+	protected static bool DuplicateNameExistAlready(string simpleBoneName, map<string, ref DAB_BoneRecord> outBoneRecords)
+	{
+		foreach(string compundBoneName, ref DAB_BoneRecord record : outBoneRecords)
+		{
+			if(record.GetSimpleBoneName() == simpleBoneName) return true;
+		}
+		
+		return false;
 	}
 	
 	//-----------------------------------------------------------------------

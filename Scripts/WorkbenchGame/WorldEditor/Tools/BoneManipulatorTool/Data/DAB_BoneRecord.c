@@ -4,10 +4,11 @@ class DAB_BoneRecord
 	protected ref array<string> m_aSlotNames;
     protected IEntity m_SlotEntity;
 	protected string m_sParentCompoundName;
+	protected bool m_bHasDuplicateName;
 
     // ── Constructors ──────────────────────────────────────────────────────────
     //-----------------------------------------------------------------------
-    void DAB_BoneRecord(string simpleBoneName, array<string> slotNames, IEntity slotEntity,  string parentCompoundName)
+    void DAB_BoneRecord(string simpleBoneName, array<string> slotNames, IEntity slotEntity, string parentCompoundName, bool hasDuplicateName)
     {
         if (simpleBoneName.IsEmpty()) Print("DAB_BoneRecord: Created BoneRecord with empty simpleBoneName!", LogLevel.ERROR);
 		if (slotNames.IsEmpty()) PrintFormat("DAB_BoneRecord: Created BoneRecord with no slotNames! (Simple Name: %1)", simpleBoneName, LogLevel.ERROR);
@@ -17,6 +18,7 @@ class DAB_BoneRecord
 		m_aSlotNames = slotNames;
         m_SlotEntity = slotEntity;
         m_sParentCompoundName = parentCompoundName;
+		m_bHasDuplicateName = hasDuplicateName;
     }
 
     //-----------------------------------------------------------------------
@@ -65,4 +67,5 @@ class DAB_BoneRecord
 	
 	//-----------------------------------------------------------------------
     string GetParentCompoundName() { return m_sParentCompoundName; }
+	bool GetHasDuplicateName() { return m_bHasDuplicateName; }
 }
