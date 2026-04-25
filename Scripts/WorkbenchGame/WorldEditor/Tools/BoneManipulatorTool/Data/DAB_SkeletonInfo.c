@@ -211,6 +211,20 @@ class DAB_SkeletonInfo
 		array<string> localBoneNames = {};
 		anim.GetBoneNames(localBoneNames);
 		
+		// Reset bones to ensure parent calculation works
+		foreach(string boneName : localBoneNames)
+		{
+			TNodeId id = anim.GetBoneIndex(boneName);
+			if(id == -1) 
+			{
+				PrintFormat("Could not find id for boneName: %1", boneName);
+				continue;
+			}
+
+			anim.SetBone(entity, id, vector.Zero, vector.Zero, 1);
+		}
+		entity.Update();
+		
 		foreach (string boneName : localBoneNames)
 		{
 			if(boneName.IsEmpty()) continue;
