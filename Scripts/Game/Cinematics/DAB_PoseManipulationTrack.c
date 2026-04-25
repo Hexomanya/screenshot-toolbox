@@ -4,8 +4,8 @@
 )]
 class DAB_PoseManipulationTrack : CinematicTrackBase
 {
-	[Attribute("1", desc: "If unchecked, pose modifications will not be applied to the target entity.")]
-	bool m_bApplyModifications;
+	[Attribute("0", desc: "If unchecked, pose modifications will not be applied to the target entity.")]
+	bool m_bDisableModifications;
 
 	private IEntity m_TargetEntity;
 	protected SlotManagerComponent m_SlotManager;
@@ -19,8 +19,11 @@ class DAB_PoseManipulationTrack : CinematicTrackBase
 	//! Applies active pose modifications from the target entity's DAB_PoseModificationComponent.
 	override void OnApply(float time)
 	{
-		if (!m_bApplyModifications) return;
-
+		ResetBonesToAnimation();
+		
+		if (m_bDisableModifications) 
+			return;
+		 
 		m_mCachedModifications.Clear();
 		if (!m_World) return;
 
@@ -59,6 +62,7 @@ class DAB_PoseManipulationTrack : CinematicTrackBase
 
 		RefreshTargetEntity(m_World);
 		ResetBonesToAnimation(); // If we add/remove tracks this object will reinit, but the bones won't. So on the next apply we would cache the modified rotation
+		OnApply(0); // Because if otherwise only reset the bones when some other track changes.
 	}
 
 	// ── Public ────────────────────────────────────────────────────────────
@@ -115,50 +119,52 @@ class DAB_PoseManipulationTrack : CinematicTrackBase
 	protected void ApplyBoneModification(DAB_BoneModification boneModification)
 	{
 		IEntity slotEntity;
-		if(!FindSlotEntity(boneModification, slotEntity))
+		if (!FindSlotEntity(boneModification, slotEntity))
 		{
 			PrintFormat("Could find slotEntity for bone: %1", boneModification.m_sBoneName, LogLevel.ERROR);
 			return;
 		}
-		
+	
 		Animation anim;
 		TNodeId boneId = DAB_BoneHelper.GetBoneIndex(slotEntity, boneModification.m_sBoneName, anim);
-		if(boneId == -1)
+		if (boneId == -1)
 		{
 			PrintFormat("Could not find boneid for bone with name: %1", boneModification.m_sBoneName);
 			return;
 		}
-
+	
+		anim.SetBone(slotEntity, boneId, vector.Zero, vector.Zero, 1.0);
+		slotEntity.Update();
+	
 		vector originalRotation;
-		if (!m_mBaseRotationCache.Find(boneModification.m_sBoneName, originalRotation))
-		{
-			if (!DAB_BoneHelper.TryGetBoneLocalRotation(slotEntity, boneId, originalRotation)) return;
-			m_mBaseRotationCache.Insert(boneModification.m_sBoneName, originalRotation);
-		}
-
+		if (!DAB_BoneHelper.TryGetBoneLocalRotation(slotEntity, boneId, originalRotation))
+			return;
+	
 		vector rotRad = boneModification.m_vRotationOffset * Math.DEG2RAD;
 		vector rotRadCorrected = Vector(rotRad[1], rotRad[0], rotRad[2]);
-
+	
 		vector entityWorld[4];
 		slotEntity.GetWorldTransform(entityWorld);
-
+	
 		vector entityRot3[3];
 		entityRot3[0] = entityWorld[0];
 		entityRot3[1] = entityWorld[1];
 		entityRot3[2] = entityWorld[2];
-
+	
 		vector boneOrigLocal3[3];
 		Math3D.AnglesToMatrix(Vector(originalRotation[1], originalRotation[0], originalRotation[2]), boneOrigLocal3);
-
+	
 		vector boneOrigWorldRot[3];
 		Math3D.MatrixMultiply3(entityRot3, boneOrigLocal3, boneOrigWorldRot);
-
+	
 		vector worldOff = boneModification.m_vPositionOffset;
 		vector localOff;
 		localOff[0] = vector.Dot(worldOff, boneOrigWorldRot[0]);
 		localOff[1] = vector.Dot(worldOff, boneOrigWorldRot[1]);
 		localOff[2] = vector.Dot(worldOff, boneOrigWorldRot[2]);
-		
+	
+		if (boneModification.m_sBoneName == "LeftForeArm") PrintFormat("Track localOff: %1", localOff);
+	
 		anim.SetBone(slotEntity, boneId, rotRadCorrected, localOff, boneModification.m_fScale);
 		slotEntity.Update();
 	}
@@ -167,7 +173,11 @@ class DAB_PoseManipulationTrack : CinematicTrackBase
 	protected void ApplyModificationFromResource(ResourceName modificationName)
 	{
 		DAB_PoseModification poseModification = GetModificationFromFile(modificationName);
-		if (!poseModification || poseModification.m_aBoneModifications.IsEmpty()) return;
+		if (!poseModification || poseModification.m_aBoneModifications.IsEmpty()) 
+		{
+			PrintFormat("Could not retrieve pose modification for name: %1", modificationName, LogLevel.ERROR);
+			return;
+		}
 
 		ApplyPoseModification(poseModification);
 	}
