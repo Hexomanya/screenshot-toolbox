@@ -92,7 +92,7 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 	override void OnActivate()
 	{
 		if(!m_EditorController) m_EditorController = DAB_EditorController(this, m_API);
-		RefreshTargetEntity();
+		RefetchAndRebuildTargetEntity(true);
 		m_EditorController.OnActivate(m_API);
 	}
 
@@ -128,7 +128,7 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 	//-----------------------------------------------------------------------
 	protected override void OnEnterEvent()
 	{
-		RefetchAndRebuildTargetEntity(true, true); // If settings are changed in the component we loose the m_TargetEntity referenve
+		RefetchAndRebuildTargetEntity(true); // If settings are changed in the component we loose the m_TargetEntity referenve
 		
 		if(!m_EditorController) return;
 		m_EditorController.OnEnterEvent();
@@ -171,15 +171,17 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 	    m_TargetComponent = null;
 	}
 	
-	void RefetchAndRebuildTargetEntity(bool forceSkeletonRefresh = false, bool notifyEditorController = true)
+	// TODO: Does the skeleton cache still gives us any benefit?
+	void RefetchAndRebuildTargetEntity(bool notifyEditorController = true)
 	{
-		//TODO: It might be worth checking if we actually need to refetch or if we are good
-		Print("Refetching Enity to fix lost references");
-		
 		m_TargetEntitySource = m_API.GetSelectedEntity(0);
-		IEntity newEntity = m_API.SourceToEntity(m_TargetEntitySource);
-		if(newEntity && forceSkeletonRefresh && notifyEditorController) m_EditorController.ForceSkeletonRefresh(newEntity);
+		bool didLooseReference = m_EditorController.DidLooseReference(m_TargetEntitySource, m_TargetEntity);
+		if(!didLooseReference) return;
 		
+		Print("Refetching Enity to fix lost references");
+		IEntity newEntity = m_API.SourceToEntity(m_TargetEntitySource);
+		
+		if(newEntity && notifyEditorController) m_EditorController.ForceSkeletonRefresh(newEntity);
 		if(newEntity == m_TargetEntity) return;
 		
 		m_TargetEntity = newEntity;
@@ -189,11 +191,11 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 	
 	// TODO: Use dedicated functions to clean this mess up?
 	// We need forceSkeletonRefresh and notifyEditorController because of when we create a config, we loose references to the entities, because they reinit.
-	void RefreshTargetEntity(bool forceSkeletonRefresh = false, bool notifyEditorController = true)
+	void RefreshTargetEntity(bool notifyEditorController = true)
 	{
 		m_TargetEntitySource = m_API.GetSelectedEntity(0);
 		IEntity newEntity = m_API.SourceToEntity(m_TargetEntitySource);
-		if(newEntity && forceSkeletonRefresh && notifyEditorController) m_EditorController.ForceSkeletonRefresh(newEntity);
+		if(newEntity && notifyEditorController) m_EditorController.ForceSkeletonRefresh(newEntity);
 		
 		if(newEntity == m_TargetEntity) return;
 		
@@ -201,6 +203,7 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 		RefreshTargetComponent();
 		if(notifyEditorController) m_EditorController.OnTargetEntityChanged(m_TargetEntity);
 	}
+	
 	
 	void ReselectTargetEntity(bool notifyEditorController = true)
 	{
@@ -211,7 +214,7 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 		}
 		
 		m_API.SetEntitySelection(m_TargetEntitySource);
-		RefetchAndRebuildTargetEntity(true, notifyEditorController);
+		RefetchAndRebuildTargetEntity(notifyEditorController);
 	}
 	
 	// ── Public Getters ────────────────────────────────────────────────────

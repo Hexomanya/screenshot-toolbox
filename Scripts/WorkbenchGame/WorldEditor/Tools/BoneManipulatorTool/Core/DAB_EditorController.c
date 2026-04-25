@@ -218,21 +218,21 @@ class DAB_EditorController
 		
 		if (!changedEntity)
 		{
-			Print("DAB_BoneManipulatorTool.RefreshTargetEntity: no entity selected.", LogLevel.NORMAL);
+			Print("DAB_EditorController.OnTargetEntityChanged: no entity selected.", LogLevel.NORMAL);
 			return;
 		}
 
 		Animation anim = changedEntity.GetAnimation();
 		if (!anim)
 		{
-			Print("DAB_BoneManipulatorTool.RefreshTargetEntity: entity has no Animation component.", LogLevel.ERROR);
+			Print("DAB_EditorController.OnTargetEntityChanged: entity has no Animation component.", LogLevel.ERROR);
 			return;
 		}
 
 		string skeletonKey = DAB_SkeletonInfo.ComputeSkeletonKey(changedEntity);
 		if (skeletonKey.IsEmpty())
 		{
-			Print("DAB_BoneManipulatorTool.RefreshTargetEntity: could not compute skeleton key.", LogLevel.ERROR);
+			Print("DAB_EditorController.OnTargetEntityChanged: could not compute skeleton key.", LogLevel.ERROR);
 			return;
 		}
 
@@ -245,6 +245,26 @@ class DAB_EditorController
 		m_sCurrentSkeleton = skeletonKey;
 		CheckValidSetup();
 		LoadAndApplyWorkingConfig(true);
+	}
+	
+	bool DidLooseReference(IEntitySource mainSource, IEntity currentMainReference)
+	{
+		if(!mainSource) return false; //There was nothing to loose
+		if(!currentMainReference) return true;
+		
+		DAB_SkeletonInfo currentInfo = GetCurrentSkeletonInfo();
+		if(!currentInfo)
+		{
+			Print("No skeleton info found", LogLevel.WARNING);
+			return false;
+		}
+		
+		foreach(string key, ref DAB_BoneRecord record : currentInfo.GetBoneRecords())
+		{
+			if(!record.GetSlotEntity()) return true;
+		}
+		
+		return false;
 	}
 	
 	void ForceSkeletonRefresh(IEntity entity)
@@ -525,7 +545,7 @@ class DAB_EditorController
 	            BaseContainer entry = modificationsArr.Get(i);
 	            DAB_BoneModification mod = new DAB_BoneModification();
 	            entry.Get("m_sBoneName", mod.m_sBoneName);
-				entry.Get("m_aSlotNames", mod.m_sBoneName);
+				entry.Get("m_aSlotNames", mod.m_aSlotNames);
 	            entry.Get("m_vRotationOffset", mod.m_vRotationOffset);
 	            entry.Get("m_vPositionOffset", mod.m_vPositionOffset);
 	            entry.Get("m_fScale", mod.m_fScale);
@@ -544,6 +564,11 @@ class DAB_EditorController
 	        if(!transform) continue;
 	        
 			string simpleBoneName = skeletonInfo.GetSimpleBoneName(compoundBoneName);
+			if(simpleBoneName.IsEmpty())
+			{
+				PrintFormat("simpleBoneName of compound name %1 is empty!", compoundBoneName, LogLevel.WARNING);
+				continue;
+			}
 			
 	        DAB_BoneModification mod = modificationMap.Get(simpleBoneName);
 	        if(!mod)
@@ -552,7 +577,7 @@ class DAB_EditorController
 	            mod.m_sBoneName = simpleBoneName;
 				mod.m_aSlotNames = skeletonInfo.GetSlotNames(compoundBoneName);
 	            poseInstance.m_aBoneModifications.Insert(mod);
-	        }
+	        } else PrintFormat("Already had bone '%1', no need to create it newly!", simpleBoneName);
 			
 	        mod.m_vRotationOffset = transform.m_vRotationOffset;
 	        mod.m_vPositionOffset = transform.m_vPositionOffset;
@@ -586,6 +611,7 @@ class DAB_EditorController
 		}
 	
 		ResourceName currentConfig = poseComponent.GetWorkingModificationConfig();
+		if(currentConfig.IsEmpty()) return;
 	
 		if (!forceApply && currentConfig == m_sLastLoadedConfig)
 			return;
