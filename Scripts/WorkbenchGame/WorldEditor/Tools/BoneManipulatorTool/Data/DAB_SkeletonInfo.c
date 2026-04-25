@@ -32,17 +32,19 @@ class DAB_SkeletonInfo
     }
  
     //-----------------------------------------------------------------------
-    //! Returns true if \p ancestorName is a parent (or parent-of-parent) of \p childName.
-    bool IsAncestorOf(string ancestorName, string childName)
+    //! Returns true if \p ancestorSimpleName is a parent (or parent-of-parent) of \p childCompoundName. Only works if ancestorSimpleName is not in slot!
+    bool IsAncestorOf(string childCompoundName, string ancestorSimpleName)
     {
-        string parent;
-        string current = childName;
+		string ancestorCompoundName = DAB_SkeletonInfo.GetCompoundName(ancestorSimpleName, {});
+		
+        string parentCompoundName;
+        string current = childCompoundName;
+		
+        while (m_mBoneParents.Find(current, parentCompoundName))
+        {			
+            if (parentCompoundName == ancestorCompoundName) return true;
  
-        while (m_mBoneParents.Find(current, parent))
-        {
-            if (parent == ancestorName) return true;
- 
-            current = parent;
+            current = parentCompoundName;
             if (current.IsEmpty()) break;
         }
  

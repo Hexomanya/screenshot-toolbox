@@ -419,10 +419,11 @@ class DAB_BoneOverlayRenderer
 	    string lowercaseBoneName = simpleBoneName;
 	    lowercaseBoneName.ToLower();
 	    
+		
 	    if (displaySettings.GetHideIKTargetBones() && lowercaseBoneName.Contains("_ik")) return false;
 	    if (displaySettings.GetHideVolumeBones() && (lowercaseBoneName.EndsWith("prop") || lowercaseBoneName.EndsWith("volume"))) return false;
 	    if (displaySettings.GetHideCameraBone() && lowercaseBoneName == "camera") return false;
-	    if (displaySettings.GetHideFaceBones() && skeletonInfo.IsAncestorOf(simpleBoneName, "Head")) return false;
+	    if (displaySettings.GetHideFaceBones() && skeletonInfo.IsAncestorOf(compoundBoneName, "Head")) return false;
 	    if (displaySettings.GetHideDuplicateNamedSlotBones() && skeletonInfo.GetHasDuplicateName(compoundBoneName)) return false;
 
 	    if (!displaySettings.GetFilterBoneName().IsEmpty())
