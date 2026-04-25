@@ -59,7 +59,7 @@ class DAB_BoneRecord
     //-----------------------------------------------------------------------
     IEntity GetSlotEntity()
     {
-        if (!m_SlotEntity) Print("DAB_BoneRecord.GetSlotEntity: Returning null entity!", LogLevel.ERROR);
+        if (!m_SlotEntity) Print("DAB_BoneRecord.GetSlotEntity: Returning null entity!", LogLevel.WARNING);
         return m_SlotEntity;
     }
 	

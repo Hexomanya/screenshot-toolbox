@@ -20,7 +20,7 @@ class DAB_ToolButtonInteractions
 		api.CreateComponent(parentTool.GetCurrentTargetEntitySource(), "DAB_PoseModificationComponent");
 		api.EndEntityAction();
 
-		parentTool.RefreshTargetEntity();
+		parentTool.RefetchAndRebuildTargetEntity();
 	}
 
 	//-----------------------------------------------------------------------
@@ -257,7 +257,7 @@ class DAB_ToolButtonInteractions
 		api.EndEntityAction();
 		api.EndEditSequence(entitySource);
 
-		parentTool.RefreshTargetEntity();
+		parentTool.RefetchAndRebuildTargetEntity();
 		parentTool.UpdatePropertyPanel();
 
 		return true;
