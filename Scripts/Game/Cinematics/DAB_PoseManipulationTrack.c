@@ -162,9 +162,7 @@ class DAB_PoseManipulationTrack : CinematicTrackBase
 		localOff[0] = vector.Dot(worldOff, boneOrigWorldRot[0]);
 		localOff[1] = vector.Dot(worldOff, boneOrigWorldRot[1]);
 		localOff[2] = vector.Dot(worldOff, boneOrigWorldRot[2]);
-	
-		if (boneModification.m_sBoneName == "LeftForeArm") PrintFormat("Track localOff: %1", localOff);
-	
+
 		anim.SetBone(slotEntity, boneId, rotRadCorrected, localOff, boneModification.m_fScale);
 		slotEntity.Update();
 	}

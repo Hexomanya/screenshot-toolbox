@@ -35,7 +35,7 @@ class DAB_SkeletonInfo
     //! Returns true if \p ancestorSimpleName is a parent (or parent-of-parent) of \p childCompoundName. Only works if ancestorSimpleName is not in slot!
     bool IsAncestorOf(string childCompoundName, string ancestorSimpleName)
     {
-		string ancestorCompoundName = DAB_SkeletonInfo.GetCompoundName(ancestorSimpleName, {});
+		string ancestorCompoundName = DAB_BoneHelper.GetCompoundName(ancestorSimpleName, {});
 		
         string parentCompoundName;
         string current = childCompoundName;
@@ -229,7 +229,7 @@ class DAB_SkeletonInfo
 		{
 			if(boneName.IsEmpty()) continue;
 			
-			string compoundName = DAB_SkeletonInfo.GetCompoundName(boneName, slotNames); //Should never happen since boneName can not be empty, but to better stay safe for future modifications
+			string compoundName = DAB_BoneHelper.GetCompoundName(boneName, slotNames); //Should never happen since boneName can not be empty, but to better stay safe for future modifications
 			if(compoundName.IsEmpty())
 			{
 				Print("Something went wrong when generating compoundName!", LogLevel.ERROR);
@@ -237,7 +237,7 @@ class DAB_SkeletonInfo
 			}
 			
 			string parentSimpleName = DAB_BoneHelper.FindParentBoneName(anim, boneName, localBoneNames);
-			string parentCompoundName = DAB_SkeletonInfo.GetCompoundName(parentSimpleName, slotNames);
+			string parentCompoundName = DAB_BoneHelper.GetCompoundName(parentSimpleName, slotNames);
 			bool isDuplicateName = DAB_SkeletonInfo.DuplicateNameExistAlready(boneName, outBoneRecords);
 				
 			DAB_BoneRecord record = new DAB_BoneRecord(boneName, slotNames, entity, parentCompoundName, isDuplicateName);
@@ -275,24 +275,7 @@ class DAB_SkeletonInfo
 		return false;
 	}
 	
-	//-----------------------------------------------------------------------
-    static string GetCompoundName(string simpleBoneName, array<string> slotNames)
-    {
-		if(simpleBoneName.IsEmpty()) return "";
-		
-		// This adds to the array in the main function too, since its reference based. But in this case ok to not copy.
-		if(slotNames.IsEmpty()) slotNames.Insert(DAB_Constants.SLOT_ROOT_ID); //TODO: Could generated null exception
-		
-		string combinedSlotString;
-		for(int i = 0; i < slotNames.Count(); i++)
-		{
-			combinedSlotString += slotNames[i];
-			if(i != (slotNames.Count() - 1)) combinedSlotString += DAB_Constants.SLOT_SLOT_DELIMITER;
-		}
-		
-        return string.Format("%1%2%3", combinedSlotString, DAB_Constants.SLOT_BONE_DELIMITER, simpleBoneName);
-    }
-	
+
 	//-----------------------------------------------------------------------
 	protected static map<string, string> ExtractBoneRecords(map<string, ref DAB_BoneRecord> records)
 	{

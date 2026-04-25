@@ -142,6 +142,24 @@ class DAB_BoneHelper
 	    outAnim = anim;
 	    return anim.GetBoneIndex(simpleBoneName);
 	}
+	
+	//-----------------------------------------------------------------------
+    static string GetCompoundName(string simpleBoneName, array<string> slotNames)
+    {
+		if(simpleBoneName.IsEmpty()) return "";
+		
+		// This adds to the array in the main function too, since its reference based. But in this case ok to not copy.
+		if(slotNames.IsEmpty()) slotNames.Insert(DAB_Constants.SLOT_ROOT_ID); //TODO: Could generated null exception
+		
+		string combinedSlotString;
+		for(int i = 0; i < slotNames.Count(); i++)
+		{
+			combinedSlotString += slotNames[i];
+			if(i != (slotNames.Count() - 1)) combinedSlotString += DAB_Constants.SLOT_SLOT_DELIMITER;
+		}
+		
+        return string.Format("%1%2%3", combinedSlotString, DAB_Constants.SLOT_BONE_DELIMITER, simpleBoneName);
+    }
 
 	//-----------------------------------------------------------------------
 	//Parent bones are always on the same entity as the entity, so we can just use normal simpleBoneNames

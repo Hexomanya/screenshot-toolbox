@@ -216,6 +216,7 @@ class DAB_EditorController
 	{
 		m_sCurrentSkeleton = "";
 		
+		
 		if (!changedEntity)
 		{
 			Print("DAB_EditorController.OnTargetEntityChanged: no entity selected.", LogLevel.NORMAL);
@@ -649,7 +650,7 @@ class DAB_EditorController
 			entry.Get("m_vPositionOffset", posOffset);
 			entry.Get("m_fScale", scale);
 
-			string compoundBoneName = DAB_SkeletonInfo.GetCompoundName(simpleBoneName, slotNames);
+			string compoundBoneName = DAB_BoneHelper.GetCompoundName(simpleBoneName, slotNames);
 			
 			// Create transform to capture the default base/original orientation
 			DAB_BoneTransform newTransform = CreateNewTransform(compoundBoneName);
