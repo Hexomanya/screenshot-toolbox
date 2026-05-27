@@ -9,6 +9,13 @@
 class DAB_BoneManipulatorTool : WorldEditorTool
 {
 	// ── Tool attributes ────────────────────────────────────────────────────
+	// ── Keybinds ──
+	[Attribute("Custom keybinds configuration for the Bone Manipulator Tool. Keys already used somewhere else in the workbench won't work as override! Leave empty to use built-in defaults (ESC, J, U, I, O).", category: "Keybinds")]
+	protected ref DAB_BoneManipulatorKeybinds m_KeyBindsOverwrites;
+	
+	[Attribute(defvalue: "0", uiwidget: UIWidgets.CheckBox, desc: "Prints all received KeyCodes in the console.", category: "Keybinds")]
+	protected bool m_bShouldPrintKeyDebug;
+	
 	// ── Display ──
 	[Attribute(defvalue: "1", uiwidget: UIWidgets.CheckBox, desc: "Hide IK target bones from the overlay", category: "Display")]
 	protected bool m_bHideIKTargetBones;
@@ -27,6 +34,9 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 
 	[Attribute(defvalue: "0", uiwidget: UIWidgets.CheckBox, desc: "Hide lines connecting bones to their parents", category: "Display")]
 	protected bool m_bHideBoneConnections;
+	
+	[Attribute(defvalue: "1", uiwidget: UIWidgets.CheckBox, desc: "Hide duplicate named slot bones from the overlay", category: "Display")]
+	protected bool m_bHideDuplicateNamedSlotBones;
 	
 	[Attribute(defvalue: "", desc: "Show only bones that include this string. Does nothing when empty", category: "Display - Filter")]
 	protected string m_sFilterBoneName;
@@ -85,7 +95,7 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 	override void OnActivate()
 	{
 		if(!m_EditorController) m_EditorController = DAB_EditorController(this, m_API);
-		RefreshTargetEntity();
+		RefetchAndRebuildTargetEntity(true);
 		m_EditorController.OnActivate(m_API);
 	}
 
@@ -121,7 +131,7 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 	//-----------------------------------------------------------------------
 	protected override void OnEnterEvent()
 	{
-		RefreshTargetEntity(); // If settings are changed in the component we loose the m_TargetEntity referenve
+		RefetchAndRebuildTargetEntity(true); // If settings are changed in the component we loose the m_TargetEntity referenve
 		
 		if(!m_EditorController) return;
 		m_EditorController.OnEnterEvent();
@@ -164,19 +174,41 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 	    m_TargetComponent = null;
 	}
 	
-	void RefreshTargetEntity()
+	// TODO: Does the skeleton cache still gives us any benefit?
+	void RefetchAndRebuildTargetEntity(bool notifyEditorController = true)
+	{
+		m_TargetEntitySource = m_API.GetSelectedEntity(0);
+		bool didLooseReference = m_EditorController.DidLooseReference(m_TargetEntitySource, m_TargetEntity);
+		if(!didLooseReference) return;
+		
+		Print("Refetching Enity to fix lost references");
+		IEntity newEntity = m_API.SourceToEntity(m_TargetEntitySource);
+		
+		if(newEntity && notifyEditorController) m_EditorController.ForceSkeletonRefresh(newEntity);
+		if(newEntity == m_TargetEntity) return;
+		
+		m_TargetEntity = newEntity;
+		RefreshTargetComponent();
+		if(notifyEditorController) m_EditorController.OnTargetEntityChanged(m_TargetEntity);
+	}
+	
+	// TODO: Use dedicated functions to clean this mess up?
+	// We need forceSkeletonRefresh and notifyEditorController because of when we create a config, we loose references to the entities, because they reinit.
+	void RefreshTargetEntity(bool notifyEditorController = true)
 	{
 		m_TargetEntitySource = m_API.GetSelectedEntity(0);
 		IEntity newEntity = m_API.SourceToEntity(m_TargetEntitySource);
+		if(newEntity && notifyEditorController) m_EditorController.ForceSkeletonRefresh(newEntity);
+		
 		if(newEntity == m_TargetEntity) return;
-
+		
 		m_TargetEntity = newEntity;
 		RefreshTargetComponent();
-		
-		m_EditorController.OnTargetEntityChanged(m_TargetEntity);
+		if(notifyEditorController) m_EditorController.OnTargetEntityChanged(m_TargetEntity);
 	}
 	
-	void ReselectTargetEntity()
+	
+	void ReselectTargetEntity(bool notifyEditorController = true)
 	{
 		if(!m_TargetEntitySource)
 		{
@@ -185,7 +217,7 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 		}
 		
 		m_API.SetEntitySelection(m_TargetEntitySource);
-		RefreshTargetEntity();
+		RefetchAndRebuildTargetEntity(notifyEditorController);
 	}
 	
 	// ── Public Getters ────────────────────────────────────────────────────
@@ -193,7 +225,8 @@ class DAB_BoneManipulatorTool : WorldEditorTool
 	IEntity GetCurrentTargetEntity(){ return m_TargetEntity; }
 	IEntitySource GetCurrentTargetEntitySource(){ return m_TargetEntitySource; } //TODO: Could be removed in theory
 	DAB_PoseModificationComponent GetTargetComponent(){ return m_TargetComponent; }
-	DAB_BoneDisplaySettings GetNewDisplaySettings() { return new DAB_BoneDisplaySettings(m_bHideIKTargetBones, m_bHidePropBones, m_bHideVolumeBones, m_bHideCameraBone, m_bHideFaceBones, m_bHideBoneConnections, m_sFilterBoneName); }
-	//ResourceName GetWorkingConfig() { return m_sWorkingConfig; }
+	DAB_BoneDisplaySettings GetNewDisplaySettings() { return new DAB_BoneDisplaySettings(m_bHideIKTargetBones, m_bHidePropBones, m_bHideVolumeBones, m_bHideCameraBone, m_bHideFaceBones, m_bHideBoneConnections, m_bHideDuplicateNamedSlotBones, m_sFilterBoneName); }
 	bool GetShouldAutoSave(){ return m_bShouldAutoSave; }
+	DAB_BoneManipulatorKeybinds GetKeybindsOverwrites() { return m_KeyBindsOverwrites; }
+	bool GetShouldPrintKeyDebug() { return m_bShouldPrintKeyDebug; }
 }

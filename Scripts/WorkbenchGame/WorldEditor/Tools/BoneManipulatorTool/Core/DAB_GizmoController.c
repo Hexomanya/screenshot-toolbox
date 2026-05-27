@@ -58,19 +58,20 @@ class DAB_GizmoController
 	//-----------------------------------------------------------------------
 	//! Attaches to a bone and starts in Rotation mode.
 	//! Call Clear() first if already attached.
-	void Attach(IEntity entity, DAB_BoneTransform boneToAttach, WorldEditorAPI api, float cameraDistance)
+	void Attach(IEntity entity, DAB_BoneTransform boneToAttach)
 	{
-		if (m_currentTransform)
+		if(!entity || !boneToAttach)
 		{
-			Print("DAB_GizmoController.Attach: previous bone was not cleared first.", LogLevel.WARNING);
-			Clear(api);
+			PrintFormat("DAB_GizmoController.Attach: Arguments for attaching are illegal! entity: %1; boneToAttach: %2", entity, boneToAttach, LogLevel.ERROR);
+			Clear();
+			return;
 		}
 
 		m_AttachedEntity  = entity;
 		m_currentTransform = boneToAttach;
 
 		vector entityWorld[4];
-		entity.GetTransform(entityWorld);
+		entity.GetWorldTransform(entityWorld);
 		m_mEntityRotation[0] = entityWorld[0];
 		m_mEntityRotation[1] = entityWorld[1];
 		m_mEntityRotation[2] = entityWorld[2];
@@ -101,7 +102,7 @@ class DAB_GizmoController
 
 	//-----------------------------------------------------------------------
 	//! Detaches from the current bone and destroys all gizmos.
-	void Clear(WorldEditorAPI api)
+	void Clear()
 	{
 		m_AttachedEntity = null;
 		m_currentTransform = null;
@@ -150,7 +151,7 @@ class DAB_GizmoController
 
 	//-----------------------------------------------------------------------
 	//! Updates gizmo size when the camera distance changes.
-	void OnCameraDistanceChange(float newCameraDistance, WorldEditorAPI api)
+	void OnCameraDistanceChange(WorldEditorAPI api)
 	{
 		if (!m_currentTransform) return;
 	
@@ -214,13 +215,14 @@ class DAB_GizmoController
 	//! Uses the actual current bone world position if available.
 	protected vector GetCurrentGizmoPosition()
 	{
-		if (m_AttachedEntity && m_currentTransform)
-		{
-			vector liveBonePos;
-			if (DAB_BoneHelper.TryGetBonePosition(m_AttachedEntity, m_currentTransform.GetBoneName(), liveBonePos))
-				return liveBonePos;
-		}
-
+		if (!m_AttachedEntity || !m_currentTransform) return m_currentTransform.GetAdjustedPosition();
+		
+		vector liveBonePos;
+		string simpleBoneName = DAB_SkeletonInfo.ExtractBoneNameFromCompundName(m_currentTransform.GetCompoundBoneName()); //TODO: Better to just build name or extract?
+		
+		if (DAB_BoneHelper.TryGetBonePosition(m_AttachedEntity, simpleBoneName, liveBonePos))
+			return liveBonePos;
+		
 		return m_currentTransform.GetAdjustedPosition();
 	}
 
@@ -230,12 +232,18 @@ class DAB_GizmoController
 	// always point along the correct local axes.
 	protected void ComputeCombinedMatrix(out vector combined[3])
 	{
-		vector boneOrigMat[3];
-		vector orig = m_currentTransform.GetOriginalRotation();
-		Math3D.AnglesToMatrix(Vector(orig[1], orig[0], orig[2]), boneOrigMat);
-
-		Math3D.MatrixMultiply3(m_mEntityRotation, boneOrigMat, combined);
-		Math3D.MatrixMultiply3(combined, m_mAccumRotation, combined);
+	    string boneName = DAB_SkeletonInfo.ExtractBoneNameFromCompundName(m_currentTransform.GetCompoundBoneName());
+	
+	    vector worldMat[4];
+	    if (!DAB_BoneHelper.TryGetBoneWorldMatrix(m_AttachedEntity, boneName, worldMat))
+	    {
+	        PrintFormat("DAB_GizmoController.ComputeCombinedMatrix: Failed to read live bone matrix for '%1'. Gizmo orientation may be wrong.", boneName, LogLevel.ERROR);
+	        return;
+	    }
+	
+	    combined[0] = worldMat[0];
+	    combined[1] = worldMat[1];
+	    combined[2] = worldMat[2];
 	}
 
 	//-----------------------------------------------------------------------
@@ -321,22 +329,18 @@ class DAB_GizmoController
 	protected void OnGizmoMove(DAB_Axis axis, float delta)
 	{
 		if (!m_currentTransform) return;
-
-		// Resolve the world-space direction for this axis (camera sign already baked in)
-		vector combined[3];
-		ComputeCombinedMatrix(combined);
-
-		vector worldAxisDir;
+	
+		vector localDelta = vector.Zero;
 		switch (axis)
 		{
-			case DAB_Axis.X_Axis: worldAxisDir = combined[0] * m_PositionGizmo.GetXSign(); break;
-			case DAB_Axis.Y_Axis: worldAxisDir = combined[1] * m_PositionGizmo.GetYSign(); break;
-			case DAB_Axis.Z_Axis: worldAxisDir = combined[2] * m_PositionGizmo.GetZSign(); break;
+			case DAB_Axis.X_Axis: localDelta[0] = delta * m_PositionGizmo.GetXSign(); break;
+			case DAB_Axis.Y_Axis: localDelta[1] = delta * m_PositionGizmo.GetYSign(); break;
+			case DAB_Axis.Z_Axis: localDelta[2] = delta * m_PositionGizmo.GetZSign(); break;
 			default: return;
 		}
-
-		m_currentTransform.m_vPositionOffset = m_currentTransform.m_vPositionOffset + worldAxisDir * delta;
-
+	
+		m_currentTransform.m_vPositionOffset = m_currentTransform.m_vPositionOffset + localDelta;
+	
 		m_OnTransformChanged.Invoke(m_currentTransform);
 		UpdatePositionGizmo();
 	}

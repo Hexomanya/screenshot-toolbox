@@ -1,11 +1,11 @@
 [BaseContainerProps()]
 class DAB_BoneModification
 {
-    [Attribute(desc: "Name of the bone to override")]
+    [Attribute(desc: "Simple name of the bone to override")]
     string m_sBoneName;
 
-    [Attribute(desc: "Slot name on the entity")]
-    string m_sSlotName;
+    [Attribute(desc: "Slot names under where to find the bone entity")]
+    ref array<string> m_aSlotNames;
 
     [Attribute("0 0 0", desc: "Rotation delta in degrees (pitch, yaw, roll)")]
     vector m_vRotationOffset;

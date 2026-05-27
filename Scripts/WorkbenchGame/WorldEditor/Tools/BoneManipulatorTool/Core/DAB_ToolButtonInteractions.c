@@ -20,7 +20,7 @@ class DAB_ToolButtonInteractions
 		api.CreateComponent(parentTool.GetCurrentTargetEntitySource(), "DAB_PoseModificationComponent");
 		api.EndEntityAction();
 
-		parentTool.RefreshTargetEntity();
+		parentTool.RefetchAndRebuildTargetEntity();
 	}
 
 	//-----------------------------------------------------------------------
@@ -40,9 +40,10 @@ class DAB_ToolButtonInteractions
 		DAB_PoseModification emptyMod = WriteAndRegisterConfig(absolutePath);
 		if (!emptyMod)
 			return;
-
+		
 		string formattedResourceName = Workbench.GetResourceName(absolutePath);
 		DAB_PoseModificationComponent workingComponent = SafeSetWorkingConfig(parentTool, api, formattedResourceName);
+
 		if (workingComponent)
 			workingComponent.SetWorkingModificationData(emptyMod, api);
 		else
@@ -50,6 +51,8 @@ class DAB_ToolButtonInteractions
 
 		Workbench.OpenModule(WorldEditor);
 		Print("CreateNewConfig: created new config at " + absolutePath, LogLevel.NORMAL);
+		
+    	parentTool.ReselectTargetEntity(); 
 	}
 
 	//-----------------------------------------------------------------------
@@ -254,7 +257,7 @@ class DAB_ToolButtonInteractions
 		api.EndEntityAction();
 		api.EndEditSequence(entitySource);
 
-		parentTool.RefreshTargetEntity();
+		parentTool.RefetchAndRebuildTargetEntity();
 		parentTool.UpdatePropertyPanel();
 
 		return true;
@@ -332,7 +335,10 @@ class DAB_ToolButtonInteractions
 		rm.RegisterResourceFile(absolutePath, false);
 		if (!rm.WaitForFile(absolutePath, 2000))
 			Print("WriteAndRegisterConfig: file created but not ready in time. This may cause issues.", LogLevel.WARNING);
-
+		else 
+			Print("Successfully registered new file!");
+		
+		
 		return emptyMod;
 	}
 
@@ -397,7 +403,7 @@ class DAB_ToolButtonInteractions
 		api.EndEntityAction();
 		api.EndEditSequence(entitySource);
 
-		parentTool.RefreshTargetEntity();
+		parentTool.ReselectTargetEntity(false); 
 		parentTool.UpdatePropertyPanel();
 
 		return parentTool.GetTargetComponent();

@@ -15,10 +15,7 @@ class DAB_EditorController
 	protected ref map<string, ref DAB_BoneTransform> m_ModifiedBones = new map<string, ref DAB_BoneTransform>();
 	protected ref set<string> m_DirtyBones = new set<string>();
 
-	protected float m_fCameraTargetDistance = 0;
 	protected ref DAB_BoneDisplaySettings m_LastBoneDisplaySettings;
-	
-	protected SlotManagerComponent m_SlotManager;
 	
 	protected ResourceName m_sLastLoadedConfig = "";
 	
@@ -49,7 +46,7 @@ class DAB_EditorController
 	{
 		// TODO: Find better way to handle api
 		m_API = api; // Needed so we do not crash after reloading scripts. 
-		
+	
 		CheckValidSetup();
 		RedrawOverlay();
 	}
@@ -57,17 +54,16 @@ class DAB_EditorController
 	//-----------------------------------------------------------------------
 	void OnDeActivate()
 	{
-		for (MapIterator it = m_ModifiedBones.Begin(); it != m_ModifiedBones.End(); it = m_ModifiedBones.Next(it))
+		foreach(string compoundBoneName, DAB_BoneTransform transform : m_ModifiedBones)
 		{
-			string boneName = m_ModifiedBones.GetIteratorKey(it);
-			ResetBone(boneName);
+			ResetBone(compoundBoneName);
 		}
 		
 		m_ModifiedBones.Clear();
 		m_Renderer.Clear();
 		m_DirtyBones.Clear();
 		m_sSelectedBoneName = "";
-		m_GizmoController.Clear(m_API);
+		if(m_GizmoController) m_GizmoController.Clear(); // In rare cases this could be null already (e.g. reloading WB Scripts after error)
 		m_bEditAllowed = false;
 		m_InvalidSetupText = null;
 		
@@ -109,7 +105,6 @@ class DAB_EditorController
 	void OnMouseMoveEvent(float x, float y)
 	{
 		if(! m_bEditAllowed) return;
-		RefreshCameraTargetDistance();
 		m_GizmoController.OnMouseMove(x, y, m_API);
 		CheckBoneHover(x, y);
 	}
@@ -129,7 +124,7 @@ class DAB_EditorController
 			return;
 		}
 
-		string hitBoneName = m_Renderer.PickBoneAtScreenPos(x, y, m_ParentTool.GetCurrentTargetEntity(), m_API);
+		string hitBoneName = m_Renderer.PickBoneAtScreenPos(x, y, m_API);
 		if (!hitBoneName.IsEmpty())
 			SelectBone(hitBoneName);
 	}
@@ -142,46 +137,77 @@ class DAB_EditorController
 		
 		if(m_ParentTool.GetShouldAutoSave()) SaveDirtyBones();
 		
-		if (buttons & WETMouseButtonFlag.RIGHT)
-			RefreshCameraTargetDistance();
+		bool isRightRelease = buttons & WETMouseButtonFlag.RIGHT;
+		if (!isRightRelease) return;
+			
+		// TODO: Entangle this mess
+		if (m_sSelectedBoneName.IsEmpty())
+		{
+			m_Renderer.RefreshSphereSizes(m_sHoveredBoneName, m_API);
+		} else {
+			m_Renderer.DrawSelectedBone(GetCurrentSkeletonInfo(), m_sSelectedBoneName, m_API);
+		}
+
+		m_GizmoController.OnCameraDistanceChange(m_API);
 	}
 	
-	//-----------------------------------------------------------------------
+		//-----------------------------------------------------------------------
 	//! Key bindings: U = Rotation, I = Position, O = Scale, J = Reset bone, Escape = Deselect.
 	void OnKeyPressEvent(KeyCode key, bool isAutoRepeat)
 	{
+		if (m_ParentTool && m_ParentTool.GetShouldPrintKeyDebug())
+	    {
+	        string keyName = typename.EnumToString(KeyCode, key);
+	        PrintFormat("Pressed KeyCode was %1 (%2).", keyName, key);
+	    }
+		
 		if (isAutoRepeat) return;
 		if(! m_bEditAllowed) return;
 
+		KeyCode deselectKey = KeyCode.KC_ESCAPE;
+		KeyCode rotationKey = KeyCode.KC_U;
+		KeyCode moveKey     = KeyCode.KC_I;
+		KeyCode scaleKey    = KeyCode.KC_O;
+		KeyCode resetKey    = KeyCode.KC_J;
+
+		DAB_BoneManipulatorKeybinds keybinds = m_ParentTool.GetKeybindsOverwrites();
+		
+		if (keybinds)
+		{
+			deselectKey = keybinds.GetBoneDeselect();
+			rotationKey = keybinds.GetRotationTool();
+			moveKey     = keybinds.GetMoveTool();
+			scaleKey    = keybinds.GetScaleTool();
+			resetKey    = keybinds.GetReset();
+		}
+
 		switch (key)
 		{
-			case KeyCode.KC_ESCAPE:
+			case deselectKey:
 				DeselectBone();
 				RedrawOverlay();
 				break;
 
-			case KeyCode.KC_U:
+			case rotationKey:
 				if (!m_sSelectedBoneName.IsEmpty())
 					m_GizmoController.SwitchMode(DAB_GizmoMode.Rotation, m_API);
 				break;
 
-			case KeyCode.KC_I:
+			case moveKey:
 				if (!m_sSelectedBoneName.IsEmpty())
 					m_GizmoController.SwitchMode(DAB_GizmoMode.Position, m_API);
 				break;
 
-			case KeyCode.KC_O:
+			case scaleKey:
 				if (!m_sSelectedBoneName.IsEmpty())
 					m_GizmoController.SwitchMode(DAB_GizmoMode.Scale, m_API);
 				break;
 
-			case KeyCode.KC_J:
+			case resetKey:
 				if (!m_sSelectedBoneName.IsEmpty())
 					ResetBone(m_sSelectedBoneName);
 				break;
 		}
-
-		RefreshCameraTargetDistance();
 	}
 	
 	// ── Public ────────────────────────────────────────────────────────────
@@ -189,45 +215,74 @@ class DAB_EditorController
 	void OnTargetEntityChanged(IEntity changedEntity)
 	{
 		m_sCurrentSkeleton = "";
-		m_SlotManager = null;
+		
 		
 		if (!changedEntity)
 		{
-			Print("DAB_BoneManipulatorTool.RefreshTargetEntity: no entity selected.", LogLevel.NORMAL);
+			Print("DAB_EditorController.OnTargetEntityChanged: no entity selected.", LogLevel.NORMAL);
 			return;
 		}
 
 		Animation anim = changedEntity.GetAnimation();
 		if (!anim)
 		{
-			Print("DAB_BoneManipulatorTool.RefreshTargetEntity: entity has no Animation component.", LogLevel.ERROR);
+			Print("DAB_EditorController.OnTargetEntityChanged: entity has no Animation component.", LogLevel.ERROR);
 			return;
 		}
 
 		string skeletonKey = DAB_SkeletonInfo.ComputeSkeletonKey(changedEntity);
 		if (skeletonKey.IsEmpty())
 		{
-			Print("DAB_BoneManipulatorTool.RefreshTargetEntity: could not compute skeleton key.", LogLevel.ERROR);
+			Print("DAB_EditorController.OnTargetEntityChanged: could not compute skeleton key.", LogLevel.ERROR);
 			return;
 		}
 
 		if (!m_CachedSkeletons.Contains(skeletonKey))
 		{
 			Print("Creating new skeleton with key: " + skeletonKey);
-			array<string> boneNames = {};
-			anim.GetBoneNames(boneNames);
-			map<string, string> boneParents = DAB_BoneHelper.ComputeBoneParents(anim, boneNames);
-			map<string, float>  boneParentDistances = DAB_BoneHelper.ComputeBoneParentDistances(changedEntity, boneParents);
-			m_CachedSkeletons.Set(skeletonKey, new DAB_SkeletonInfo(skeletonKey, boneNames, boneParents, boneParentDistances));
+			m_CachedSkeletons.Set(skeletonKey, new DAB_SkeletonInfo(skeletonKey, changedEntity));
 		} 
 		
 		m_sCurrentSkeleton = skeletonKey;
-		m_SlotManager = SlotManagerComponent.Cast(changedEntity.FindComponent(SlotManagerComponent));
 		CheckValidSetup();
-		
-		RefreshCameraTargetDistance();
-		
 		LoadAndApplyWorkingConfig(true);
+	}
+	
+	bool DidLooseReference(IEntitySource mainSource, IEntity currentMainReference)
+	{
+		if(!mainSource) return false; //There was nothing to loose
+		if(!currentMainReference) return true;
+		
+		DAB_SkeletonInfo currentInfo = GetCurrentSkeletonInfo();
+		if(!currentInfo)
+		{
+			Print("No skeleton info found", LogLevel.WARNING);
+			return false;
+		}
+		
+		foreach(string key, ref DAB_BoneRecord record : currentInfo.GetBoneRecords())
+		{
+			if(!record.GetSlotEntity()) return true;
+		}
+		
+		return false;
+	}
+	
+	void ForceSkeletonRefresh(IEntity entity)
+	{
+		string skeletonKey = DAB_SkeletonInfo.ComputeSkeletonKey(entity);
+		
+		if(skeletonKey.IsEmpty())
+		{
+			Print("Computed skeleton key is empty!", LogLevel.ERROR);
+			return;
+		}
+		
+		if(!m_CachedSkeletons.Contains(skeletonKey))
+			PrintFormat("Called ForceSkeletonRefresh on entity that had not yet been registed. SkeletonKey was: %1", skeletonKey, LogLevel.WARNING);
+		
+		m_CachedSkeletons.Set(skeletonKey, new DAB_SkeletonInfo(skeletonKey, entity));
+		PrintFormat("Force refreshed skeleton info with key: %1", skeletonKey, LogLevel.NORMAL);
 	}
 	
 	// ── Public Getters ────────────────────────────────────────────────────
@@ -238,11 +293,11 @@ class DAB_EditorController
 	//-----------------------------------------------------------------------
 	protected void OnBoneTransformChanged(DAB_BoneTransform changedTransform)
 	{
-		string boneName = changedTransform.GetBoneName();
-		m_ModifiedBones.Set(boneName, changedTransform);
-		m_DirtyBones.Insert(boneName);
+		string compoundBoneName = changedTransform.GetCompoundBoneName();
+		m_ModifiedBones.Set(compoundBoneName, changedTransform);
+		m_DirtyBones.Insert(compoundBoneName);
 		
-		RefreshBone(boneName);
+		RefreshBone(compoundBoneName);
 	}
 
 	//-----------------------------------------------------------------------
@@ -251,149 +306,114 @@ class DAB_EditorController
 	// world axes (entity × boneOrig — without accumRotation).
 	// Using the current axes would silently shift the projected localOff on
 	// every rotation call, making the bone orbit its rest location.
-	protected void RefreshBone(string boneName)
+	protected void RefreshBone(string compoundBoneName)
 	{
-		IEntity targetEntity = m_ParentTool.GetCurrentTargetEntity();
-		
-		if (!targetEntity)
-		{
-			Print("DAB_BoneManipulatorTool.RefreshBone: no valid entity selected.", LogLevel.ERROR);
-			return;
-		}
+		//TODO: Check for allowed edit? m_bEditAllowed
 
-		DAB_BoneTransform transform = m_ModifiedBones.Get(boneName);
+		DAB_BoneTransform transform = m_ModifiedBones.Get(compoundBoneName);
 		if (!transform)
 		{
-			Print("DAB_BoneManipulatorTool.RefreshBone: no stored transform for '" + boneName + "'.", LogLevel.ERROR);
+			Print("DAB_BoneManipulatorTool.RefreshBone: no stored transform for '" + compoundBoneName + "'.", LogLevel.ERROR);
 			return;
 		}
 		
-		Animation anim = GetSlotDependentAnim(boneName);
-		if (!anim)
-		{
-			PrintFormat("DAB_BoneManipulatorTool.RefreshBone: no anim found for bone '%1' on entity %2", boneName, targetEntity.GetName(), LogLevel.ERROR);
-			return;
-		}
+		DAB_SkeletonInfo skeletonInfo = GetCurrentSkeletonInfo();
+		if(!skeletonInfo) return;
+		
+		IEntity slotEntity = skeletonInfo.GetSlotEntity(compoundBoneName);
+		if(!slotEntity) return;
+		
+		string simpleBoneName = skeletonInfo.GetSimpleBoneName(compoundBoneName);
+		if(simpleBoneName.IsEmpty()) return;
 
-		TNodeId boneId = DAB_BoneHelper.GetBoneId(targetEntity, boneName);
+		Animation anim;
+		TNodeId boneId = DAB_SkeletonInfo.GetBoneIndex(slotEntity, simpleBoneName, anim);
+		if (!anim) return;
+
 		vector rotRad = transform.m_vRotationOffset * Math.DEG2RAD;
 		vector rotRadCorrected = Vector(rotRad[1], rotRad[0], rotRad[2]);
 
-		vector entityWorld[4];
-		targetEntity.GetTransform(entityWorld);
+		vector localOff = transform.m_vPositionOffset;
 
-		vector entityRot3[3];
-		entityRot3[0] = entityWorld[0];
-		entityRot3[1] = entityWorld[1];
-		entityRot3[2] = entityWorld[2];
-
-		vector boneOrigLocal3[3];
-		vector orig = transform.GetOriginalRotation();
-		Math3D.AnglesToMatrix(Vector(orig[1], orig[0], orig[2]), boneOrigLocal3);
-
-		vector boneOrigWorldRot[3];
-		Math3D.MatrixMultiply3(entityRot3, boneOrigLocal3, boneOrigWorldRot);
-
-		vector worldOff = transform.m_vPositionOffset;
-		vector localOff;
-		localOff[0] = vector.Dot(worldOff, boneOrigWorldRot[0]);
-		localOff[1] = vector.Dot(worldOff, boneOrigWorldRot[1]);
-		localOff[2] = vector.Dot(worldOff, boneOrigWorldRot[2]);
-
-		anim.SetBone(targetEntity, boneId, rotRadCorrected, localOff, transform.m_fScale);
-		targetEntity.Update();
-		m_Renderer.DrawSelectedBone(targetEntity, boneName, m_API);
-	}
-
-	//-----------------------------------------------------------------------
-	protected Animation GetSlotDependentAnim(string boneName)
-	{
-		IEntity targetEntity = m_ParentTool.GetCurrentTargetEntity();
-		if (!m_SlotManager) return targetEntity.GetAnimation();
-
-		array<EntitySlotInfo> slotInfos = {};
-		m_SlotManager.GetSlotInfos(slotInfos);
-
-		foreach (EntitySlotInfo slotInfo : slotInfos)
-		{
-			IEntity slotEntity = slotInfo.GetAttachedEntity();
-			if (!slotEntity) continue;
-
-			Animation anim = slotEntity.GetAnimation();
-			if (!anim) continue;
-
-			if (anim.GetBoneIndex(boneName) != -1)
-			{
-				return anim;
-			} else 
-			{
-				PrintFormat("Found -1 boneIndex with boneName '%1' on slot %2.", boneName, slotInfo.GetSourceName());
-			}
-				
-		}
-
-		return targetEntity.GetAnimation();
+		anim.SetBone(slotEntity, boneId, rotRadCorrected, localOff, transform.m_fScale);
+		slotEntity.Update();
+		m_Renderer.DrawSelectedBone(GetCurrentSkeletonInfo(), compoundBoneName, m_API);
 	}
 	
 	//-----------------------------------------------------------------------
-	protected void SelectBone(string boneName)
+	protected void SelectBone(string compoundBoneName)
 	{
-	    m_sSelectedBoneName = boneName;
+	    m_sSelectedBoneName = compoundBoneName;
 	
-	    DAB_BoneTransform transform = m_ModifiedBones.Get(boneName);
+	    DAB_BoneTransform transform = m_ModifiedBones.Get(compoundBoneName);
 	    if (!transform)
-	        transform = CreateNewTransform(boneName); // We do not safe it here. It gets saved once we actually modify it.
-	    
-	    m_GizmoController.Attach(m_ParentTool.GetCurrentTargetEntity(), transform, m_API, m_fCameraTargetDistance);
+	        transform = CreateNewTransform(compoundBoneName); // We do not safe it here. It gets saved once we actually modify it.
+		
+		DAB_SkeletonInfo skeletonInfo = GetCurrentSkeletonInfo();
+		if(!skeletonInfo) return;
+		
+		IEntity slotEntity = skeletonInfo.GetSlotEntity(compoundBoneName);
+		if(!slotEntity) return;
+		    
+	    m_GizmoController.Attach(slotEntity, transform);
 	    RedrawOverlay();
 	}
-
+	
 	//-----------------------------------------------------------------------
-	protected DAB_BoneTransform CreateNewTransform(string boneName)
+	protected DAB_BoneTransform CreateNewTransform(string compoundBoneName)
 	{
-		IEntity targetEntity = m_ParentTool.GetCurrentTargetEntity();
-		if(!targetEntity) return null;
+		DAB_SkeletonInfo skeletonInfo = GetCurrentSkeletonInfo();
+		if(!skeletonInfo) return null;
 		
-		Animation anim = GetSlotDependentAnim(boneName);
-		TNodeId boneId = DAB_BoneHelper.GetBoneId(targetEntity, boneName);
+		DAB_BoneRecord record = skeletonInfo.GetBoneRecord(compoundBoneName);
+		if(!record) return null;
+		
+		IEntity slotEntity = record.GetSlotEntity();
+		if(!slotEntity) return null;
+		
+		string simpleBoneName = record.GetSimpleBoneName();
+		if(simpleBoneName.IsEmpty()) return null;
+		
+		Animation anim;
+		TNodeId boneId = DAB_SkeletonInfo.GetBoneIndex(slotEntity, simpleBoneName, anim);
 		
 		if (anim && boneId != -1)
 		{
-			anim.SetBone(targetEntity, boneId, vector.Zero, vector.Zero, 1.0);
-			targetEntity.Update();
+			anim.SetBone(slotEntity, boneId, vector.Zero, vector.Zero, 1.0);
+			slotEntity.Update();
 		}
 
 		vector bonePosition;
-		if (!DAB_BoneHelper.TryGetBonePosition(targetEntity, boneName, bonePosition))
+		if (!DAB_BoneHelper.TryGetBonePosition(slotEntity, simpleBoneName, bonePosition))
 		{
-			Print("DAB_BoneManipulatorTool.CreateNewTransform: could not get position for '" + boneName + "'.", LogLevel.ERROR);
+			Print("DAB_BoneManipulatorTool.CreateNewTransform: could not get position for '" + simpleBoneName + "'.", LogLevel.ERROR);
 			return null;
 		}
 
-		vector  boneRotation;
-		if (!DAB_BoneHelper.TryGetBoneLocalRotation(targetEntity, boneId, boneRotation))
+		vector boneRotation;
+		if (!DAB_BoneHelper.TryGetBoneLocalRotation(slotEntity, boneId, boneRotation))
 		{
-			Print("DAB_BoneManipulatorTool.CreateNewTransform: could not get rotation for '" + boneName + "'.", LogLevel.ERROR);
+			Print("DAB_BoneManipulatorTool.CreateNewTransform: could not get rotation for '" + simpleBoneName + "'.", LogLevel.ERROR);
 			return null;
 		}
 
-		return new DAB_BoneTransform(boneName, bonePosition, boneRotation);
+		return new DAB_BoneTransform(compoundBoneName, bonePosition, boneRotation);
 	}
 
 	//-----------------------------------------------------------------------
 	protected void DeselectBone()
 	{
 		m_sSelectedBoneName = "";
-		m_GizmoController.Clear(m_API);
+		m_GizmoController.Clear();
 		IEntitySource targetEntitySource = m_ParentTool.GetCurrentTargetEntitySource();
 		if (targetEntitySource)
 			m_API.SetEntitySelection(targetEntitySource);
 	}
 
 	//-----------------------------------------------------------------------
-	protected void ResetBone(string boneName)
+	protected void ResetBone(string compoundBoneName)
 	{
-		DAB_BoneTransform transform = m_ModifiedBones.Get(boneName);
+		DAB_BoneTransform transform = m_ModifiedBones.Get(compoundBoneName);
 		if (!transform) return;
 	
 		IEntity targetEntity = m_ParentTool.GetCurrentTargetEntity();
@@ -403,32 +423,10 @@ class DAB_EditorController
 		transform.m_vRotationOffset = vector.Zero;
 		transform.m_fScale = 1.0;
 
-		m_DirtyBones.Insert(boneName);
-		RefreshBone(boneName);
+		m_DirtyBones.Insert(compoundBoneName);
+		RefreshBone(compoundBoneName);
 		m_GizmoController.ResetAccumulatedTransform(m_API);
-		m_Renderer.DrawSelectedBone(targetEntity, boneName, m_API);
-	}
-
-	//-----------------------------------------------------------------------
-	protected void RefreshCameraTargetDistance()
-	{
-		IEntity targetEntity = m_ParentTool.GetCurrentTargetEntity();
-		if (!targetEntity) return;
-
-		vector camPos   = DAB_Helper.GetCameraPosition(m_API);
-		float  distance = vector.Distance(camPos, targetEntity.GetOrigin());
-
-		if (DAB_Helper.AreFloatsEqual(distance, m_fCameraTargetDistance, DAB_VisConfig.CAMERA_POLLING_DISTANCE_EPSILON))
-			return;
-
-		m_fCameraTargetDistance = distance;
-
-		if (m_sSelectedBoneName.IsEmpty())
-			m_Renderer.RefreshSphereSizes(m_sHoveredBoneName, camPos, m_API);
-		else
-			m_Renderer.DrawSelectedBone(targetEntity, m_sSelectedBoneName, m_API);
-
-		m_GizmoController.OnCameraDistanceChange(m_fCameraTargetDistance, m_API);
+		m_Renderer.DrawSelectedBone(GetCurrentSkeletonInfo(), compoundBoneName, m_API);
 	}
 
 	//-----------------------------------------------------------------------
@@ -446,9 +444,9 @@ class DAB_EditorController
 		m_LastBoneDisplaySettings = m_ParentTool.GetNewDisplaySettings();
 
 		if (m_sSelectedBoneName.IsEmpty())
-			m_Renderer.DrawAllBones(targetEntity, skeletonInfo, m_sHoveredBoneName, camPos, m_LastBoneDisplaySettings, m_API);
+			m_Renderer.DrawAllBones(skeletonInfo, m_sHoveredBoneName, camPos, m_LastBoneDisplaySettings, m_API);
 		else
-			m_Renderer.DrawSelectedBone(targetEntity, m_sSelectedBoneName, m_API);
+			m_Renderer.DrawSelectedBone(skeletonInfo, m_sSelectedBoneName, m_API);
 	}
 
 	//-----------------------------------------------------------------------
@@ -456,12 +454,12 @@ class DAB_EditorController
 	{
 		if (!m_sSelectedBoneName.IsEmpty()) return;
 
-		string hitBoneName = m_Renderer.PickBoneAtScreenPos(x, y, m_ParentTool.GetCurrentTargetEntity(), m_API);
+		string hitBoneName = m_Renderer.PickBoneAtScreenPos(x, y, m_API);
 		if (hitBoneName == m_sHoveredBoneName) return;
 
 		m_sHoveredBoneName = hitBoneName;
 		vector camPos = DAB_Helper.GetCameraPosition(m_API);
-		m_Renderer.RefreshSphereSizes(m_sHoveredBoneName, camPos, m_API);
+		m_Renderer.RefreshSphereSizes(m_sHoveredBoneName, m_API);
 	}
 
 	//-----------------------------------------------------------------------
@@ -518,7 +516,8 @@ class DAB_EditorController
 	    DAB_PoseModification poseInstance = new DAB_PoseModification();
 	    BaseContainerTools.WriteToInstance(poseInstance, config);
 	
-	    // [MANUAL ARRAY LOAD - Required because WriteToInstance is shallow for arrays]
+		// TODO: Is there not a better way for this?
+	    // MANUAL ARRAY LOAD - Required because WriteToInstance is shallow for arrays
 	    BaseContainerList modificationsArr = config.GetObjectArray("m_aBoneModifications");
 	    if (modificationsArr)
 	    {
@@ -528,6 +527,7 @@ class DAB_EditorController
 	            BaseContainer entry = modificationsArr.Get(i);
 	            DAB_BoneModification mod = new DAB_BoneModification();
 	            entry.Get("m_sBoneName", mod.m_sBoneName);
+				entry.Get("m_aSlotNames", mod.m_aSlotNames);
 	            entry.Get("m_vRotationOffset", mod.m_vRotationOffset);
 	            entry.Get("m_vPositionOffset", mod.m_vPositionOffset);
 	            entry.Get("m_fScale", mod.m_fScale);
@@ -536,19 +536,30 @@ class DAB_EditorController
 	    }
 	
 	    map<string, ref DAB_BoneModification> modificationMap = poseInstance.GetBoneModificationsAsMap();
-	        
-	    foreach(string boneName : m_DirtyBones)
+		
+		DAB_SkeletonInfo skeletonInfo = GetCurrentSkeletonInfo();
+		if(!skeletonInfo) return false;
+		
+	    foreach(string compoundBoneName : m_DirtyBones)
 	    {
-	        DAB_BoneTransform transform = m_ModifiedBones.Get(boneName);
+	        DAB_BoneTransform transform = m_ModifiedBones.Get(compoundBoneName);
 	        if(!transform) continue;
 	        
-	        DAB_BoneModification mod = modificationMap.Get(boneName);
+			string simpleBoneName = skeletonInfo.GetSimpleBoneName(compoundBoneName);
+			if(simpleBoneName.IsEmpty())
+			{
+				PrintFormat("simpleBoneName of compound name %1 is empty!", compoundBoneName, LogLevel.WARNING);
+				continue;
+			}
+			
+	        DAB_BoneModification mod = modificationMap.Get(simpleBoneName);
 	        if(!mod)
 	        {
 	            mod = new DAB_BoneModification();
-	            mod.m_sBoneName = boneName;
+	            mod.m_sBoneName = simpleBoneName;
+				mod.m_aSlotNames = skeletonInfo.GetSlotNames(compoundBoneName);
 	            poseInstance.m_aBoneModifications.Insert(mod);
-	        }
+	        } else PrintFormat("Already had bone '%1', no need to create it newly!", simpleBoneName);
 			
 	        mod.m_vRotationOffset = transform.m_vRotationOffset;
 	        mod.m_vPositionOffset = transform.m_vPositionOffset;
@@ -570,7 +581,7 @@ class DAB_EditorController
 		IEntity targetEntity = m_ParentTool.GetCurrentTargetEntity();
 		if (!targetEntity)
 		{
-			Print("Target is null. Could not load and apply working config", LogLevel.WARNING);
+			//Print("Target is null. Could not load and apply working config", LogLevel.WARNING);
 			return;
 		}
 		
@@ -582,6 +593,7 @@ class DAB_EditorController
 		}
 	
 		ResourceName currentConfig = poseComponent.GetWorkingModificationConfig();
+		if(currentConfig.IsEmpty()) return;
 	
 		if (!forceApply && currentConfig == m_sLastLoadedConfig)
 			return;
@@ -599,34 +611,40 @@ class DAB_EditorController
 		BaseContainer config = configResource.GetResource().ToBaseContainer();
 		BaseContainerList modificationsArr = config.GetObjectArray("m_aBoneModifications");
 	
-		if (modificationsArr)
+		if (!modificationsArr)
 		{
-			for (int i = 0; i < modificationsArr.Count(); i++)
-			{
-				BaseContainer entry = modificationsArr.Get(i);
-				string boneName;
-				vector rotOffset, posOffset;
-				float scale = 1.0;
-	
-				entry.Get("m_sBoneName", boneName);
-				entry.Get("m_vRotationOffset", rotOffset);
-				entry.Get("m_vPositionOffset", posOffset);
-				entry.Get("m_fScale", scale);
-	
-				// Create transform to capture the default base/original orientation
-				DAB_BoneTransform newTransform = CreateNewTransform(boneName);
-				if (newTransform)
-				{
-					newTransform.m_vRotationOffset = rotOffset;
-					newTransform.m_vPositionOffset = posOffset;
-					newTransform.m_fScale = scale;
-	
-					m_ModifiedBones.Set(boneName, newTransform);
-					RefreshBone(boneName);
-				}
-			}
+			RedrawOverlay();
+			return;
 		}
-	
+
+		for (int i = 0; i < modificationsArr.Count(); i++)
+		{
+			BaseContainer entry = modificationsArr.Get(i);
+			string simpleBoneName;
+			array<string> slotNames;
+			vector rotOffset, posOffset;
+			float scale = 1.0;
+
+			entry.Get("m_sBoneName", simpleBoneName);
+			entry.Get("m_aSlotNames", slotNames);
+			entry.Get("m_vRotationOffset", rotOffset);
+			entry.Get("m_vPositionOffset", posOffset);
+			entry.Get("m_fScale", scale);
+
+			string compoundBoneName = DAB_BoneHelper.GetCompoundName(simpleBoneName, slotNames);
+			
+			// Create transform to capture the default base/original orientation
+			DAB_BoneTransform newTransform = CreateNewTransform(compoundBoneName);
+			if (!newTransform) continue;
+			
+			newTransform.m_vRotationOffset = rotOffset;
+			newTransform.m_vPositionOffset = posOffset;
+			newTransform.m_fScale = scale;
+
+			m_ModifiedBones.Set(compoundBoneName, newTransform);
+			RefreshBone(compoundBoneName);
+		}
+
 		RedrawOverlay();
 	}
 	
@@ -640,18 +658,25 @@ class DAB_EditorController
 			Print("DAB_EditorController.CheckValidSetup: Detected stale references. Please reopen the bone manipulator tool. If this keeps happening please report it!", LogLevel.ERROR);
 			return;
 		}
+		
+		World world = m_API.GetWorld();
+		if (!world)
+		{
+			Print("DAB_EditorController.CheckValidSetup: m_API.GetWorld() returned null (script reload?).", LogLevel.WARNING);
+			return;
+		}
 
 		IEntity currentTarget = m_ParentTool.GetCurrentTargetEntity();
 		if(! currentTarget)
 		{
-			m_InvalidSetupText = DebugTextScreenSpace.Create(m_API.GetWorld(), "No Target Selected!", DebugTextFlags.FACE_CAMERA, 10, 10, 25, 0xFFFF0000);
+			m_InvalidSetupText = DebugTextScreenSpace.Create(world, "No Target Selected!", DebugTextFlags.FACE_CAMERA, 10, 10, 25, 0xFFFF0000);
 			return;
 		}
 		
 		Animation anim = currentTarget.GetAnimation();
 		if(!anim)
 		{
-			m_InvalidSetupText = DebugTextScreenSpace.Create(m_API.GetWorld(), "Target has no animation on it!", DebugTextFlags.FACE_CAMERA, 10, 10, 25, 0xFFFF0000);
+			m_InvalidSetupText = DebugTextScreenSpace.Create(world, "Target has no animation on it!", DebugTextFlags.FACE_CAMERA, 10, 10, 25, 0xFFFF0000);
 			return;
 		}
 		
@@ -659,21 +684,21 @@ class DAB_EditorController
 		anim.GetBoneNames(boneNames);
 		if(boneNames.Count() <= 0)
 		{
-			m_InvalidSetupText = DebugTextScreenSpace.Create(m_API.GetWorld(), "Target has no bones to pose!", DebugTextFlags.FACE_CAMERA, 10, 10, 25, 0xFFFF0000);
+			m_InvalidSetupText = DebugTextScreenSpace.Create(world, "Target has no bones to pose!", DebugTextFlags.FACE_CAMERA, 10, 10, 25, 0xFFFF0000);
 			return;
 		}
 		
 		DAB_PoseModificationComponent poseComponent = m_ParentTool.GetTargetComponent();
 		if(! poseComponent)
 		{
-			m_InvalidSetupText = DebugTextScreenSpace.Create(m_API.GetWorld(), "Target has no DAB_PoseModificationComponent", DebugTextFlags.FACE_CAMERA, 10, 10, 25, 0xFFFF0000);
+			m_InvalidSetupText = DebugTextScreenSpace.Create(world, "Target has no DAB_PoseModificationComponent", DebugTextFlags.FACE_CAMERA, 10, 10, 25, 0xFFFF0000);
 			return;
 		}
 		
 		ResourceName poseModification = poseComponent.GetWorkingModificationConfig();
 		if(poseModification.IsEmpty())
 		{
-			m_InvalidSetupText = DebugTextScreenSpace.Create(m_API.GetWorld(), "DAB_PoseModificationComponent has no working config", DebugTextFlags.FACE_CAMERA, 10, 10, 20, 0xFFFF0000);
+			m_InvalidSetupText = DebugTextScreenSpace.Create(world, "DAB_PoseModificationComponent has no working config", DebugTextFlags.FACE_CAMERA, 10, 10, 20, 0xFFFF0000);
 			return;
 		}
 		

@@ -1,55 +1,46 @@
 //! Draws all bone-sphere overlays and connection lines in the viewport.
-//! Caches world positions and pre-computed size constraints to avoid
-//! redundant per-frame recalculation.
 class DAB_BoneOverlayRenderer
 {
-	// ── Caches ─────────────────────────────────────────────────────────────
-	protected ref map<string, vector> m_CachedWorldPositions  = new map<string, vector>();
-	protected ref map<string, float>  m_CachedSpatialMaxRadii = new map<string, float>();
-	protected ref map<string, float>  m_CachedFinalMaxRadii   = new map<string, float>();
+	// ── Member Variables ───────────────────────────────────────────────────
+	protected ref map<string, vector> m_mCachedWorldPositions = new map<string, vector>();
+	protected ref map<string, float> m_mCachedSpatialMaxRadii = new map<string, float>();
+	protected ref map<string, float> m_mCachedFinalMaxRadii = new map<string, float>();
+	
+	// ── Fast Iterator Caches ───────────────────────────────────────────────
+	protected ref array<string> m_aActiveBoneNames = new array<string>();
+	protected ref array<vector> m_aActiveBonePositions = new array<vector>();
+	protected ref array<string> m_aActiveBoneParents = new array<string>();
+	protected ref array<float> m_aCachedSpatialRadii = new array<float>();
 
 	// ── Live shapes ────────────────────────────────────────────────────────
-	protected ref array<ref Shape> m_ActiveShapes     = new array<ref Shape>();
-	protected ref array<ref Shape> m_ConnectionShapes = new array<ref Shape>();
+	protected ref array<ref Shape> m_aActiveShapes = new array<ref Shape>();
+	protected ref array<ref Shape> m_aConnectionShapes = new array<ref Shape>();
 	protected ref DebugTextScreenSpace m_SelectedBoneText;
 
 	protected WorldEditorAPI m_API;
 
+	// ── Public ─────────────────────────────────────────────────────────────
 	//-----------------------------------------------------------------------
 	//! Redraws all bone spheres and connection lines.
 	//! Rebuilds all caches from scratch; call when the skeleton changes or the tool activates.
-	void DrawAllBones(IEntity entity, DAB_SkeletonInfo skeletonInfo, string hoveredBone, vector camPos, DAB_BoneDisplaySettings displaySettings, WorldEditorAPI api)
+	void DrawAllBones(DAB_SkeletonInfo skeletonInfo, string hoveredBone, vector camPos, DAB_BoneDisplaySettings displaySettings, WorldEditorAPI api)
 	{
 		m_API = api;
 
-		ClearShapes();
-		ClearConnectionShapes();
-		m_CachedWorldPositions.Clear();
-		m_CachedSpatialMaxRadii.Clear();
-		m_CachedFinalMaxRadii.Clear();
+		Clear();
 
-		if (!entity || !skeletonInfo)
+		if (!skeletonInfo)
 		{
-			Print("DAB_BoneOverlayRenderer.DrawAllBones: entity or skeletonInfo is null.", LogLevel.ERROR);
-			return;
-		}
-
-		Animation anim = entity.GetAnimation();
-		if (!anim)
-		{
-			Print("DAB_BoneOverlayRenderer.DrawAllBones: animation is null.", LogLevel.ERROR);
+			Print("DAB_BoneOverlayRenderer.DrawAllBones: skeletonInfo is null.", LogLevel.ERROR);
 			return;
 		}
 		
-		vector entityWorld[4];
-		entity.GetTransform(entityWorld);
-
-		CacheBoneWorldPositions(anim, entityWorld, skeletonInfo, displaySettings);
+		CacheBoneWorldPositions(skeletonInfo, displaySettings);
 		ComputeSpatialConstraints(skeletonInfo);
 		CombineConstraints(camPos);
 
 		if (!displaySettings.GetHideBoneConnections())
-			DrawBoneConnections(skeletonInfo);
+			DrawBoneConnections();
 
 		DrawBoneShapes(hoveredBone);
 	}
@@ -57,36 +48,43 @@ class DAB_BoneOverlayRenderer
 	//-----------------------------------------------------------------------
 	//! Re-scales all spheres for the new camera position without rebuilding caches.
 	//! Call when the camera moves but the skeleton has not changed.
-	void RefreshSphereSizes(string hoveredBone, vector camPos, WorldEditorAPI api)
+	void RefreshSphereSizes(string hoveredBone, WorldEditorAPI api)
 	{
-		if (m_CachedWorldPositions.IsEmpty()) return;
-		m_API = api;
-		CombineConstraints(camPos);
+		if (m_mCachedWorldPositions.IsEmpty()) return;
+		
+		m_API = api; // TODO: Remember why exactly we are reassigning here!
+		
+		CombineConstraints(DAB_Helper.GetCameraPosition(m_API));
+		
 		ClearShapes();
 		DrawBoneShapes(hoveredBone);
 	}
 
 	//-----------------------------------------------------------------------
 	//! Draws a single highlighted sphere at the selected bone's current world position.
-	void DrawSelectedBone(IEntity entity, string selectedBoneName, WorldEditorAPI api)
+	void DrawSelectedBone(DAB_SkeletonInfo skeletonInfo, string selectedCompoundBoneName, WorldEditorAPI api)
 	{
 		ClearShapes();
 		ClearConnectionShapes();
 
-		if (!entity)
+		IEntity slotEntity = skeletonInfo.GetSlotEntity(selectedCompoundBoneName);
+		if (!slotEntity)
 		{
-			Print("DAB_BoneOverlayRenderer.DrawSelectedBone: entity is null.", LogLevel.ERROR);
+			Print("DAB_BoneOverlayRenderer.DrawSelectedBone: slotEntity is null.", LogLevel.ERROR);
 			return;
 		}
+		
+		string niceCompoundName = skeletonInfo.GetNiceCompoundName(selectedCompoundBoneName);
+		string simpleBoneName = skeletonInfo.GetSimpleBoneName(selectedCompoundBoneName);
 
-		m_SelectedBoneText = DebugTextScreenSpace.Create(api.GetWorld(), selectedBoneName, DebugTextFlags.FACE_CAMERA, 10, 10);
-
+		m_SelectedBoneText = DebugTextScreenSpace.Create(api.GetWorld(), niceCompoundName, DebugTextFlags.FACE_CAMERA, 10, 10);
+		
 		vector boneWorld[4];
-		if (!TryGetBoneWorldMatrix(entity, selectedBoneName, boneWorld))
+		if (!TryGetBoneWorldMatrix(slotEntity, simpleBoneName, boneWorld))
 			return;
 
 		float maxRadius;
-		if (!m_CachedFinalMaxRadii.Find(selectedBoneName, maxRadius))
+		if (!m_mCachedFinalMaxRadii.Find(selectedCompoundBoneName, maxRadius))
 			maxRadius = DAB_VisConfig.SPHERE_MAX_RADIUS;
 
 		float sphereRadius = Math.Min(
@@ -94,7 +92,7 @@ class DAB_BoneOverlayRenderer
 			maxRadius
 		) * DAB_VisConfig.SPHERE_HOVER_MULTIPLIER;
 
-		m_ActiveShapes.Insert(Shape.CreateSphere(
+		m_aActiveShapes.Insert(Shape.CreateSphere(
 			DAB_VisConfig.COLOR_SELECTED,
 			ShapeFlags.NOZBUFFER | ShapeFlags.TRANSP,
 			boneWorld[3],
@@ -103,11 +101,10 @@ class DAB_BoneOverlayRenderer
 	}
 
 	//-----------------------------------------------------------------------
-	//! Returns the name of the bone whose sphere is hit by a ray through (mouseX, mouseY),
-	//! or an empty string on miss.
-	string PickBoneAtScreenPos(int mouseX, int mouseY, IEntity entity, WorldEditorAPI api)
+	//! Returns the compound name of the bone whose sphere is hit by a ray through (mouseX, mouseY), or an empty string on miss.
+	string PickBoneAtScreenPos(int mouseX, int mouseY, WorldEditorAPI api)
 	{
-		if (m_CachedWorldPositions.IsEmpty()) return "";
+		if (m_mCachedWorldPositions.IsEmpty()) return "";
 
 		vector traceStart, traceEnd, traceDir;
 		api.TraceWorldPos(mouseX, mouseY, TraceFlags.ENTS, traceStart, traceEnd, traceDir);
@@ -115,23 +112,21 @@ class DAB_BoneOverlayRenderer
 		float  bestT    = float.MAX;
 		string bestBone = "";
 
-		for (MapIterator it = m_CachedWorldPositions.Begin(); it != m_CachedWorldPositions.End(); it = m_CachedWorldPositions.Next(it))
+		foreach(string compoundBoneName, vector bonePosition : m_mCachedWorldPositions)
 		{
-			string boneName = m_CachedWorldPositions.GetIteratorKey(it);
-			vector position = m_CachedWorldPositions.GetIteratorElement(it);
-			if (position == vector.Zero) continue;
+			if (bonePosition == vector.Zero) continue;
 
 			float maxRadius;
-			if (!m_CachedFinalMaxRadii.Find(boneName, maxRadius))
+			if (!m_mCachedFinalMaxRadii.Find(compoundBoneName, maxRadius))
 				maxRadius = DAB_VisConfig.SPHERE_MAX_RADIUS;
 
-			float radius = Math.Min(DAB_VisConfig.ComputeBoneSphereRadius(api, position), maxRadius);
+			float radius = Math.Min(DAB_VisConfig.ComputeBoneSphereRadius(api, bonePosition), maxRadius);
 
 			float t;
-			if (RaySphereIntersect(traceStart, traceDir, position, radius, t) && t < bestT)
+			if (RaySphereIntersect(traceStart, traceDir, bonePosition, radius, t) && t < bestT)
 			{
 				bestT    = t;
-				bestBone = boneName;
+				bestBone = compoundBoneName;
 			}
 		}
 
@@ -144,197 +139,250 @@ class DAB_BoneOverlayRenderer
 	{
 		ClearShapes();
 		ClearConnectionShapes();
-		m_CachedWorldPositions.Clear();
-		m_CachedSpatialMaxRadii.Clear();
-		m_CachedFinalMaxRadii.Clear();
+		m_mCachedWorldPositions.Clear();
+		m_mCachedSpatialMaxRadii.Clear();
+		m_mCachedFinalMaxRadii.Clear();	
+		m_aActiveBoneNames.Clear();
+		m_aActiveBonePositions.Clear();
+		m_aActiveBoneParents.Clear();
+		m_aCachedSpatialRadii.Clear();
 	}
 
-	// ── Private ────────────────────────────────────────────────────────────
-
+	// ── Protected / Private ────────────────────────────────────────────────
 	//-----------------------------------------------------------------------
-	protected void CacheBoneWorldPositions(Animation anim, vector entityWorld[4], DAB_SkeletonInfo skeletonInfo, DAB_BoneDisplaySettings displaySettings)
+	protected void CacheBoneWorldPositions(DAB_SkeletonInfo skeletonInfo, DAB_BoneDisplaySettings displaySettings)
 	{
-		foreach (string boneName : skeletonInfo.GetBoneNames())
+		map<string, string> boneParents = skeletonInfo.GetBoneParents();
+		
+		foreach (string compoundBoneName, DAB_BoneRecord record : skeletonInfo.GetBoneRecords())
 		{
-			string lowercaseBoneName = boneName;
-			lowercaseBoneName.ToLower();
+			string simpleBoneName = DAB_SkeletonInfo.ExtractBoneNameFromCompundName(compoundBoneName);
+			if (!ShouldDisplayBone(compoundBoneName, simpleBoneName, displaySettings, skeletonInfo))
+			    continue;
 			
-			if (displaySettings.GetHideIKTargetBones() && lowercaseBoneName.Contains("_ik")) continue;
-			if (displaySettings.GetHideVolumeBones() && lowercaseBoneName.EndsWith("prop")) continue;
-			if (displaySettings.GetHideVolumeBones() && lowercaseBoneName.EndsWith("volume")) continue;
-			if (displaySettings.GetHideCameraBone() && lowercaseBoneName == "camera") continue;
-			if (displaySettings.GetHideFaceBones() && skeletonInfo.IsDescendantOf(boneName, "Head")) continue;
-			
-			if(!displaySettings.GetFilterBoneName().IsEmpty())
+			IEntity slotEntity = record.GetSlotEntity();
+			if(!slotEntity)
 			{
-				string lowercaseFilterName = displaySettings.GetFilterBoneName().Trim();
-				lowercaseFilterName.ToLower();
-				if (!lowercaseBoneName.Contains(lowercaseFilterName)) continue;
+				PrintFormat("DAB_BoneOverlayRenderer.CacheBoneWorldPositions: Bone '%1' slotEntity is null!", compoundBoneName, LogLevel.ERROR);
+				continue;
 			}
 			
-			TNodeId boneId = anim.GetBoneIndex(boneName);
+			Animation anim = slotEntity.GetAnimation();
+			if(!anim)
+			{
+				PrintFormat("DAB_BoneOverlayRenderer.CacheBoneWorldPositions: Bone '%1' slotEntity has no animation!", compoundBoneName, LogLevel.ERROR);
+				continue;
+			}
+			
+			TNodeId boneId = anim.GetBoneIndex(simpleBoneName);
 			if (boneId == -1) continue;
 
 			vector boneLocal[4];
 			anim.GetBoneMatrix(boneId, boneLocal);
 
+			vector entityWorld[4];
+			slotEntity.GetWorldTransform(entityWorld);
+			
 			vector boneWorld[4];
 			Math3D.MatrixMultiply4(entityWorld, boneLocal, boneWorld);
-			m_CachedWorldPositions.Set(boneName, boneWorld[3]);
+			m_mCachedWorldPositions.Set(compoundBoneName, boneWorld[3]);
+			
+			m_aActiveBoneNames.Insert(compoundBoneName);
+			m_aActiveBonePositions.Insert(boneWorld[3]);
+			string parent = "";
+			boneParents.Find(compoundBoneName, parent);
+			m_aActiveBoneParents.Insert(parent);
 		}
 	}
 
 	//-----------------------------------------------------------------------
 	protected void ComputeSpatialConstraints(DAB_SkeletonInfo skeletonInfo)
 	{
-		map<string, string> boneParents = skeletonInfo.GetBoneParents();
-		for (MapIterator it = m_CachedWorldPositions.Begin(); it != m_CachedWorldPositions.End(); it = m_CachedWorldPositions.Next(it))
+		int n = m_aActiveBoneNames.Count();
+		if (n == 0) return;
+		
+		float gapFactor = 1.0 - DAB_VisConfig.SPHERE_GAP_FRACTION;
+		float maxRadius = DAB_VisConfig.SPHERE_MAX_RADIUS;
+		
+		for (int i = 0; i < n; i++)
 		{
-			string boneName = m_CachedWorldPositions.GetIteratorKey(it);
-			vector bonePos  = m_CachedWorldPositions.GetIteratorElement(it);
-			m_CachedSpatialMaxRadii.Set(boneName, ComputeSpatialConstraint(boneName, bonePos, boneParents));
-		}
-	}
-
-	//-----------------------------------------------------------------------
-	// Merges stable spatial constraints with a freshly computed angular constraint.
-	// Reads from m_CachedSpatialMaxRadii so repeated calls never compound the angular cap.
-	protected void CombineConstraints(vector camPos)
-	{
-		for (MapIterator it = m_CachedWorldPositions.Begin(); it != m_CachedWorldPositions.End(); it = m_CachedWorldPositions.Next(it))
-		{
-			string boneName = m_CachedWorldPositions.GetIteratorKey(it);
-			vector bonePos  = m_CachedWorldPositions.GetIteratorElement(it);
-
-			float spatial, finalRadius;
-			m_CachedSpatialMaxRadii.Find(boneName, spatial);
+			string compoundBoneNameA = m_aActiveBoneNames[i];
+			vector bonePositionA = m_aActiveBonePositions[i];
+			string boneParentA = m_aActiveBoneParents[i];
 			
-			finalRadius = Math.Min(spatial, ComputeAngularConstraint(bonePos, camPos));
-			m_CachedFinalMaxRadii.Set(boneName, Math.Max(finalRadius, DAB_VisConfig.SPHERE_MIN_RADIUS));
+			float minConstraint = maxRadius;
+			
+			for (int j = 0; j < n; j++)
+			{
+				if (j == i) continue;
+				if (m_aActiveBoneParents[j] == compoundBoneNameA) continue; // skip direct children
+				
+				vector bonePositionB = m_aActiveBonePositions[j];
+				float dist = vector.Distance(bonePositionA, bonePositionB);
+				
+				if (dist < 0.0001 || dist > maxRadius) continue;
+				
+				float share = 0.5;
+				if(m_aActiveBoneNames[j] == boneParentA) share = DAB_VisConfig.SPHERE_CHILD_SHARE;
+
+				float constraint = dist * gapFactor * share;
+				if (constraint < minConstraint)
+					minConstraint = constraint;
+			}
+			
+			m_mCachedSpatialMaxRadii.Set(compoundBoneNameA, minConstraint);
 		}
 	}
 
 	//-----------------------------------------------------------------------
-	protected float ComputeSpatialConstraint(string boneName, vector bonePos, map<string, string> boneParents)
+	protected void PrepareCameraConstraints(vector camPosition, out array<vector> camDirections, out array<float> distFromCam)
 	{
-		string myParent = "";
-		boneParents.Find(boneName, myParent);
-
-		float minConstraint = DAB_VisConfig.SPHERE_MAX_RADIUS;
-
-		for (MapIterator itB = m_CachedWorldPositions.Begin(); itB != m_CachedWorldPositions.End(); itB = m_CachedWorldPositions.Next(itB))
+		int n = m_aActiveBoneNames.Count();
+		if (n == 0) return;
+		
+		float maxRadius = DAB_VisConfig.SPHERE_MAX_RADIUS;
+		
+		camDirections.Clear();
+		distFromCam.Clear();
+		m_aCachedSpatialRadii.Clear();
+		
+		camDirections.Reserve(n);
+		distFromCam.Reserve(n);
+		m_aCachedSpatialRadii.Reserve(n);
+		
+		for (int i = 0; i < n; i++)
 		{
-			string nameB = m_CachedWorldPositions.GetIteratorKey(itB);
-			if (nameB == boneName) continue;
-
-			string parentOfB = "";
-			boneParents.Find(nameB, parentOfB);
-			if (parentOfB == boneName) continue;
-
-			float dist = vector.Distance(bonePos, m_CachedWorldPositions.GetIteratorElement(itB));
-			if (dist < 0.0001) continue;
-
-			float constraint = dist * (1.0 - DAB_VisConfig.SPHERE_GAP_FRACTION) * GetSpaceShare(nameB, myParent);
-			if (constraint < minConstraint)
-				minConstraint = constraint;
+			vector toBone = m_aActiveBonePositions[i] - camPosition;
+			float dist = toBone.Length();
+			
+			distFromCam.Insert(dist);
+			
+			if (dist > 0.0001)
+				camDirections.Insert(toBone * (1.0 / dist));
+			else
+				camDirections.Insert(vector.Forward);
+			
+			// Spatial radii are stable -> cache them once
+			float sp = maxRadius;
+			m_mCachedSpatialMaxRadii.Find(m_aActiveBoneNames[i], sp);
+			m_aCachedSpatialRadii.Insert(sp);
 		}
-
-		return minConstraint;
 	}
-
+	
 	//-----------------------------------------------------------------------
-	protected float ComputeAngularConstraint(vector bonePos, vector camPos)
+	protected void ComputeFinalRadii(array<vector> camDirections, array<float> distFromCam)
 	{
-		vector dirA  = (bonePos - camPos).Normalized();
-		float  distA = vector.Distance(camPos, bonePos);
-		if (distA < 0.0001) return DAB_VisConfig.SPHERE_MAX_RADIUS;
-
-		float minHalfAngle = float.MAX;
-
-		for (MapIterator itB = m_CachedWorldPositions.Begin(); itB != m_CachedWorldPositions.End(); itB = m_CachedWorldPositions.Next(itB))
+		int n = m_aActiveBoneNames.Count();
+		if (n == 0) return;
+		
+		float gapFactor = 1.0 - DAB_VisConfig.SPHERE_GAP_FRACTION;
+		float minRadius = DAB_VisConfig.SPHERE_MIN_RADIUS;
+		float maxRadius = DAB_VisConfig.SPHERE_MAX_RADIUS;
+		
+		for (int i = 0; i < n; i++)
 		{
-			vector posB = m_CachedWorldPositions.GetIteratorElement(itB);
-			if (posB == bonePos) continue;
-
-			float theta     = Math.Acos(Math.Clamp(vector.Dot(dirA, (posB - camPos).Normalized()), -1.0, 1.0));
-			float halfAngle = theta * 0.5 * (1.0 - DAB_VisConfig.SPHERE_GAP_FRACTION);
-			if (halfAngle < minHalfAngle)
-				minHalfAngle = halfAngle;
+			float spatial     = m_aCachedSpatialRadii[i];
+			float distA       = distFromCam[i];
+			vector dirA       = camDirections[i];
+			
+			float angularConstraint = maxRadius;
+			if (distA >= 0.0001)
+			{
+				float maxDot = -1.0;
+				for (int j = 0; j < n; j++)
+				{
+					if (j == i) continue;
+					float d = vector.Dot(dirA, camDirections[j]);
+					if (d > maxDot)
+						maxDot = d;
+				}
+				
+				float theta     = Math.Acos(Math.Clamp(maxDot, -1.0, 1.0));
+				float halfAngle = theta * 0.5 * gapFactor;
+				angularConstraint = Math.Min(halfAngle * distA, maxRadius);
+			}
+			
+			float finalRadius = Math.Min(spatial, angularConstraint);
+			m_mCachedFinalMaxRadii.Set(m_aActiveBoneNames[i], Math.Max(finalRadius, minRadius));
 		}
-
-		if (minHalfAngle == float.MAX)
-			return DAB_VisConfig.SPHERE_MAX_RADIUS;
-
-		return Math.Min(minHalfAngle * distA, DAB_VisConfig.SPHERE_MAX_RADIUS);
+	}
+	
+	//-----------------------------------------------------------------------
+	protected void CombineConstraints(vector camPosition)
+	{
+		array<vector> camDirections = new array<vector>();
+		array<float>  distFromCam   = new array<float>();
+		
+		PrepareCameraConstraints(camPosition, camDirections, distFromCam);
+		ComputeFinalRadii(camDirections, distFromCam);
 	}
 
 	//-----------------------------------------------------------------------
-	protected float GetSpaceShare(string nameB, string parentOfA)
+	protected void DrawBoneConnections()
 	{
-		if (nameB == parentOfA)
-			return DAB_VisConfig.SPHERE_CHILD_SHARE;
-		return 0.5;
-	}
-
-	//-----------------------------------------------------------------------
-	protected void DrawBoneConnections(DAB_SkeletonInfo skeletonInfo)
-	{
-		map<string, string> boneParents = skeletonInfo.GetBoneParents();
-
-		for (MapIterator it = m_CachedWorldPositions.Begin(); it != m_CachedWorldPositions.End(); it = m_CachedWorldPositions.Next(it))
-		{
-			string childName = m_CachedWorldPositions.GetIteratorKey(it);
-			vector childPos  = m_CachedWorldPositions.GetIteratorElement(it);
-
-			string parentName = "";
-			if (!boneParents.Find(childName, parentName) || parentName.IsEmpty()) continue;
-
-			vector parentPos;
-			if (!m_CachedWorldPositions.Find(parentName, parentPos)) continue;
-
-			m_ConnectionShapes.Insert(Shape.Create(ShapeType.LINE, DAB_VisConfig.COLOR_BONE_CONNECTION, ShapeFlags.NOZBUFFER, childPos, parentPos));
-		}
+	    int n = m_aActiveBoneNames.Count();
+	    if (n == 0)
+	        return;
+	
+	    for (int i = 0; i < n; i++)
+	    {
+	        string parentCompoundName = m_aActiveBoneParents[i];
+	        if (parentCompoundName.IsEmpty())
+	            continue;
+	
+	        vector childPosition = m_aActiveBonePositions[i];
+	
+	        vector parentPosition;
+	        if (!m_mCachedWorldPositions.Find(parentCompoundName, parentPosition))
+	        {
+	            PrintFormat("DAB_BoneOverlayRenderer.DrawBoneConnections: Could not find a parent position for: %1", parentCompoundName, LogLevel.WARNING);
+	            continue;
+	        }
+	
+	        m_aConnectionShapes.Insert(Shape.Create(
+	          	ShapeType.LINE,
+	            DAB_VisConfig.COLOR_BONE_CONNECTION,
+	            ShapeFlags.NOZBUFFER,
+	            childPosition,
+	            parentPosition
+	        ));
+	    }
 	}
 
 	//-----------------------------------------------------------------------
 	protected void DrawBoneShapes(string hoveredBone)
 	{
-		for (MapIterator it = m_CachedWorldPositions.Begin(); it != m_CachedWorldPositions.End(); it = m_CachedWorldPositions.Next(it))
+		foreach(string boneCompoundName, vector position : m_mCachedWorldPositions)
 		{
-			string boneName = m_CachedWorldPositions.GetIteratorKey(it);
-			vector pos      = m_CachedWorldPositions.GetIteratorElement(it);
-
 			float maxRadius;
-			if (!m_CachedFinalMaxRadii.Find(boneName, maxRadius))
+			if (!m_mCachedFinalMaxRadii.Find(boneCompoundName, maxRadius))
 				maxRadius = DAB_VisConfig.SPHERE_MAX_RADIUS;
 
-			float sphereRadius = Math.Min(DAB_VisConfig.ComputeBoneSphereRadius(m_API, pos), maxRadius);
-			int   color        = DAB_VisConfig.COLOR_DEFAULT;
+			float sphereRadius = Math.Min(DAB_VisConfig.ComputeBoneSphereRadius(m_API, position), maxRadius);
+			int color = DAB_VisConfig.COLOR_DEFAULT;
 
-			if (boneName == hoveredBone)
+			if (boneCompoundName == hoveredBone)
 			{
 				sphereRadius *= DAB_VisConfig.SPHERE_HOVER_MULTIPLIER;
-				color         = DAB_VisConfig.COLOR_HOVER;
+				color = DAB_VisConfig.COLOR_HOVER;
 			}
 
-			m_ActiveShapes.Insert(Shape.CreateSphere(color, DAB_VisConfig.SPHERE_FLAGS, pos, sphereRadius));
+			m_aActiveShapes.Insert(Shape.CreateSphere(color, DAB_VisConfig.SPHERE_FLAGS, position, sphereRadius));
 		}
 	}
 
 	//-----------------------------------------------------------------------
-	protected bool TryGetBoneWorldMatrix(IEntity entity, string boneName, out vector boneWorld[4])
+	protected bool TryGetBoneWorldMatrix(IEntity entity, string simpleBoneName, out vector boneWorld[4])
 	{
-		Animation anim = entity.GetAnimation();
-		if (!anim) return false;
-
-		TNodeId boneId = anim.GetBoneIndex(boneName);
+		Animation anim;
+		TNodeId boneId = DAB_SkeletonInfo.GetBoneIndex(entity, simpleBoneName, anim);
 		if (boneId == -1) return false;
 
 		vector boneLocal[4];
 		anim.GetBoneMatrix(boneId, boneLocal);
 
 		vector entityWorld[4];
-		entity.GetTransform(entityWorld);
+		entity.GetWorldTransform(entityWorld);
 
 		Math3D.MatrixMultiply4(entityWorld, boneLocal, boneWorld);
 		return true;
@@ -355,13 +403,36 @@ class DAB_BoneOverlayRenderer
 	//-----------------------------------------------------------------------
 	protected void ClearShapes()
 	{
-		m_ActiveShapes.Clear();
+		m_aActiveShapes.Clear();
 		m_SelectedBoneText = null;
 	}
 
 	//-----------------------------------------------------------------------
 	protected void ClearConnectionShapes()
 	{
-		m_ConnectionShapes.Clear();
+		m_aConnectionShapes.Clear();
 	}
+
+	//-----------------------------------------------------------------------
+	protected bool ShouldDisplayBone(string compoundBoneName, string simpleBoneName, DAB_BoneDisplaySettings displaySettings, DAB_SkeletonInfo skeletonInfo)
+	{
+	    string lowercaseBoneName = simpleBoneName;
+	    lowercaseBoneName.ToLower();
+	    
+		
+	    if (displaySettings.GetHideIKTargetBones() && lowercaseBoneName.Contains("_ik")) return false;
+	    if (displaySettings.GetHideVolumeBones() && (lowercaseBoneName.EndsWith("prop") || lowercaseBoneName.EndsWith("volume"))) return false;
+	    if (displaySettings.GetHideCameraBone() && lowercaseBoneName == "camera") return false;
+	    if (displaySettings.GetHideFaceBones() && skeletonInfo.IsAncestorOf(compoundBoneName, "Head")) return false;
+	    if (displaySettings.GetHideDuplicateNamedSlotBones() && skeletonInfo.GetHasDuplicateName(compoundBoneName)) return false;
+
+	    if (!displaySettings.GetFilterBoneName().IsEmpty())
+	    {
+	        string lowercaseFilter = displaySettings.GetFilterBoneName().Trim();
+	        lowercaseFilter.ToLower();
+	        if (!lowercaseBoneName.Contains(lowercaseFilter)) return false;
+	    }
+
+	    return true;
+	}	
 }
