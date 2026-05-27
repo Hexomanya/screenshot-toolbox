@@ -335,7 +335,7 @@ class DAB_BoneOverlayRenderer
 	        vector parentPosition;
 	        if (!m_mCachedWorldPositions.Find(parentCompoundName, parentPosition))
 	        {
-	            PrintFormat("DAB_BoneOverlayRenderer.DrawBoneConnections: Could not find a parent position for: %1", parentCompoundName, LogLevel.WARNING);
+	            //PrintFormat("DAB_BoneOverlayRenderer.DrawBoneConnections: Could not find a parent position for: %1", parentCompoundName, LogLevel.WARNING);
 	            continue;
 	        }
 	
