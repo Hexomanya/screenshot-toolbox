@@ -329,22 +329,18 @@ class DAB_GizmoController
 	protected void OnGizmoMove(DAB_Axis axis, float delta)
 	{
 		if (!m_currentTransform) return;
-
-		// Resolve the world-space direction for this axis (camera sign already baked in)
-		vector combined[3];
-		ComputeCombinedMatrix(combined);
-
-		vector worldAxisDir;
+	
+		vector localDelta = vector.Zero;
 		switch (axis)
 		{
-			case DAB_Axis.X_Axis: worldAxisDir = combined[0] * m_PositionGizmo.GetXSign(); break;
-			case DAB_Axis.Y_Axis: worldAxisDir = combined[1] * m_PositionGizmo.GetYSign(); break;
-			case DAB_Axis.Z_Axis: worldAxisDir = combined[2] * m_PositionGizmo.GetZSign(); break;
+			case DAB_Axis.X_Axis: localDelta[0] = delta * m_PositionGizmo.GetXSign(); break;
+			case DAB_Axis.Y_Axis: localDelta[1] = delta * m_PositionGizmo.GetYSign(); break;
+			case DAB_Axis.Z_Axis: localDelta[2] = delta * m_PositionGizmo.GetZSign(); break;
 			default: return;
 		}
-
-		m_currentTransform.m_vPositionOffset = m_currentTransform.m_vPositionOffset + worldAxisDir * delta;
-
+	
+		m_currentTransform.m_vPositionOffset = m_currentTransform.m_vPositionOffset + localDelta;
+	
 		m_OnTransformChanged.Invoke(m_currentTransform);
 		UpdatePositionGizmo();
 	}

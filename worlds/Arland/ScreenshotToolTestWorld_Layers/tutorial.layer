@@ -31,14 +31,8 @@ CinematicEntity Tutorial {
     TrackName "US01_PoseTrack"
     ClassName "DAB_PoseManipulationTrack"
     ChildTracks {
-     BooleanCinematicTrack "{691CA926F3390256}" {
-      TrackName "m_bApplyModifications"
-      Keyframes {
-       BooleanCinematicKeyframe "{691CA927D3447957}" {
-        FrameNumber 0
-        Value 1
-       }
-      }
+     BooleanCinematicTrack "{6932E9518ED95C43}" {
+      TrackName "m_bDisableModifications"
      }
     }
    }
@@ -46,14 +40,8 @@ CinematicEntity Tutorial {
     TrackName "LAV1_PoseTrack"
     ClassName "DAB_PoseManipulationTrack"
     ChildTracks {
-     BooleanCinematicTrack "{691CA92621B925CD}" {
-      TrackName "m_bApplyModifications"
-      Keyframes {
-       BooleanCinematicKeyframe "{691CA927D3726D7C}" {
-        FrameNumber 0
-        Value 1
-       }
-      }
+     BooleanCinematicTrack "{6932E9518ED95AF8}" {
+      TrackName "m_bDisableModifications"
      }
     }
    }
@@ -61,19 +49,164 @@ CinematicEntity Tutorial {
     TrackName "USSR01_PoseTrack"
     ClassName "DAB_PoseManipulationTrack"
     ChildTracks {
-     BooleanCinematicTrack "{691CB5B9F6EB1878}" {
-      TrackName "m_bApplyModifications"
+     BooleanCinematicTrack "{6932E9518ED95BD4}" {
+      TrackName "m_bDisableModifications"
+     }
+    }
+   }
+   CustomCinematicTrack "{6932B7EDEDDCA35E}" {
+    TrackName "WeatherTrack"
+    ClassName "WeatherCinematicTrack"
+    ChildTracks {
+     FloatCinematicTrack "{6932B7EDEDDCACE1}" {
+      TrackName "m_fTimeOfDay"
       Keyframes {
-       BooleanCinematicKeyframe "{691CB5B9F4917F1E}" {
-        FrameNumber 1
+       FloatCinematicKeyframe "{6932B7FC1E817447}" {
+        FrameNumber 0
+        Value 11.4
+        InterpMode 0
+       }
+      }
+     }
+     IntegerCinematicTrack "{6932B7EDEDDCAD54}" {
+      TrackName "m_iWeatherType"
+      Keyframes {
+       IntegerCinematicKeyframe "{6932B7EDEC919A76}" {
+        FrameNumber 0
+        Value 0
+       }
+      }
+     }
+     BooleanCinematicTrack "{6932B7EDEDDCABB3}" {
+      TrackName "setSpecifics"
+      Keyframes {
+       BooleanCinematicKeyframe "{6932B7EDEC9198D0}" {
+        FrameNumber 0
+        Value 0
+       }
+      }
+     }
+     FloatCinematicTrack "{6932B7EDEDDCA896}" {
+      TrackName "m_fWindSpeed"
+      Keyframes {
+       FloatCinematicKeyframe "{6932B7EDEC9186B6}" {
+        FrameNumber 0
+        Value 0
+       }
+      }
+     }
+     FloatCinematicTrack "{6932B7EDEDDCA9EF}" {
+      TrackName "m_fWindDirection"
+      Keyframes {
+       FloatCinematicKeyframe "{6932B7EDEC918707}" {
+        FrameNumber 0
+        Value 0
+       }
+      }
+     }
+     FloatCinematicTrack "{6932B7EDEDDC96C0}" {
+      TrackName "m_fWetness"
+      Keyframes {
+       FloatCinematicKeyframe "{6932B7EDEC918592}" {
+        FrameNumber 0
+        Value 0
+       }
+      }
+     }
+     FloatCinematicTrack "{6932B7EDEDDC9432}" {
+      TrackName "m_fPuddles"
+      Keyframes {
+       FloatCinematicKeyframe "{6932B7EDEC9183BF}" {
+        FrameNumber 0
+        Value 0
+       }
+      }
+     }
+     FloatCinematicTrack "{6932B7EDEDDC92BC}" {
+      TrackName "m_fFog"
+      Keyframes {
+       FloatCinematicKeyframe "{6932B7EDEC918064}" {
+        FrameNumber 0
+        Value 0
+       }
+      }
+     }
+     FloatCinematicTrack "{6932B7EDEDDC93E8}" {
+      TrackName "m_fFogHeight"
+      Keyframes {
+       FloatCinematicKeyframe "{6932B7EDEC918EDE}" {
+        FrameNumber 0
+        Value 0
+       }
+      }
+     }
+     BooleanCinematicTrack "{6932B7EDEDDC90C5}" {
+      TrackName "setDate"
+      Keyframes {
+       BooleanCinematicKeyframe "{6932B7EDEC918CAB}" {
+        FrameNumber 0
+        Value 0
+       }
+      }
+     }
+     IntegerCinematicTrack "{6932B7EDEDDC9126}" {
+      TrackName "m_iYear"
+      Keyframes {
+       IntegerCinematicKeyframe "{6932B7EDEC918D02}" {
+        FrameNumber 0
+        Value 1989
+       }
+      }
+     }
+     IntegerCinematicTrack "{6932B7EDEDDC9E32}" {
+      TrackName "m_iMonth"
+      Keyframes {
+       IntegerCinematicKeyframe "{6932B7EDEC918BE7}" {
+        FrameNumber 0
+        Value 4
+       }
+      }
+     }
+     IntegerCinematicTrack "{6932B7EDEDDC9F00}" {
+      TrackName "m_iDay"
+      Keyframes {
+       IntegerCinematicKeyframe "{6932B7EDEC918847}" {
+        FrameNumber 0
         Value 1
        }
       }
      }
     }
    }
+   CustomCinematicTrack "{6932B7FD8DE03A54}" {
+    TrackName "LAVTest0101_PoseTrack"
+    ClassName "DAB_PoseManipulationTrack"
+    ChildTracks {
+     BooleanCinematicTrack "{6932E9518ED9413C}" {
+      TrackName "m_bDisableModifications"
+     }
+    }
+   }
+   CustomCinematicTrack "{6932B7FDCFA051DD}" {
+    TrackName "US01_PoseTrack"
+    ClassName "DAB_PoseManipulationTrack"
+    ChildTracks {
+     BooleanCinematicTrack "{6932E9518ED94E60}" {
+      TrackName "m_bDisableModifications"
+     }
+    }
+   }
   }
  }
+}
+LightEntity {
+ coords 3131.066 16.767 2772.471
+ angles -33.823 -78.509 0
+ Color 0.5333 0.618 1 1
+ LV 2.95
+ CastShadow 0
+ Visualization Disabled
+ LensFlareType Disabled
 }
 $grp Vehicle : "{0FBF8F010F81A4E5}Prefabs/Vehicles/Wheeled/LAV25/LAV25.et" {
  LAV1 {
@@ -81,20 +214,13 @@ $grp Vehicle : "{0FBF8F010F81A4E5}Prefabs/Vehicles/Wheeled/LAV25/LAV25.et" {
    DAB_PoseModificationComponent "{691CA926DA06B116}" {
    }
   }
-  coords 1368.553 39 2225.411
-  angles 0 -170.987 0
- }
- LAV2 {
-  components {
-   DAB_PoseModificationComponent "{691CA926DA06B116}" {
-   }
-  }
-  coords 1374.397 39 2204.604
-  angles 0 -170.987 0
+  coords 1369.908 39.574 2220.682
+  angles 0 -124.947 7.268
  }
  LAVTest0101 {
   components {
    DAB_PoseModificationComponent "{691CA926DA06B116}" {
+    m_sWorkingPoseModification "{4ED7964C93A33B76}Configs/PoseModifications/testslotsasd.conf"
    }
    SlotManagerComponent "{55BCE45E438E4CFF}" {
     Slots {
@@ -104,15 +230,20 @@ $grp Vehicle : "{0FBF8F010F81A4E5}Prefabs/Vehicles/Wheeled/LAV25/LAV25.et" {
     }
    }
   }
-  coords 1381.944 39 2195.681
+  coords 1378.784 39.215 2208.917
+  angles 0 -127.44 -7.474
  }
 }
 Projectile : "{38BAE094333E31BF}Prefabs/Weapons/Ammo/Ammo_Shell_81mm_HE_M821.et" {
- coords 1366.495 39.951 2228.459
+ coords 1366.003 39.951 2227.904
 }
 GenericEntity : "{3FD26066E47DD5AE}PrefabLibrary/DefaultLibrary/Props/Commercial/CrateWooden_01_plain.et" {
  coords 1362.259 38.976 2234.74
  angles 0 -35.065 0
+}
+GenericEntity : "{5E7626D8E78566B4}Prefabs/Props/Furniture/Desk_01_long.et" {
+ coords 3132.454 15.612 2772.692
+ angles 0 -45.926 0
 }
 GenericEntity : "{6EB3EE4FE50E0319}Prefabs/Props/Recreation/Beach/BlanketBeach_01/BlanketBeach_01_red.et" {
  Flags 0x80000 0
@@ -131,25 +262,12 @@ SCR_ChimeraCharacter USSR01 : "{90D2F1A1CFCA7B5F}Prefabs/Characters/Factions/OPF
  coords 1362.11 39.334 2234.744
  angles 0 -125 0
 }
-Vehicle UAZ469_base1 : "{99F1610551D54D17}Prefabs/Vehicles/Wheeled/UAZ469/UAZ469_base.et" {
- components {
-  DAB_PoseModificationComponent "{691F04D2594AA87D}" {
-  }
- }
- coords 1363.354 39 2217.56
-}
-Turret : "{A0514904A496A87C}Prefabs/Vehicles/Wheeled/LAV25/VehParts/Turret/LAV25_turret.et" {
- coords 1367.18 39 2220.325
-}
-GenericEntity : "{A8142EB263DA25B6}Prefabs/Vehicles/Wheeled/UAZ469/VehParts/Doors/FIA/UAZ469_FIA_door_L01_bottom.et" {
- coords 1361.63 39 2215.855
-}
 GenericEntity : "{AA865FD8AB5DA589}Prefabs/Weapons/Ammo/Ammo_25x137/Casing_25x137.et" {
  components {
   DAB_PoseModificationComponent "{691EFDD97854C902}" {
   }
  }
- coords 1366.084 40.12 2229.351
+ coords 1364.468 40.12 2229.406
 }
 GenericEntity : "{B1482FB64E3D2D45}Prefabs/Weapons/Rifles/M16/Rifle_M16A2_4x20.et" {
  components {
@@ -163,18 +281,19 @@ GenericEntity : "{B1482FB64E3D2D45}Prefabs/Weapons/Rifles/M16/Rifle_M16A2_4x20.e
 Vehicle "692EB4E8C7F63535" : "{BDE43262FC05B4D7}Prefabs/Vehicles/Helicopters/UH1H/UH1H_armed_gunship_empty_sharkNose.et" {
  components {
   DAB_PoseModificationComponent "{691CA9279827EA8A}" {
+   m_sWorkingPoseModification "{B8A3496C2E33C8C0}Configs/PoseModifications/hubschraubTestomatic.conf"
   }
  }
- coords 1373.422 39 2218.865
- angles 0 175.855 0
+ coords 1373.82 39.714 2214.977
+ angles 0 -113.008 -5.081
 }
 Vehicle BTR1 : "{C012BB3488BEA0C2}Prefabs/Vehicles/Wheeled/BTR70/BTR70.et" {
  components {
   DAB_PoseModificationComponent "{691CA920DA58C762}" {
   }
  }
- coords 1373.39 39 2231.878
- angles 0 -173.021 0
+ coords 1366.899 39.656 2224.906
+ angles 0 -129.074 -7.927
 }
 Turret : "{D1FFE458E8AC4BDB}Prefabs/Weapons/Mortars/2B14/Mortar_2B14.et" {
  components {
@@ -194,12 +313,10 @@ GameEntity : "{D9842C11742C00CF}Prefabs/Props/Civilian/Fireplace_01.et" {
  coords 1361.994 38.997 2232.352
  angles 0 -5.181 0
 }
-Vehicle S105_base1 : "{DA79E34823120087}Prefabs/Vehicles/Wheeled/S105/S105_base.et" {
- coords 1363.557 38.779 2222.963
-}
 SCR_ChimeraCharacter US01 : "{DE15FB5FAFC3E63F}Prefabs/Characters/Factions/BLUFOR/US_Army/Character_US_Officer.et" {
  components {
   DAB_PoseModificationComponent "{691CA926E55E4812}" {
+   m_sWorkingPoseModification "{EBB38D46106ABDC0}Configs/PoseModifications/Ussitting.conf"
   }
   AnimationPlayerComponent "{691CA927DC113314}" {
    Animation "{3996BF5D860A1536}anims/anm/NPC/male/sitting/p_sitting_ground_unm_idle.anm"
@@ -212,7 +329,9 @@ SCR_ChimeraCharacter US01 : "{DE15FB5FAFC3E63F}Prefabs/Characters/Factions/BLUFO
 Vehicle UAZ469 : "{E28501E93F8EFDC0}Prefabs/Vehicles/Wheeled/UAZ469/UAZ469_FIA_uncovered.et" {
  components {
   DAB_PoseModificationComponent "{69230A1009EE9148}" {
+   m_sWorkingPoseModification "{83EF3418318936CD}Configs/PoseModifications/UAZTest.conf"
   }
  }
- coords 1363.121 39 2212.432
+ coords 1381.694 39.259 2203.674
+ angles 0 -120.235 10.054
 }

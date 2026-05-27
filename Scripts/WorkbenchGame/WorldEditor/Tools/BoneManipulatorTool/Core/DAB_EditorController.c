@@ -333,26 +333,7 @@ class DAB_EditorController
 		vector rotRad = transform.m_vRotationOffset * Math.DEG2RAD;
 		vector rotRadCorrected = Vector(rotRad[1], rotRad[0], rotRad[2]);
 
-		vector entityWorld[4];
-		slotEntity.GetWorldTransform(entityWorld);
-
-		vector entityRot3[3];
-		entityRot3[0] = entityWorld[0];
-		entityRot3[1] = entityWorld[1];
-		entityRot3[2] = entityWorld[2];
-
-		vector boneOrigLocal3[3];
-		vector orig = transform.GetOriginalRotation();
-		Math3D.AnglesToMatrix(Vector(orig[1], orig[0], orig[2]), boneOrigLocal3);
-
-		vector boneOrigWorldRot[3];
-		Math3D.MatrixMultiply3(entityRot3, boneOrigLocal3, boneOrigWorldRot);
-
-		vector worldOff = transform.m_vPositionOffset;
-		vector localOff;
-		localOff[0] = vector.Dot(worldOff, boneOrigWorldRot[0]);
-		localOff[1] = vector.Dot(worldOff, boneOrigWorldRot[1]);
-		localOff[2] = vector.Dot(worldOff, boneOrigWorldRot[2]);
+		vector localOff = transform.m_vPositionOffset;
 
 		anim.SetBone(slotEntity, boneId, rotRadCorrected, localOff, transform.m_fScale);
 		slotEntity.Update();

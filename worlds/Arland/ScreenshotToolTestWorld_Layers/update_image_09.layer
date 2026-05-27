@@ -1,0 +1,438 @@
+CinematicEntity update_image_09 {
+ coords 0 0 0
+ Scene CinematicScene "{6930F5EF5663474B}" {
+  EndFrame 1
+  Tracks {
+   AnimationCinematicTrack "{6930F5EF537B2670}" {
+    TrackName "CIVTyperwriter01"
+    Play BooleanCinematicTrack "{6930F5EF537B27A3}" {
+     TrackName "Play"
+     Keyframes {
+      BooleanCinematicKeyframe "{6930F5EEA39EBA94}" {
+       FrameNumber 0
+       Value 1
+      }
+     }
+    }
+   }
+   CustomCinematicTrack "{6930F5EE9EF91C93}" {
+    TrackName "CIVTyperwriter01_PoseTrack"
+    ClassName "DAB_PoseManipulationTrack"
+    ChildTracks {
+     BooleanCinematicTrack "{6932E95053EA266B}" {
+      TrackName "m_bDisableModifications"
+     }
+    }
+   }
+   CustomCinematicTrack "{6930F590DCC7FB51}" {
+    TrackName "WeatherTrack"
+    ClassName "WeatherCinematicTrack"
+    ChildTracks {
+     FloatCinematicTrack "{6930F590DCC7E703}" {
+      TrackName "m_fTimeOfDay"
+      Keyframes {
+       FloatCinematicKeyframe "{6932E95EC3251542}" {
+        FrameNumber 0
+        Value 0.048
+        InterpMode 0
+       }
+      }
+     }
+     IntegerCinematicTrack "{6930F590DCC7E5B8}" {
+      TrackName "m_iWeatherType"
+     }
+     BooleanCinematicTrack "{6930F590DCC7E2DE}" {
+      TrackName "setSpecifics"
+     }
+     FloatCinematicTrack "{6930F590DCC7E398}" {
+      TrackName "m_fWindSpeed"
+     }
+     FloatCinematicTrack "{6930F590DCC7E34B}" {
+      TrackName "m_fWindDirection"
+     }
+     FloatCinematicTrack "{6930F590DCC7E03F}" {
+      TrackName "m_fWetness"
+     }
+     FloatCinematicTrack "{6930F590DCC7E19B}" {
+      TrackName "m_fPuddles"
+     }
+     FloatCinematicTrack "{6930F590DCC7E17A}" {
+      TrackName "m_fFog"
+     }
+     FloatCinematicTrack "{6930F590DCC7EEDE}" {
+      TrackName "m_fFogHeight"
+     }
+     BooleanCinematicTrack "{6930F590DCC7EF84}" {
+      TrackName "setDate"
+     }
+     IntegerCinematicTrack "{6930F590DCC7EF69}" {
+      TrackName "m_iYear"
+     }
+     IntegerCinematicTrack "{6930F590DCC7ECD2}" {
+      TrackName "m_iMonth"
+     }
+     IntegerCinematicTrack "{6930F590DCC7EDB1}" {
+      TrackName "m_iDay"
+     }
+    }
+   }
+   CameraCinematicTrack "{6930F59355BA4011}" {
+    TrackName "Camera"
+    Position Vector3CinematicTrack "{6930F59355BA404C}" {
+     TrackName "Position"
+     X FloatCinematicTrack "{6930F59355BA405E}" {
+      TrackName "X"
+      Keyframes {
+       FloatCinematicKeyframe "{6932E9457FA94592}" {
+        FrameNumber 0
+        Value 3130.827
+        InterpMode 0
+       }
+      }
+     }
+     Y FloatCinematicTrack "{6930F59355BA41A4}" {
+      TrackName "Y"
+      Keyframes {
+       FloatCinematicKeyframe "{6932E9457FA940A4}" {
+        FrameNumber 0
+        Value 17.056
+        InterpMode 0
+       }
+      }
+     }
+     Z FloatCinematicTrack "{6930F59355BA41A0}" {
+      TrackName "Z"
+      Keyframes {
+       FloatCinematicKeyframe "{6932E9457FA9412A}" {
+        FrameNumber 0
+        Value 2771.947
+        InterpMode 0
+       }
+      }
+     }
+    }
+    Angles Vector3CinematicTrack "{6930F59355BA41A8}" {
+     TrackName "Angles"
+     X FloatCinematicTrack "{6930F59355BA41B5}" {
+      TrackName "X"
+      Keyframes {
+       FloatCinematicKeyframe "{6932E9457FA94E5D}" {
+        FrameNumber 0
+        Value -52.02
+        InterpMode 0
+       }
+      }
+     }
+     Y FloatCinematicTrack "{6930F59355BA41B1}" {
+      TrackName "Y"
+      Keyframes {
+       FloatCinematicKeyframe "{6932E9457FA94CCC}" {
+        FrameNumber 0
+        Value 356.024
+        InterpMode 0
+       }
+      }
+     }
+     Z FloatCinematicTrack "{6930F59355BA41BC}" {
+      TrackName "Z"
+      Keyframes {
+       FloatCinematicKeyframe "{6932E9457FA94D44}" {
+        FrameNumber 0
+        Value 0
+        InterpMode 0
+       }
+       FloatCinematicKeyframe "{6932E952466B468F}" {
+        FrameNumber 1
+        Value 3.03
+       }
+      }
+     }
+    }
+    FOV FloatCinematicTrack "{6930F59355BA4186}" {
+     TrackName "FOV"
+     Keyframes {
+      FloatCinematicKeyframe "{6930F59350034721}" {
+       FrameNumber 0
+       Value 32.72
+      }
+     }
+    }
+    DOF DOFCinematicTrack "{6930F59355BA4181}" {
+     TrackName "DOF"
+     Enabled BooleanCinematicTrack "{6930F59355BA4196}" {
+      TrackName "Enabled"
+     }
+     FocusDistance FloatCinematicTrack "{6930F59355BA4191}" {
+      TrackName "FocusDistance"
+     }
+     LengthNear FloatCinematicTrack "{6930F59355BA419D}" {
+      TrackName "LengthNear"
+     }
+     LengthFar FloatCinematicTrack "{6930F59355BA4198}" {
+      TrackName "LengthFar"
+     }
+    }
+    DOFAdvanced DOFAdvancedCinematicTrack "{6930F59355BA41E5}" {
+     TrackName "DOFAdvanced"
+     Enabled BooleanCinematicTrack "{6930F59355BA41E9}" {
+      TrackName "Enabled"
+      Keyframes {
+       BooleanCinematicKeyframe "{6930F5928631FE44}" {
+        FrameNumber 0
+        Value 1
+       }
+      }
+     }
+     FocusDistance FloatCinematicTrack "{6930F59355BA41F4}" {
+      TrackName "FocusDistance"
+      Keyframes {
+       FloatCinematicKeyframe "{6932E95132F0CC21}" {
+        FrameNumber 0
+        Value 0.59
+        InterpMode 0
+       }
+      }
+     }
+     FStop FloatCinematicTrack "{6930F59355BA41F3}" {
+      TrackName "FStop"
+      Keyframes {
+       FloatCinematicKeyframe "{6932E9513C2B8D90}" {
+        FrameNumber 0
+        Value 5.27
+        InterpMode 0
+       }
+      }
+     }
+     SensorSize FloatCinematicTrack "{6930F59355BA41FF}" {
+      TrackName "SensorSize"
+      Keyframes {
+       FloatCinematicKeyframe "{6932E951DA8DD5BF}" {
+        FrameNumber 0
+        Value 35
+        InterpMode 0
+       }
+      }
+     }
+     FocalLengthAuto BooleanCinematicTrack "{6930F59355BA41FB}" {
+      TrackName "FocalLengthAuto"
+      Keyframes {
+       BooleanCinematicKeyframe "{6932E9513598C426}" {
+        FrameNumber 0
+        Value 1
+       }
+      }
+     }
+     FocalLength FloatCinematicTrack "{6930F59355BA41C7}" {
+      TrackName "FocalLength"
+      Keyframes {
+       FloatCinematicKeyframe "{6932E95136016BD9}" {
+        FrameNumber 0
+        Value 13.48
+        InterpMode 0
+       }
+      }
+     }
+    }
+    HDR HDRCinematicTrack "{6930F59355BA41C3}" {
+     TrackName "HDR"
+     ManualExposition BooleanCinematicTrack "{6930F59355BA41CF}" {
+      TrackName "ManualExposition"
+      Keyframes {
+       BooleanCinematicKeyframe "{6932E9527FB38037}" {
+        FrameNumber 1
+        Value 0
+       }
+      }
+     }
+     ExpositionLV FloatCinematicTrack "{6930F59355BA41CB}" {
+      TrackName "ExpositionLV"
+      Keyframes {
+       FloatCinematicKeyframe "{6932E952702795EF}" {
+        FrameNumber 1
+        Value -0.5
+       }
+      }
+     }
+    }
+   }
+  }
+ }
+}
+GameEntity {
+ components {
+  SignalsManagerComponent "{6930F593DD5FD576}" {
+  }
+  SoundComponent "{6930F593DD5FD541}" {
+   Filenames {
+    "{288E6E06D5C624E7}Sounds/Props/Civilian/LightTable_01/Props_LightTable_01.acp"
+   }
+   DistanceManagement 0
+   IncludeInactive 1
+  }
+  MeshObject "{6930F593DD5FD3A8}" {
+   Object "{03B7CEBF2E960E2C}Assets/Props/Furniture/LightTable_01/LightTable_01.xob"
+   LODFactors {
+    5
+    2
+    1.5
+    1
+    1
+    1
+   }
+  }
+  ParametricMaterialInstanceComponent "{6930F593DD5FD382}" {
+   ColorEmissive 0.141 0.112 0.068 1
+   EmissiveMultiplier 11
+   UseUserParamOne 0
+   UseUserParamTwo 0
+   UseUserParamThree 0
+   UseUserParamFour 0
+   UseUserParamAlpha 0
+  }
+  RigidBody "{6930F593DD5FD3D9}" {
+   ResponseIndex "TinyDestructible"
+   ModelGeometry 1
+   Static 1
+  }
+  SCR_BaseInteractiveLightComponent "{6930F593DD5FD30E}" {
+   Enabled 0
+   m_aLightData {
+    SCR_BaseLightData "{6930F593DD5FD301}" {
+     m_eLightType POINT
+     m_vLightOffset 0 0.2 0
+     m_vLightColor 1 0.896 0.687
+     m_fRadius 4
+     m_fIntensityClipEV -10
+     m_vFlareOffset 0 0.02 0
+     m_fScale 0.2
+     m_eLightFlags 3
+    }
+   }
+   m_bGradualLightning 1
+   m_fLV 2
+   m_eInitialLightState LIT_ON_SPAWN
+  }
+  SCR_DestructionMultiPhaseComponent "{6930F593DD5FD098}" {
+   Enabled 1
+   "Additional hit zones" {
+    SCR_HitZone Default {
+     HZDefault 1
+     "Melee multiplier" 1
+     "Kinetic multiplier" 1
+     "Explosive multiplier" 90
+     "Incendiary multiplier" 1
+    }
+   }
+   m_fBaseHealth 300
+   m_fForceToDamageScale 350
+   m_DestroySpawnObjects {
+    SCR_DebrisSpawnable "{6930F593DD5FD34F}" {
+     m_vOffsetPosition 0 0.3 0
+     m_ModelPrefabs {
+      "{036DF1B9EDCAFADE}Assets/Props/Military/Camps/LanternMilitary_US_01/Dst/LanternMilitary_US_01_DST_01.xob"
+     }
+     m_fMass 3
+     m_fRandomVelocityLinear 1
+     m_eMaterialSoundType METAL_LIGHT
+    }
+    SCR_ParticleSpawnable "{6930F593DD5FD357}" {
+     m_Particle "{6A57903619B5C050}Particles/Props/Dest_Prop_Metal_Small.ptc"
+    }
+   }
+   m_eMaterialSoundType BREAK_GLASS
+  }
+  SCR_LampComponent "{6930F593DD5FD074}" {
+   m_aLightData {
+    SCR_BaseLightData "{6930F593DD5FD03A}" {
+     m_eLightType SPOT
+     m_vLightOffset 0.012 0.333 0.157
+     m_vLightColor 1 0.701 0.361
+     m_fConeAngle 120
+     m_fRadius 4
+     m_fIntensityClipEV -10
+     m_eFlareType Disabled
+     m_vFlareOffset 0 0.02 0
+     m_fScale 0.2
+     m_eLightFlags CASTSHADOW
+    }
+   }
+   m_fLV 6
+   m_sParticle ""
+   m_vParticleOffset 0 0.22 0
+  }
+  RplComponent "{6930F593DD5FD1B8}" {
+   Enabled 1
+  }
+ }
+ Flags 0x403 0
+ coords 3131.723 16.511 2772.22
+ angles 0 -83.66 0
+}
+$grp LightEntity {
+ {
+  coords 3131.585 16.851 2772.228
+  angles -33.823 -78.509 0
+  Color 1 0.7011 0.3613 1
+  LV 3.01
+  Radius 3
+  Visualization Disabled
+  LensFlareIndex 1
+  LensFlareScale 0.2
+ }
+ {
+  coords 3128.162 18.247 2772.124
+  angles -33.823 -78.509 0
+  Color 1 0.8673 0.5333 1
+  LV 4.5
+  Radius 4.1
+  LensFlareType Disabled
+ }
+}
+GenericEntity : "{023E41560468D5F8}Prefabs/Props/PersonalBelongings/Papers/Papers_Personal_FIA.et" {
+ coords 3131.419 16.519 2772.376
+ angles 0 -166.497 0
+}
+GenericEntity : "{13891AA1F5833C4A}Prefabs/Props/Civilian/Notebook_01_Double.et" {
+ coords 3130.622 16.517 2771.473
+ angles 0 147.026 0
+}
+GenericEntity : "{5377EE9A760462BE}Prefabs/Props/Civilian/GlassBeer_01/GlassBeer_02.et" {
+ coords 3131.155 16.519 2771.654
+}
+GenericEntity : "{5E7626D8E78566B4}Prefabs/Props/Furniture/Desk_01_long.et" {
+ coords 3132.062 15.613 2772.281
+ angles 0 -45.926 0
+}
+GenericEntity : "{88FAE04EF7115814}Prefabs/Props/Civilian/BeerBottle_01_green.et" {
+ coords 3131.083 16.519 2771.596
+}
+GenericEntity : "{A052E25F93E52CDB}Prefabs/Props/Civilian/Typewriter_01/Typewriter_01_orange.et" {
+ coords 3131.22 16.519 2772.027
+ angles 0 -46.568 0
+}
+SCR_ChimeraCharacter CIVTyperwriter01 : "{A517C72CEF150898}Prefabs/Characters/Factions/CIV/Businessman/Character_CIV_Businessman_2.et" {
+ components {
+  DAB_PoseModificationComponent "{6930F5EE92D17EE7}" {
+   m_sWorkingPoseModification "{C33CCF80D3876779}Configs/PoseModifications/CIV_Typewriter_01.conf"
+  }
+  AnimationPlayerComponent "{6930F5EF10383E34}" {
+   Animation "{7EEECF165D35D3CE}anims/anm/NPC/male/sitting/sitting_on_box/p_una_sitting_on_box_idle1.anm"
+   Loop 1
+   AutoPlay 1
+  }
+ }
+ coords 3130.429 15.696 2772.353
+ angles 0 125.712 0
+}
+GenericEntity : "{A735A93A8AD4077A}Prefabs/Props/PersonalBelongings/Papers/Papers_Personal_US.et" {
+ coords 3131.623 16.519 2772.366
+ angles 0 78.707 0
+}
+GenericEntity : "{D19D5E8950BC4DD1}Prefabs/Props/Furniture/ChairOffice_01.et" {
+ coords 3130.739 15.621 2772.378
+ angles 0 130.158 0
+}
+GenericEntity : "{F7205C73E974634A}Prefabs/Props/Civilian/SheetMusicBook_E_01_closed_V2.et" {
+ coords 3130.68 16.546 2771.421
+ angles 0 112.442 0
+}

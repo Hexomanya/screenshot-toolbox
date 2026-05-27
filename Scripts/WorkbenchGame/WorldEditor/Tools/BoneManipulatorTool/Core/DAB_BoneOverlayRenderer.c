@@ -181,7 +181,7 @@ class DAB_BoneOverlayRenderer
 			anim.GetBoneMatrix(boneId, boneLocal);
 
 			vector entityWorld[4];
-			slotEntity.GetTransform(entityWorld);
+			slotEntity.GetWorldTransform(entityWorld);
 			
 			vector boneWorld[4];
 			Math3D.MatrixMultiply4(entityWorld, boneLocal, boneWorld);
@@ -382,7 +382,7 @@ class DAB_BoneOverlayRenderer
 		anim.GetBoneMatrix(boneId, boneLocal);
 
 		vector entityWorld[4];
-		entity.GetTransform(entityWorld);
+		entity.GetWorldTransform(entityWorld);
 
 		Math3D.MatrixMultiply4(entityWorld, boneLocal, boneWorld);
 		return true;
