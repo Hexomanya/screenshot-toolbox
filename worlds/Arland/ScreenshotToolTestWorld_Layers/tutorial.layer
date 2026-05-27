@@ -216,6 +216,12 @@ $grp Vehicle : "{0FBF8F010F81A4E5}Prefabs/Vehicles/Wheeled/LAV25/LAV25.et" {
   }
   coords 1369.908 39.574 2220.682
   angles 0 -124.947 7.268
+  {
+   GenericEntity : "{FFFDC163BE13E55F}Prefabs/Structures/Infrastructure/Roads/Runway/Runway_Line_6x30.et" {
+    coords 418.17 52.762 -417.52
+    angles 6.822 110.283 2.513
+   }
+  }
  }
  LAVTest0101 {
   components {
@@ -261,6 +267,20 @@ SCR_ChimeraCharacter USSR01 : "{90D2F1A1CFCA7B5F}Prefabs/Characters/Factions/OPF
  }
  coords 1362.11 39.334 2234.744
  angles 0 -125 0
+}
+SCR_ChimeraCharacter Blabla : "{A517C72CEF150898}Prefabs/Characters/Factions/CIV/Businessman/Character_CIV_Businessman_2.et" {
+ components {
+  DAB_PoseModificationComponent "{6930F5EE92D17EE7}" {
+   m_sWorkingPoseModification "{236F5275694B9EEF}Configs/PoseModifications/234234234234.conf"
+  }
+  AnimationPlayerComponent "{6930F5EF10383E34}" {
+   Animation "{7EEECF165D35D3CE}anims/anm/NPC/male/sitting/sitting_on_box/p_una_sitting_on_box_idle1.anm"
+   Loop 1
+   AutoPlay 1
+  }
+ }
+ coords 3138.74 11.602 2768.532
+ angles 0 125.712 0
 }
 GenericEntity : "{AA865FD8AB5DA589}Prefabs/Weapons/Ammo/Ammo_25x137/Casing_25x137.et" {
  components {
